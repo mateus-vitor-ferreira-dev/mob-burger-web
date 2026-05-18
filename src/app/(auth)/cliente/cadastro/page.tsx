@@ -119,7 +119,6 @@ export default function RegisterPage() {
                 onChange={field.onChange}
                 onDialCodeChange={setDialCode}
                 error={!!errors.phone}
-                wrapperClassName="h-12 border-zinc-600 bg-zinc-900/80 focus-within:border-orange-600/60 focus-within:ring-0 focus-within:ring-offset-0"
               />
             )}
           />

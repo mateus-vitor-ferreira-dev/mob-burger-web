@@ -14,7 +14,6 @@ export interface PhoneInputProps {
   disabled?: boolean;
   error?: boolean;
   className?: string;
-  wrapperClassName?: string;
 }
 
 export function PhoneInput({
@@ -25,7 +24,6 @@ export function PhoneInput({
   disabled,
   error,
   className,
-  wrapperClassName,
 }: PhoneInputProps) {
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [isOpen, setIsOpen] = useState(false);
@@ -79,12 +77,13 @@ export function PhoneInput({
     <div ref={containerRef} className={cn('relative', className)}>
       <div
         className={cn(
-          'flex h-10 w-full items-center rounded-md border bg-background text-sm ring-offset-background transition-colors',
-          'focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-          error && 'border-destructive focus-within:ring-destructive',
+          'flex h-12 w-full items-center rounded-md border text-sm transition-colors',
+          'bg-white dark:bg-zinc-900',
+          'border-zinc-300 dark:border-zinc-600',
+          'focus-within:outline-none focus-within:border-primary/60 dark:focus-within:border-orange-600/60',
+          error && 'border-destructive',
           disabled && 'cursor-not-allowed opacity-50',
-          !error && 'border-input',
-          wrapperClassName,
+          className,
         )}
       >
         {/* Botão seletor de país */}
@@ -95,21 +94,22 @@ export function PhoneInput({
           aria-label="Selecionar país"
           aria-expanded={isOpen}
           className={cn(
-            'flex shrink-0 items-center gap-1.5 rounded-l-md px-3 py-2',
-            'text-sm transition-colors hover:bg-muted',
+            'flex h-full shrink-0 items-center gap-1.5 rounded-l-md px-3',
+            'text-sm transition-colors',
+            'hover:bg-zinc-100 dark:hover:bg-zinc-800',
             'focus:outline-none',
             disabled && 'pointer-events-none',
           )}
         >
           <span className="text-base leading-none">{country.flag}</span>
-          <span className="text-xs text-muted-foreground">{country.dialCode}</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{country.dialCode}</span>
           <ChevronDown
-            className={cn('h-3 w-3 text-muted-foreground transition-transform', isOpen && 'rotate-180')}
+            className={cn('h-3 w-3 text-zinc-400 dark:text-zinc-500 transition-transform', isOpen && 'rotate-180')}
           />
         </button>
 
         {/* Divisor */}
-        <div className="h-5 w-px shrink-0 bg-border" />
+        <div className="h-5 w-px shrink-0 bg-zinc-200 dark:bg-zinc-700" />
 
         {/* Input do número */}
         <input
@@ -121,7 +121,8 @@ export function PhoneInput({
           disabled={disabled}
           className={cn(
             'flex-1 rounded-r-md bg-transparent px-3 py-2 text-sm',
-            'placeholder:text-muted-foreground',
+            'text-zinc-900 dark:text-white',
+            'placeholder:text-zinc-400 dark:placeholder:text-zinc-600',
             'focus:outline-none',
             'disabled:cursor-not-allowed',
           )}
