@@ -11,8 +11,10 @@ Aplicação Next.js que cobre dois fluxos principais:
 
 ## Stack
 
-- Next.js 15 (App Router)
-- Tailwind CSS + shadcn/ui
+- Next.js 16 (App Router) + React 19 + TypeScript
+- Tailwind CSS v4 + shadcn/ui
+- Zustand (estado global) + TanStack Query (cache de dados)
+- React Hook Form + Zod (formulários e validação)
 - Stripe (Pix + Cartão)
 - Server-Sent Events (SSE) para atualizações em tempo real
 
