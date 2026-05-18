@@ -14,6 +14,7 @@ export interface PhoneInputProps {
   disabled?: boolean;
   error?: boolean;
   className?: string;
+  wrapperClassName?: string;
 }
 
 export function PhoneInput({
@@ -24,6 +25,7 @@ export function PhoneInput({
   disabled,
   error,
   className,
+  wrapperClassName,
 }: PhoneInputProps) {
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [isOpen, setIsOpen] = useState(false);
@@ -82,6 +84,7 @@ export function PhoneInput({
           error && 'border-destructive focus-within:ring-destructive',
           disabled && 'cursor-not-allowed opacity-50',
           !error && 'border-input',
+          wrapperClassName,
         )}
       >
         {/* Botão seletor de país */}

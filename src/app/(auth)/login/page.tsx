@@ -18,11 +18,17 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import type { StaffRole } from '@/store/auth';
 
+const FLAME_H = 'linear-gradient(to right, #FFB300, #FF6D00, #E64A19)';
+const BTN_GRADIENT = 'linear-gradient(to right, #FF8F00, #FF6D00, #E64A19)';
+
+const inputCls =
+  'h-12 border-zinc-600 bg-zinc-900/80 text-white placeholder:text-zinc-600 focus-visible:border-orange-600/60 focus-visible:ring-0 focus-visible:ring-offset-0';
+const labelCls = 'text-[0.65rem] tracking-[0.15em] uppercase text-zinc-500 font-medium';
+
 const schema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
 });
-
 type FormData = z.infer<typeof schema>;
 
 type LoginResponse = {
@@ -42,11 +48,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -54,19 +58,10 @@ export default function LoginPage() {
       const res = await api.post<LoginResponse>('/api/auth/customer/login', data);
       const u = res.customer ?? res.user;
       if (!u) throw new Error('Resposta inválida do servidor.');
-
       setAuth(
-        {
-          id: u.id,
-          email: u.email,
-          name: 'name' in u ? u.name : undefined,
-          type: u.role === 'ADMIN' || u.role === 'ATTENDANT' ? 'staff' : 'customer',
-          role: u.role,
-        },
-        res.accessToken,
-        res.refreshToken,
+        { id: u.id, email: u.email, name: 'name' in u ? u.name : undefined, type: u.role === 'ADMIN' || u.role === 'ATTENDANT' ? 'staff' : 'customer', role: u.role },
+        res.accessToken, res.refreshToken,
       );
-
       toast.success('Bem-vindo de volta!');
       router.push(redirectByRole(u.role));
     } catch (err) {
@@ -83,29 +78,15 @@ export default function LoginPage() {
         const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${access_token}` },
         }).then((r) => r.json());
-
         const res = await api.post<LoginResponse>('/api/auth/google', {
-          idToken: access_token,
-          googleId: info.sub,
-          email: info.email,
-          name: info.name,
+          idToken: access_token, googleId: info.sub, email: info.email, name: info.name,
         });
-
         const u = res.customer ?? res.user;
         if (!u) throw new Error('Resposta inválida do servidor.');
-
         setAuth(
-          {
-            id: u.id,
-            email: u.email,
-            name: 'name' in u ? u.name : undefined,
-            type: u.role === 'ADMIN' || u.role === 'ATTENDANT' ? 'staff' : 'customer',
-            role: u.role,
-          },
-          res.accessToken,
-          res.refreshToken,
+          { id: u.id, email: u.email, name: 'name' in u ? u.name : undefined, type: u.role === 'ADMIN' || u.role === 'ATTENDANT' ? 'staff' : 'customer', role: u.role },
+          res.accessToken, res.refreshToken,
         );
-
         toast.success('Bem-vindo!');
         router.push(redirectByRole(u.role));
       } catch (err) {
@@ -118,19 +99,33 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="w-full max-w-sm space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Bem-vindo</h1>
-          <p className="text-sm text-muted-foreground">Acesse sua conta para continuar</p>
+    <div className="w-full space-y-6">
+
+      {/* Título */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <p className="text-[0.65rem] tracking-[0.2em] uppercase text-zinc-600">Bem vindo ao</p>
+          <h1
+            className="text-5xl leading-none tracking-tight"
+            style={{ fontFamily: 'var(--font-bebas)', background: FLAME_H, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}
+          >
+            MOB BURGER
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Acesse com seu{' '}
+            <span style={{ background: FLAME_H, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }} className="font-semibold">
+              login e senha
+            </span>
+          </p>
         </div>
         <ThemeToggle />
       </div>
 
+      {/* Google */}
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="h-12 w-full border-zinc-600 bg-transparent text-zinc-300 hover:bg-zinc-800/60 hover:text-white hover:border-zinc-500 transition-all"
         onClick={() => googleLogin()}
         disabled={googleLoading}
       >
@@ -147,47 +142,42 @@ export default function LoginPage() {
         Entrar com Google
       </Button>
 
+      {/* Separador */}
       <div className="flex items-center gap-3">
-        <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">ou</span>
-        <Separator className="flex-1" />
+        <Separator className="flex-1 bg-zinc-700" />
+        <span className="text-[0.65rem] tracking-widest uppercase text-zinc-600">ou</span>
+        <Separator className="flex-1 bg-zinc-700" />
       </div>
 
+      {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="seu@email.com"
-            autoComplete="email"
-            {...register('email')}
-          />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          <Label htmlFor="email" className={labelCls}>Email</Label>
+          <Input id="email" type="email" placeholder="seu@email.com" autoComplete="email" className={inputCls} {...register('email')} />
+          {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password">Senha</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-            {...register('password')}
-          />
-          {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+          <Label htmlFor="password" className={labelCls}>Senha</Label>
+          <Input id="password" type="password" placeholder="••••••••" autoComplete="current-password" className={inputCls} {...register('password')} />
+          {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          className="h-12 w-full font-bold tracking-wide text-white transition-all hover:opacity-90"
+          style={{ background: BTN_GRADIENT, boxShadow: '0 0 24px rgba(255, 100, 0, 0.35)' }}
+          disabled={loading}
+        >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Entrar
         </Button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Não tem conta?{' '}
-        <a href="/cliente/cadastro" className="font-medium text-primary hover:underline">
-          Cadastre-se
+      <p className="text-center text-[0.75rem] tracking-wide text-zinc-600">
+        Não possui conta?{' '}
+        <a href="/cliente/cadastro" className="font-semibold text-orange-400 hover:text-orange-300 transition-colors">
+          Clique aqui!
         </a>
       </p>
     </div>
