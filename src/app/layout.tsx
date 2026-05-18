@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono, Bebas_Neue } from 'next/font/google';
 import { Providers } from '@/components/providers';
+import { SplashGate } from '@/components/splash-gate';
 import './globals.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -20,7 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
-        <Providers>{children}</Providers>
+        <Providers>
+          <SplashGate>{children}</SplashGate>
+        </Providers>
       </body>
     </html>
   );

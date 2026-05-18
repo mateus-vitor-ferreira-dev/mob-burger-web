@@ -78,7 +78,7 @@ export function PhoneInput({
       <div
         className={cn(
           'flex h-12 w-full items-center rounded-md border text-sm transition-colors',
-          'bg-white dark:bg-zinc-900',
+          'bg-white dark:bg-zinc-900/80',
           'border-zinc-300 dark:border-zinc-600',
           'focus-within:outline-none focus-within:border-primary/60 dark:focus-within:border-orange-600/60',
           error && 'border-destructive',

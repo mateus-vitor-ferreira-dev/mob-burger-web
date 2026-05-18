@@ -35,8 +35,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         />
 
         <div
-          className="relative z-10 flex flex-col justify-center px-10"
-          style={{ minHeight: '100%', paddingTop: '4rem', paddingBottom: '4rem' }}
+          className="relative z-10 flex flex-col justify-center"
+          style={{ minHeight: '100%', paddingTop: '4rem', paddingBottom: '4rem', paddingLeft: 'clamp(3rem, 10%, 5rem)', paddingRight: 'clamp(1.5rem, 5%, 3rem)' }}
         >
           {/* Eyebrow */}
           <p style={{
@@ -55,20 +55,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </p>
 
           {/* Grid: texto chama | M·O·B fantasma */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'center', gap: 'clamp(0.5rem, 2vw, 2rem)' }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 'clamp(0.5rem, 2vw, 2rem)' }}>
             <h1 style={{ fontFamily: DISPLAY, lineHeight: 0.87, letterSpacing: '-0.01em' }}>
               <div style={{ overflow: 'clip' }}>
-                <div style={{ fontSize: 'clamp(4rem, 9vw, 9rem)', background: G_MURILO, ...clip }}>MURILO</div>
+                <div style={{ fontSize: 'clamp(3.5rem, 8.5vw, 8.5rem)', background: G_MURILO, ...clip }}>MURILO</div>
               </div>
               <div style={{ overflow: 'clip' }}>
-                <div style={{ fontSize: 'clamp(2.8rem, 7vw, 7rem)', background: G_ORIGINAL, ...clip }}>ORIGINAL</div>
+                <div style={{ fontSize: 'clamp(2.4rem, 6.2vw, 6.2rem)', background: G_ORIGINAL, ...clip }}>ORIGINAL</div>
               </div>
               <div style={{ overflow: 'clip' }}>
-                <div style={{ fontSize: 'clamp(4rem, 9vw, 9rem)', background: G_BURGER, ...clip }}>BURGER</div>
+                <div style={{ fontSize: 'clamp(3.5rem, 8.5vw, 8.5rem)', background: G_BURGER, ...clip }}>BURGER</div>
               </div>
             </h1>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 0.85 }}>
+            {/* M·O·B esticado para cobrir exatamente a mesma altura do texto */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '0.15em' }}>
               {[
                 { letter: 'M', stroke: 'rgba(255,225,80,0.28)' },
                 { letter: 'O', stroke: 'rgba(255,140,0,0.24)' },
@@ -76,9 +77,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               ].map(({ letter, stroke }) => (
                 <span key={letter} style={{
                   fontFamily: DISPLAY,
-                  fontSize: 'clamp(3rem, 6vw, 6rem)',
+                  fontSize: 'clamp(2.2rem, 5.5vw, 5.5rem)',
                   color: 'transparent',
                   WebkitTextStroke: `2px ${stroke}`,
+                  lineHeight: 1,
                   display: 'block',
                   textAlign: 'center',
                   userSelect: 'none',
@@ -88,11 +90,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               ))}
               <p style={{
                 fontFamily: 'var(--font-geist-sans)',
-                fontSize: '0.52rem',
-                letterSpacing: '0.18em',
+                fontSize: '0.48rem',
+                letterSpacing: '0.16em',
                 color: 'rgba(255,150,0,0.3)',
                 textTransform: 'uppercase',
-                marginTop: '0.5rem',
                 textAlign: 'center',
               }}>
                 Murilo Original Burger
