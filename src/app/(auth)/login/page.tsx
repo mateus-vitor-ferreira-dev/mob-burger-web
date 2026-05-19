@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema"
 import { z } from "zod"
 import {
@@ -19,6 +19,7 @@ import { useGoogleLogin } from "@react-oauth/google"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { formatPhoneBR } from "@/lib/masks"
 import { MENU_ITEMS, DESSERTS, TOTAL_ITEMS } from "@/data/menu"
 
 // ─── Schemas ────────────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ const registerSchema = z
   .object({
     name: z.string().min(2, "Nome muito curto"),
     email: z.string().email("E-mail inválido"),
-    phone: z.string().min(10, "Telefone inválido"),
+    phone: z.string().refine((v) => v.replace(/\D/g, "").length >= 10, "Telefone inválido"),
     password: z.string().min(6, "Mínimo 6 caracteres"),
     confirmPassword: z.string(),
   })
@@ -319,7 +320,10 @@ export default function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const loginForm = useForm<LoginData>({ resolver: standardSchemaResolver(loginSchema) })
-  const registerForm = useForm<RegisterData>({ resolver: standardSchemaResolver(registerSchema) })
+  const registerForm = useForm<RegisterData>({
+    resolver: standardSchemaResolver(registerSchema),
+    defaultValues: { name: "", email: "", phone: "", password: "", confirmPassword: "" },
+  })
   const forgotForm = useForm<ForgotData>({ resolver: standardSchemaResolver(forgotSchema) })
 
   const googleLogin = useGoogleLogin({
@@ -752,12 +756,19 @@ export default function AuthPage() {
                           <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-sm whitespace-nowrap text-gray-600">
                             🇧🇷 +55
                           </div>
-                          <input
-                            {...registerForm.register("phone")}
-                            type="tel"
-                            placeholder="(35) 9999-9999"
-                            disabled={isSubmitting}
-                            className={cn(INPUT, "flex-1")}
+                          <Controller
+                            name="phone"
+                            control={registerForm.control}
+                            render={({ field }) => (
+                              <input
+                                {...field}
+                                inputMode="tel"
+                                placeholder="(35) 9 9999-9999"
+                                disabled={isSubmitting}
+                                className={cn(INPUT, "flex-1")}
+                                onChange={(e) => field.onChange(formatPhoneBR(e.target.value))}
+                              />
+                            )}
                           />
                         </div>
                         <FieldError msg={registerForm.formState.errors.phone?.message} />
