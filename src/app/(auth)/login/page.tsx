@@ -1,96 +1,38 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema"
 import { z } from "zod"
-import {
-  Eye,
-  EyeOff,
-  Utensils,
-  ShoppingBag,
-  MapPin,
-  Loader2,
-  ArrowLeft,
-  CheckCircle2,
-} from "lucide-react"
+import { Eye, EyeOff, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useGoogleLogin } from "@react-oauth/google"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { formatPhoneBR } from "@/lib/masks"
-import { MENU_ITEMS, DESSERTS, TOTAL_ITEMS } from "@/data/menu"
+import { AuthLeftPanel } from "../_components/auth-left-panel"
+import { useCustomer } from "@/lib/customer-store"
 
-// ─── Schemas ────────────────────────────────────────────────────────────────
+// ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const loginSchema = z.object({
   email: z.string().email("E-mail inválido"),
   password: z.string().min(6, "Mínimo 6 caracteres"),
 })
 
-const registerSchema = z
-  .object({
-    name: z.string().min(2, "Nome muito curto"),
-    email: z.string().email("E-mail inválido"),
-    phone: z.string().refine((v) => v.replace(/\D/g, "").length >= 10, "Telefone inválido"),
-    password: z.string().min(6, "Mínimo 6 caracteres"),
-    confirmPassword: z.string(),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "Senhas não coincidem",
-    path: ["confirmPassword"],
-  })
-
 const forgotSchema = z.object({
   email: z.string().email("E-mail inválido"),
 })
 
 type LoginData = z.infer<typeof loginSchema>
-type RegisterData = z.infer<typeof registerSchema>
 type ForgotData = z.infer<typeof forgotSchema>
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const STATS = [
-  { Icon: Utensils, value: String(TOTAL_ITEMS), label: "itens no cardápio" },
-  { Icon: ShoppingBag, value: "300+", label: "pedidos hoje" },
-  { Icon: MapPin, value: String(DESSERTS.length), label: "sobremesas" },
-]
-
-// ─── Ferris wheel config ─────────────────────────────────────────────────────
-
-const ITEM_H = 68 // slot height — deve ser >= altura real do item ativo
-const WHEEL_H = 340 // 5 slots × 68px = 340
-const WHEEL_INTERVAL = 3000
-
-const SLOTS = [
-  { offset: -2, scale: 0.7, opacity: 0.25 },
-  { offset: -1, scale: 0.84, opacity: 0.55 },
-  { offset: 0, scale: 1.0, opacity: 1.0 },
-  { offset: 1, scale: 0.84, opacity: 0.55 },
-  { offset: 2, scale: 0.7, opacity: 0.25 },
-]
-
-// Gradientes placeholder por categoria — usados quando item.img === null.
-// Quando a foto chegar, preencha item.img em src/data/menu.ts e o background
-// trocará automaticamente para url("...") center/cover.
-const PLACEHOLDER_BG: Record<string, string> = {
-  burger: "radial-gradient(ellipse at 30% 80%, rgba(200,70,0,0.55) 0%, transparent 60%), #0e0a07",
-  chicken: "radial-gradient(ellipse at 30% 80%, rgba(200,150,0,0.48) 0%, transparent 60%), #0f0d06",
-}
-
-function getItemBg(item: (typeof MENU_ITEMS)[number]): string {
-  if (item.img) return `url("${item.img}") center/cover no-repeat`
-  return PLACEHOLDER_BG[item.cat] ?? "#0a0a0a"
-}
+// ─── Primitives ──────────────────────────────────────────────────────────────
 
 const INPUT =
   "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white " +
   "focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 " +
   "transition-all placeholder:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
-
-// ─── Primitives ──────────────────────────────────────────────────────────────
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null
@@ -129,15 +71,7 @@ function OrangeSubmit({ children, loading }: { children: React.ReactNode; loadin
   )
 }
 
-function GoogleButton({
-  onClick,
-  disabled,
-  children,
-}: {
-  onClick: () => void
-  disabled?: boolean
-  children: string
-}) {
+function GoogleButton({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) {
   return (
     <button
       type="button"
@@ -146,118 +80,8 @@ function GoogleButton({
       className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <GoogleIcon />
-      {children}
+      Entrar com Google
     </button>
-  )
-}
-
-// animated field wrapper — stagger via delay prop
-function Field({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  return (
-    <div
-      style={{
-        animation: "mob-field-in 0.35s ease-out both",
-        animationDelay: `${delay}ms`,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-// ─── Ferris wheel component ───────────────────────────────────────────────────
-
-function FerrisWheel({
-  activeIdx,
-  onSelect,
-}: {
-  activeIdx: number
-  onSelect: (i: number) => void
-}) {
-  function cyclicDist(i: number) {
-    const n = MENU_ITEMS.length
-    const d = (((i - activeIdx) % n) + n) % n
-    return d > n / 2 ? d - n : d
-  }
-
-  return (
-    <div
-      className="relative my-4 overflow-hidden"
-      style={{
-        height: WHEEL_H,
-        maskImage:
-          "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, transparent 100%)",
-      }}
-    >
-      {MENU_ITEMS.map((item, i) => {
-        const d = cyclicDist(i)
-        if (Math.abs(d) > 2) return null
-        const slot = SLOTS.find((s) => s.offset === d)!
-        const isActive = d === 0
-        const top = WHEEL_H / 2 + d * ITEM_H - ITEM_H / 2
-
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => !isActive && onSelect(i)}
-            className="absolute right-0 left-0 flex items-center gap-3.5"
-            style={{
-              top,
-              transform: `scale(${slot.scale})`,
-              opacity: slot.opacity,
-              zIndex: isActive ? 5 : 4 - Math.abs(d),
-              transition:
-                "transform 0.55s cubic-bezier(.4,0,.2,1), opacity 0.55s cubic-bezier(.4,0,.2,1), top 0.55s cubic-bezier(.4,0,.2,1)",
-              padding: isActive ? "10px 18px" : "8px 14px",
-              background: isActive ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
-              border: `1.5px solid ${isActive ? "rgba(255,255,255,0.35)" : "transparent"}`,
-              borderRadius: "12px",
-              backdropFilter: isActive ? "blur(4px)" : "none",
-              cursor: isActive ? "default" : "pointer",
-              transformOrigin: "center center",
-            }}
-          >
-            <span
-              style={{
-                fontSize: isActive ? "28px" : "20px",
-                lineHeight: 1,
-                transition: "font-size 0.4s ease",
-                flexShrink: 0,
-              }}
-            >
-              {item.emoji}
-            </span>
-            <div className="flex flex-col gap-0.5">
-              <span
-                style={{
-                  fontSize: isActive ? "1rem" : "0.875rem",
-                  fontWeight: isActive ? 700 : 500,
-                  color: "#fff",
-                  transition: "font-size 0.4s ease",
-                  textShadow: "0 1px 6px rgba(0,0,0,0.45)",
-                }}
-              >
-                {item.name}
-              </span>
-              {isActive && (
-                <span
-                  style={{
-                    fontSize: "0.8rem",
-                    color: "rgba(255,255,255,0.85)",
-                    textShadow: "0 1px 6px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  {item.price}
-                </span>
-              )}
-            </div>
-          </button>
-        )
-      })}
-    </div>
   )
 }
 
@@ -284,46 +108,24 @@ function GoogleIcon() {
   )
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+function Field({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <div style={{ animation: "mob-field-in 0.35s ease-out both", animationDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  )
+}
 
-export default function AuthPage() {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function LoginPage() {
   const router = useRouter()
-
-  const [activeIdx, setActiveIdx] = useState(0)
-  const [layers, setLayers] = useState<{ a: string | null; b: string | null; front: "a" | "b" }>({
-    a: getItemBg(MENU_ITEMS[0]),
-    b: null,
-    front: "a",
-  })
-  const prevIdxRef = useRef(-1)
-
-  // auto-rotate
-  useEffect(() => {
-    const t = setInterval(() => setActiveIdx((i) => (i + 1) % MENU_ITEMS.length), WHEEL_INTERVAL)
-    return () => clearInterval(t)
-  }, [])
-
-  // crossfade when active item changes
-  useEffect(() => {
-    if (prevIdxRef.current === activeIdx) return
-    prevIdxRef.current = activeIdx
-    const bg = getItemBg(MENU_ITEMS[activeIdx])
-    setLayers((prev) =>
-      prev.front === "a" ? { a: prev.a, b: bg, front: "b" } : { a: bg, b: prev.b, front: "a" },
-    )
-  }, [activeIdx])
-
-  const [tab, setTab] = useState<"login" | "register">("register")
+  const setCustomer = useCustomer((s) => s.setCustomer)
   const [showPwd, setShowPwd] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
   const [forgotView, setForgotView] = useState<"hidden" | "form" | "sent">("hidden")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const loginForm = useForm<LoginData>({ resolver: standardSchemaResolver(loginSchema) })
-  const registerForm = useForm<RegisterData>({
-    resolver: standardSchemaResolver(registerSchema),
-    defaultValues: { name: "", email: "", phone: "", password: "", confirmPassword: "" },
-  })
   const forgotForm = useForm<ForgotData>({ resolver: standardSchemaResolver(forgotSchema) })
 
   const googleLogin = useGoogleLogin({
@@ -335,7 +137,18 @@ export default function AuthPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accessToken: res.access_token }),
         })
-        if (!r.ok) throw new Error("Erro ao autenticar com Google")
+        const json = (await r.json().catch(() => ({}))) as {
+          error?: { message?: string }
+          data?: {
+            customer?: { id: string; name: string; email: string; phone?: string }
+            accessToken?: string
+          }
+        }
+        if (!r.ok) throw new Error(json.error?.message ?? "Erro ao autenticar com Google")
+        const { customer: c, accessToken } = json.data ?? {}
+        if (c && accessToken) {
+          setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
+        }
         toast.success("Login realizado com sucesso!")
         router.push("/")
       } catch (e) {
@@ -350,40 +163,27 @@ export default function AuthPage() {
   const onLogin = loginForm.handleSubmit(async (data) => {
     setIsSubmitting(true)
     try {
-      const r = await fetch("/api/auth/login", {
+      const r = await fetch("/api/auth/customer/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-      if (!r.ok) {
-        const body = (await r.json().catch(() => ({}))) as { message?: string }
-        throw new Error(body.message ?? "Credenciais inválidas")
+      const json = (await r.json().catch(() => ({}))) as {
+        error?: { message?: string }
+        data?: {
+          customer?: { id: string; name: string; email: string; phone?: string }
+          accessToken?: string
+        }
+      }
+      if (!r.ok) throw new Error(json.error?.message ?? "Credenciais inválidas")
+      const { customer: c, accessToken } = json.data ?? {}
+      if (c && accessToken) {
+        setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
       }
       toast.success("Bem-vindo de volta! 🔥")
       router.push("/")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao fazer login")
-    } finally {
-      setIsSubmitting(false)
-    }
-  })
-
-  const onRegister = registerForm.handleSubmit(async (data) => {
-    setIsSubmitting(true)
-    try {
-      const r = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      if (!r.ok) {
-        const body = (await r.json().catch(() => ({}))) as { message?: string }
-        throw new Error(body.message ?? "Erro ao criar conta")
-      }
-      toast.success("Conta criada com sucesso! 🎉")
-      router.push("/")
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erro ao criar conta")
     } finally {
       setIsSubmitting(false)
     }
@@ -420,90 +220,8 @@ export default function AuthPage() {
       `}</style>
 
       <div className="flex min-h-screen">
-        {/* ── Left panel ──────────────────────────────────────────── */}
-        <aside
-          className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex lg:w-[55%]"
-          style={{ background: "#0a0a0a" }}
-        >
-          {/* Background crossfade — camada A */}
-          <div
-            className="absolute inset-0 z-0 transition-opacity duration-[900ms] ease-in-out"
-            style={{ background: layers.a ?? "#0a0a0a", opacity: layers.front === "a" ? 1 : 0 }}
-          />
-          {/* Background crossfade — camada B */}
-          <div
-            className="absolute inset-0 z-0 transition-opacity duration-[900ms] ease-in-out"
-            style={{ background: layers.b ?? "#0a0a0a", opacity: layers.front === "b" ? 1 : 0 }}
-          />
-          {/* Overlay escuro para legibilidade */}
-          <div
-            className="absolute inset-0 z-[1]"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.50) 50%, rgba(0,0,0,0.65) 100%)",
-            }}
-          />
+        <AuthLeftPanel />
 
-          {/* Brand */}
-          <header className="relative z-[2] flex items-center gap-3">
-            <Image
-              src="/mob-logo.png"
-              alt="M.O.B"
-              width={40}
-              height={40}
-              className="rounded-xl object-cover"
-            />
-            <div>
-              <p className="text-sm font-semibold tracking-[0.18em] text-white">M.O.B</p>
-              <p className="text-xs text-white/70">Burgers Pack Co.</p>
-            </div>
-          </header>
-
-          {/* Hero + Ferris wheel */}
-          <div className="relative z-[2] flex flex-1 flex-col justify-center pb-10">
-            <h1
-              className="mb-2 leading-none text-white"
-              style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: "clamp(3.5rem, 6vw, 6rem)",
-                letterSpacing: "0.03em",
-                textShadow: "0 2px 16px rgba(0,0,0,0.55)",
-              }}
-            >
-              Encontre seu
-              <br />
-              <span style={{ color: "#f97316" }}>lanche.</span>
-            </h1>
-            <p
-              className="mb-2 max-w-xs text-sm leading-relaxed text-white/90"
-              style={{ textShadow: "0 1px 8px rgba(0,0,0,0.5)" }}
-            >
-              Hambúrgueres artesanais, combos exclusivos e muito sabor —&nbsp; tudo num só lugar.
-            </p>
-
-            <FerrisWheel activeIdx={activeIdx} onSelect={setActiveIdx} />
-
-            {/* Stats */}
-            <div className="mt-2 flex gap-2.5">
-              {STATS.map(({ value, label }) => (
-                <div
-                  key={label}
-                  className="flex-1 rounded-xl border border-white/[0.18] p-3"
-                  style={{ background: "rgba(255,255,255,0.10)", backdropFilter: "blur(6px)" }}
-                >
-                  <p className="mb-0.5 text-xl leading-none font-bold text-white">{value}</p>
-                  <p className="text-xs leading-snug text-white/65">{label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="relative z-[2] text-xs text-white/50 italic">
-            &ldquo;Chega de delivery genérico. Peça o seu MOB agora.&rdquo;
-          </p>
-        </aside>
-
-        {/* ── Right panel ─────────────────────────────────────────── */}
         <main
           className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
           style={{ background: "#fafaf8" }}
@@ -531,10 +249,8 @@ export default function AuthPage() {
                       onClick={() => setForgotView("hidden")}
                       className="mb-8 flex items-center gap-1.5 text-xs text-gray-400 transition-colors hover:text-gray-600"
                     >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      Voltar para o login
+                      <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
                     </button>
-
                     <Field delay={0}>
                       <div className="mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">Recuperar senha 🔑</h2>
@@ -543,7 +259,6 @@ export default function AuthPage() {
                         </p>
                       </div>
                     </Field>
-
                     <form onSubmit={onForgot} className="space-y-4">
                       <Field delay={60}>
                         <label className="mb-1.5 block text-xs font-medium text-gray-600">
@@ -558,7 +273,6 @@ export default function AuthPage() {
                         />
                         <FieldError msg={forgotForm.formState.errors.email?.message} />
                       </Field>
-
                       <Field delay={120}>
                         <OrangeSubmit loading={isSubmitting}>
                           Enviar link de recuperação
@@ -567,7 +281,6 @@ export default function AuthPage() {
                     </form>
                   </>
                 ) : (
-                  /* Sent confirmation */
                   <div className="py-10 text-center">
                     <div
                       className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
@@ -588,288 +301,89 @@ export default function AuthPage() {
                       }}
                       className="mx-auto flex items-center gap-1.5 text-sm font-medium text-orange-500 transition-colors hover:text-orange-600"
                     >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      Voltar para o login
+                      <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <>
-                {/* Tabs */}
-                <div className="mb-8 flex rounded-xl border border-gray-200/50 bg-gray-100/80 p-1">
-                  {(["login", "register"] as const).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTab(t)}
-                      className={cn(
-                        "flex-1 rounded-[10px] py-2.5 text-sm font-medium transition-all duration-200",
-                        tab === t
-                          ? "bg-white text-gray-900 shadow-sm"
-                          : "text-gray-400 hover:text-gray-600",
-                      )}
-                    >
-                      {t === "login" ? "Entrar" : "Cadastrar"}
-                    </button>
-                  ))}
-                </div>
-
-                {/* ── Login ──────────────────────────────────────── */}
-                {tab === "login" && (
-                  <div style={{ animation: "mob-slide-in 0.25s ease-out both" }}>
-                    <Field delay={0}>
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Bem-vindo de volta 🔥</h2>
-                        <p className="mt-1 text-sm text-gray-500">
-                          Acesse sua conta e faça seu pedido.
-                        </p>
-                      </div>
-                    </Field>
-
-                    <Field delay={60}>
-                      <GoogleButton onClick={() => googleLogin()} disabled={isSubmitting}>
-                        Entrar com Google
-                      </GoogleButton>
-                    </Field>
-
-                    <Divider />
-
-                    <form onSubmit={onLogin} className="space-y-4">
-                      <Field delay={120}>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                          E-mail
-                        </label>
-                        <input
-                          {...loginForm.register("email")}
-                          type="email"
-                          placeholder="seu@email.com"
-                          disabled={isSubmitting}
-                          className={INPUT}
-                        />
-                        <FieldError msg={loginForm.formState.errors.email?.message} />
-                      </Field>
-
-                      <Field delay={160}>
-                        <div className="mb-1.5 flex items-center justify-between">
-                          <label className="text-xs font-medium text-gray-600">Senha</label>
-                          <button
-                            type="button"
-                            onClick={() => setForgotView("form")}
-                            className="text-xs text-orange-500 hover:text-orange-600"
-                          >
-                            Esqueceu a senha?
-                          </button>
-                        </div>
-                        <div className="relative">
-                          <input
-                            {...loginForm.register("password")}
-                            type={showPwd ? "text" : "password"}
-                            placeholder="••••••••"
-                            disabled={isSubmitting}
-                            className={cn(INPUT, "pr-11")}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPwd((v) => !v)}
-                            className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                            aria-label="Alternar visibilidade"
-                          >
-                            {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                        <FieldError msg={loginForm.formState.errors.password?.message} />
-                      </Field>
-
-                      <Field delay={210}>
-                        <OrangeSubmit loading={isSubmitting}>Entrar</OrangeSubmit>
-                      </Field>
-
-                      <Field delay={240}>
-                        <p className="text-center text-sm text-gray-500">
-                          Não tem conta?{" "}
-                          <button
-                            type="button"
-                            onClick={() => setTab("register")}
-                            className="font-medium text-orange-500 hover:text-orange-600"
-                          >
-                            Cadastre-se
-                          </button>
-                        </p>
-                      </Field>
-                    </form>
+              <div style={{ animation: "mob-slide-in 0.25s ease-out both" }}>
+                <Field delay={0}>
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Bem-vindo de volta 🔥</h2>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Acesse sua conta e faça seu pedido.
+                    </p>
                   </div>
-                )}
+                </Field>
 
-                {/* ── Register ───────────────────────────────────── */}
-                {tab === "register" && (
-                  <div style={{ animation: "mob-slide-in 0.25s ease-out both" }}>
-                    <Field delay={0}>
-                      <div className="mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Crie sua conta 🍔</h2>
-                        <p className="mt-1 text-sm text-gray-500">
-                          É rápido, grátis e sem enrolação.
-                        </p>
-                      </div>
-                    </Field>
+                <Field delay={60}>
+                  <GoogleButton onClick={() => googleLogin()} disabled={isSubmitting} />
+                </Field>
 
-                    <Field delay={60}>
-                      <GoogleButton onClick={() => googleLogin()} disabled={isSubmitting}>
-                        Inscrever-se no Google
-                      </GoogleButton>
-                    </Field>
+                <Divider />
 
-                    <Divider />
+                <form onSubmit={onLogin} className="space-y-4">
+                  <Field delay={120}>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-600">E-mail</label>
+                    <input
+                      {...loginForm.register("email")}
+                      type="email"
+                      placeholder="seu@email.com"
+                      disabled={isSubmitting}
+                      className={INPUT}
+                    />
+                    <FieldError msg={loginForm.formState.errors.email?.message} />
+                  </Field>
 
-                    <form onSubmit={onRegister} className="space-y-4">
-                      <Field delay={120}>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                          Nome completo
-                        </label>
-                        <input
-                          {...registerForm.register("name")}
-                          placeholder="Seu nome"
-                          disabled={isSubmitting}
-                          className={INPUT}
-                        />
-                        <FieldError msg={registerForm.formState.errors.name?.message} />
-                      </Field>
+                  <Field delay={160}>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <label className="text-xs font-medium text-gray-600">Senha</label>
+                      <button
+                        type="button"
+                        onClick={() => setForgotView("form")}
+                        className="text-xs text-orange-500 hover:text-orange-600"
+                      >
+                        Esqueceu a senha?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        {...loginForm.register("password")}
+                        type={showPwd ? "text" : "password"}
+                        placeholder="••••••••"
+                        disabled={isSubmitting}
+                        className={cn(INPUT, "pr-11")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((v) => !v)}
+                        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                        aria-label="Alternar visibilidade"
+                      >
+                        {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <FieldError msg={loginForm.formState.errors.password?.message} />
+                  </Field>
 
-                      <Field delay={155}>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                          E-mail
-                        </label>
-                        <input
-                          {...registerForm.register("email")}
-                          type="email"
-                          placeholder="seu@email.com"
-                          disabled={isSubmitting}
-                          className={INPUT}
-                        />
-                        <FieldError msg={registerForm.formState.errors.email?.message} />
-                      </Field>
+                  <Field delay={210}>
+                    <OrangeSubmit loading={isSubmitting}>Entrar</OrangeSubmit>
+                  </Field>
 
-                      <Field delay={190}>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                          Telefone
-                        </label>
-                        <div className="flex gap-2">
-                          <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-sm whitespace-nowrap text-gray-600">
-                            🇧🇷 +55
-                          </div>
-                          <Controller
-                            name="phone"
-                            control={registerForm.control}
-                            render={({ field }) => (
-                              <input
-                                {...field}
-                                inputMode="tel"
-                                placeholder="(35) 9 9999-9999"
-                                disabled={isSubmitting}
-                                className={cn(INPUT, "flex-1")}
-                                onChange={(e) => field.onChange(formatPhoneBR(e.target.value))}
-                              />
-                            )}
-                          />
-                        </div>
-                        <FieldError msg={registerForm.formState.errors.phone?.message} />
-                      </Field>
-
-                      <Field delay={225}>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                              Senha
-                            </label>
-                            <div className="relative">
-                              <input
-                                {...registerForm.register("password")}
-                                type={showPwd ? "text" : "password"}
-                                placeholder="••••••••"
-                                disabled={isSubmitting}
-                                className={cn(INPUT, "pr-10")}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPwd((v) => !v)}
-                                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                                aria-label="Alternar visibilidade"
-                              >
-                                {showPwd ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                            <FieldError msg={registerForm.formState.errors.password?.message} />
-                          </div>
-
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-600">
-                              Confirmar
-                            </label>
-                            <div className="relative">
-                              <input
-                                {...registerForm.register("confirmPassword")}
-                                type={showConfirm ? "text" : "password"}
-                                placeholder="••••••••"
-                                disabled={isSubmitting}
-                                className={cn(INPUT, "pr-10")}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowConfirm((v) => !v)}
-                                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-                                aria-label="Alternar visibilidade"
-                              >
-                                {showConfirm ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
-                              </button>
-                            </div>
-                            <FieldError
-                              msg={registerForm.formState.errors.confirmPassword?.message}
-                            />
-                          </div>
-                        </div>
-                      </Field>
-
-                      <Field delay={260}>
-                        <OrangeSubmit loading={isSubmitting}>Criar conta grátis 🚀</OrangeSubmit>
-                      </Field>
-
-                      <Field delay={330}>
-                        <p className="text-center text-xs text-gray-400">
-                          Já tem conta?{" "}
-                          <button
-                            type="button"
-                            onClick={() => setTab("login")}
-                            className="font-medium text-orange-500 hover:text-orange-600"
-                          >
-                            Entrar
-                          </button>
-                        </p>
-                      </Field>
-
-                      <Field delay={350}>
-                        <p className="text-center text-xs text-gray-400/70">
-                          Ao criar conta, você concorda com os{" "}
-                          <a href="#" className="underline underline-offset-2 hover:text-gray-500">
-                            Termos de Uso
-                          </a>{" "}
-                          e a{" "}
-                          <a href="#" className="underline underline-offset-2 hover:text-gray-500">
-                            Política de Privacidade
-                          </a>
-                          .
-                        </p>
-                      </Field>
-                    </form>
-                  </div>
-                )}
-              </>
+                  <Field delay={240}>
+                    <p className="text-center text-sm text-gray-500">
+                      Não tem conta?{" "}
+                      <a
+                        href="/register"
+                        className="font-medium text-orange-500 hover:text-orange-600"
+                      >
+                        Cadastre-se
+                      </a>
+                    </p>
+                  </Field>
+                </form>
+              </div>
             )}
           </div>
         </main>

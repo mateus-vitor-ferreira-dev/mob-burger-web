@@ -8,9 +8,13 @@ async function proxy(request: NextRequest, path: string[]) {
 
   const body = request.method !== "GET" ? await request.text() : undefined
 
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  const auth = request.headers.get("authorization")
+  if (auth) headers["authorization"] = auth
+
   const res = await fetch(endpoint, {
     method: request.method,
-    headers: { "Content-Type": "application/json" },
+    headers,
     body,
   }).catch(() => null)
 
@@ -31,6 +35,14 @@ export async function POST(
 }
 
 export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> },
+) {
+  const { path } = await params
+  return proxy(request, path)
+}
+
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
