@@ -60,14 +60,14 @@ interface MenuCardProps {
 function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
   const inner = (
     <div
-      className="group/card relative h-[240px] w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.025]"
+      className="group/card relative h-60 w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.025]"
       style={{
         border: "1px solid rgba(255,255,255,0.10)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
       }}
     >
       {/* Food photo */}
-      <div className="absolute inset-x-0 top-0 z-[1]" style={{ bottom: 62 }}>
+      <div className="absolute inset-x-0 top-0 z-1" style={{ bottom: 62 }}>
         <Image
           src={img}
           alt={label}
@@ -87,7 +87,7 @@ function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
 
       {/* Gradient veil */}
       <div
-        className="pointer-events-none absolute inset-x-0 z-[2]"
+        className="pointer-events-none absolute inset-x-0 z-2"
         style={{
           top: "42%",
           bottom: 62,
@@ -97,7 +97,7 @@ function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
 
       {/* Frosted glass text bar */}
       <div
-        className="absolute right-0 bottom-0 left-0 z-[3] h-[62px] px-4 py-3"
+        className="absolute right-0 bottom-0 left-0 z-3 h-15.5 px-4 py-3"
         style={{
           background: "rgba(10,8,6,0.72)",
           backdropFilter: "blur(24px)",
@@ -116,7 +116,7 @@ function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
 
       {/* Orange glow on hover */}
       <div
-        className="pointer-events-none absolute inset-0 z-[4] rounded-2xl opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+        className="pointer-events-none absolute inset-0 z-4 rounded-2xl opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
         style={{ boxShadow: "inset 0 0 0 1px rgba(249,115,22,0.4)" }}
       />
     </div>
@@ -222,7 +222,7 @@ function SectionTitle({ title }: { title: string }) {
       </h2>
       {/* Accent underline */}
       <div
-        className="mx-auto mt-2 h-[2px] w-10 rounded-full"
+        className="mx-auto mt-2 h-0.5 w-10 rounded-full"
         style={{ background: "linear-gradient(to right, #f97316, #ea580c)" }}
       />
     </div>
@@ -235,7 +235,7 @@ export default function HomePage() {
   return (
     <main>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative h-[520px] w-full overflow-hidden lg:h-[580px]">
+      <section className="relative h-130 w-full overflow-hidden lg:h-145">
         <Image
           src="/images/mob-banner.png"
           alt="MOB Burger"
@@ -323,7 +323,7 @@ export default function HomePage() {
       </div>
 
       {/* ── Footer ───────────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.05] px-6 py-8 text-center">
+      <footer className="border-t border-white/5 px-6 py-8 text-center">
         <p className="text-xs text-white/20">
           © {new Date().getFullYear()} M.O.B — Burgers Pack Co. Todos os direitos reservados.
         </p>
