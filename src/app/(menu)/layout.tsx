@@ -1,17 +1,67 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ShoppingBag } from "lucide-react"
+import { CartButton } from "@/components/cart-button"
+import { UserMenu } from "@/components/user-menu"
+
+const MOB_PATTERN = `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="110" fill="white">` +
+    `<text x="8" y="54" font-family="Arial Black,Impact,Arial,sans-serif" font-weight="900" font-size="42" letter-spacing="8">MOB</text>` +
+    `<g transform="translate(158,14)">` +
+    `<path d="M5 32 Q5 4 38 4 Q70 4 70 32Z"/>` +
+    `<rect x="2" y="32" width="70" height="7" rx="3"/>` +
+    `<rect x="2" y="40" width="70" height="12" rx="3"/>` +
+    `<rect x="4" y="53" width="66" height="13" rx="6"/>` +
+    `</g>` +
+    `</svg>`,
+)}`
 
 export default function MenuLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen" style={{ background: "#0c0b09" }}>
-      {/* ── Header sticky ──────────────────────────────────────────── */}
+    <div className="relative min-h-screen" style={{ background: "#0c0b09" }}>
+      {/* ── Background fixo — dá profundidade ao glassmorphism ── */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <Image
+          src="/images/mob-banner.png"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+          style={{ opacity: 0.18, filter: "blur(48px) saturate(1.8)" }}
+        />
+        {/* Vignette para escurecer as bordas */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 80% at 50% 40%, transparent 0%, rgba(12,11,9,0.7) 100%)",
+          }}
+        />
+        {/* Padrão diagonal MOB + burger */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            style={{
+              position: "absolute",
+              inset: "-100%",
+              transform: "rotate(-25deg)",
+              backgroundImage: `url("${MOB_PATTERN}")`,
+              backgroundRepeat: "repeat",
+              backgroundSize: "240px 110px",
+              opacity: 0.045,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* ── Header sticky ─────────────────────────────────────── */}
       <header
         className="sticky top-0 z-50 border-b border-white/[0.07]"
-        style={{ background: "rgba(12,11,9,0.92)", backdropFilter: "blur(16px)" }}
+        style={{
+          background: "rgba(12,11,9,0.75)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+        }}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
             <Image
               src="/mob-logo.png"
@@ -28,7 +78,6 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
             </div>
           </Link>
 
-          {/* Nav */}
           <nav className="flex items-center gap-8">
             <Link
               href="/"
@@ -44,22 +93,13 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
             </Link>
           </nav>
 
-          {/* Cart — conectar ao store depois */}
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95"
-            style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              boxShadow: "0 4px 12px rgba(249,115,22,0.25)",
-            }}
-          >
-            <ShoppingBag className="h-4 w-4" />
-            Carrinho
-          </button>
+          <UserMenu />
+          <CartButton />
         </div>
       </header>
 
-      {children}
+      {/* ── Conteúdo sobre o background ───────────────────────── */}
+      <div className="relative z-10">{children}</div>
     </div>
   )
 }
