@@ -169,7 +169,7 @@ export default function FinanceiroPage() {
 
   function startCreate(type: "FIXED" | "VARIABLE") {
     setEditingId(null)
-    setForm({ ...EMPTY_FORM, type, month })
+    setForm({ ...EMPTY_FORM, type })
     setShowForm(true)
   }
 
