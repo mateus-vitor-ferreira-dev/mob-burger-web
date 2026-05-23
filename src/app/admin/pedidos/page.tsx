@@ -12,6 +12,8 @@ import {
   Radio,
   Calendar,
   Download,
+  Bike,
+  Phone,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
@@ -124,6 +126,13 @@ const FILTER_STATUSES = [
   { value: "CANCELLED", label: "Cancelado" },
 ]
 
+interface Driver {
+  id: string
+  name: string
+  phone: string
+  active: boolean
+}
+
 interface OrderItem {
   id: string
   quantity: number
@@ -141,6 +150,7 @@ interface Order {
   customer: { name: string; phone?: string }
   items: OrderItem[]
   delivery?: { street: string; number: string; neighborhood: string; complement?: string }
+  driver?: { id: string; name: string; phone: string } | null
 }
 
 // ─── Print receipt ────────────────────────────────────────────────────────────
@@ -289,6 +299,9 @@ export default function PedidosPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalOrders, setTotalOrders] = useState(0)
   const PAGE_SIZE = 30
+  const [drivers, setDrivers] = useState<Driver[]>([])
+  const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null)
+  const [assigning, setAssigning] = useState(false)
 
   const load = useCallback(() => {
     if (!token) return
@@ -314,6 +327,17 @@ export default function PedidosPage() {
   useEffect(() => {
     load() // eslint-disable-line react-hooks/set-state-in-effect
   }, [load])
+
+  const loadDrivers = useCallback(async () => {
+    if (!token) return
+    const r = await fetch("/api/backend/drivers", { headers: { Authorization: `Bearer ${token}` } })
+    const json = await r.json()
+    setDrivers((json.data ?? []).filter((d: Driver) => d.active))
+  }, [token])
+
+  useEffect(() => {
+    loadDrivers() // eslint-disable-line react-hooks/set-state-in-effect
+  }, [loadDrivers])
 
   // ─── SSE — atualizações em tempo real ──────────────────────────────────────
   useEffect(() => {
@@ -415,6 +439,27 @@ export default function PedidosPage() {
   function cancelQueue() {
     cancelQueueRef.current = true
     setQueue(null)
+  }
+
+  async function handleAssignDriver(orderId: string, driverId: string) {
+    setAssigning(true)
+    try {
+      const r = await fetch(`/api/backend/orders/${orderId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ driverId }),
+      })
+      if (!r.ok) {
+        const json = await r.json()
+        throw new Error(json.error?.message ?? "Erro ao designar entregador")
+      }
+      setAssigningOrderId(null)
+      load()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erro ao designar entregador")
+    } finally {
+      setAssigning(false)
+    }
   }
 
   const filtered = orders.filter((o) => {
@@ -723,14 +768,82 @@ export default function PedidosPage() {
                 })()}
               </div>
 
-              {/* Endereço se delivery */}
+              {/* Endereço + entregador (delivery) */}
               {order.delivery && (
-                <p className="mt-2 text-[11px] text-white/25">
-                  📍 {order.delivery.street}, {order.delivery.number}
-                  {order.delivery.complement ? ` — ${order.delivery.complement}` : ""}
-                  {" · "}
-                  {order.delivery.neighborhood}
-                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-[11px] text-white/25">
+                    📍 {order.delivery.street}, {order.delivery.number}
+                    {order.delivery.complement ? ` — ${order.delivery.complement}` : ""}
+                    {" · "}
+                    {order.delivery.neighborhood}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {order.driver && (
+                      <div className="flex items-center gap-1.5 text-[11px]">
+                        <Bike className="h-3 w-3 text-cyan-400" />
+                        <span className="text-cyan-400">{order.driver.name}</span>
+                        <span className="text-white/20">·</span>
+                        <Phone className="h-2.5 w-2.5 text-white/20" />
+                        <span className="text-white/25">{order.driver.phone}</span>
+                      </div>
+                    )}
+                    {!["DELIVERED", "PICKED_UP", "CANCELLED"].includes(order.status) && (
+                      <div className="relative">
+                        <button
+                          onClick={() =>
+                            setAssigningOrderId(assigningOrderId === order.id ? null : order.id)
+                          }
+                          className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] text-white/30 transition hover:bg-white/5 hover:text-cyan-400"
+                          style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+                        >
+                          <Bike className="h-2.5 w-2.5" />
+                          {order.driver ? "Trocar" : "Designar entregador"}
+                        </button>
+                        {assigningOrderId === order.id && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setAssigningOrderId(null)}
+                            />
+                            <div
+                              className="absolute bottom-full left-0 z-20 mb-1 min-w-40 rounded-xl p-1.5"
+                              style={{
+                                background: "#1a1815",
+                                border: "1px solid rgba(255,255,255,0.1)",
+                                boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                              }}
+                            >
+                              {drivers.length === 0 ? (
+                                <p className="px-3 py-2 text-[10px] text-white/30">
+                                  Nenhum entregador ativo
+                                </p>
+                              ) : (
+                                drivers.map((d) => (
+                                  <button
+                                    key={d.id}
+                                    onClick={() => handleAssignDriver(order.id, d.id)}
+                                    disabled={assigning}
+                                    className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-white/60 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+                                  >
+                                    {order.driver?.id === d.id ? (
+                                      <span className="text-[10px] text-cyan-400">✓</span>
+                                    ) : (
+                                      <Bike className="h-3 w-3 text-white/20" />
+                                    )}
+                                    {d.name}
+                                    {assigning && (
+                                      <Loader2 className="ml-auto h-3 w-3 animate-spin" />
+                                    )}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           ))}
