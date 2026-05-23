@@ -21,8 +21,7 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_SIZE)
       return NextResponse.json({ error: "Arquivo muito grande. Máximo 3 MB." }, { status: 400 })
 
-    const ext = file.type.split("/")[1].replace("jpeg", "jpg")
-    const filename = `${slug}.${ext}`
+    const filename = `${slug}.png`
     const buffer = Buffer.from(await file.arrayBuffer())
     const dir = path.join(process.cwd(), "public", "categories")
     await writeFile(path.join(dir, filename), buffer)

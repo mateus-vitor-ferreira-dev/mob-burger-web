@@ -4,6 +4,14 @@ import { useEffect, useState } from "react"
 import { Loader2, Save, Power } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
+function maskWhatsApp(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 13)
+  if (d.length <= 2) return d.length ? `+${d}` : ""
+  if (d.length <= 4) return `+${d.slice(0, 2)} (${d.slice(2)}`
+  if (d.length <= 9) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4)}`
+  return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9)}`
+}
+
 const DAYS = [
   { key: "seg", label: "Segunda" },
   { key: "ter", label: "Terça" },
@@ -170,10 +178,10 @@ export default function ConfigPage() {
             </label>
             <input
               className={`${inputCls} w-full`}
-              value={config.whatsappNumber}
-              placeholder="5535999999999"
+              value={maskWhatsApp(config.whatsappNumber)}
+              placeholder="+55 (35) 99999-9999"
               inputMode="tel"
-              maxLength={15}
+              maxLength={19}
               onChange={(e) =>
                 setConfig((p) => ({ ...p, whatsappNumber: e.target.value.replace(/\D/g, "") }))
               }

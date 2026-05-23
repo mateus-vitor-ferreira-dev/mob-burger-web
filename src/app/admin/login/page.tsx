@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
       if (user && accessToken) {
         setStaff({ id: user.id, email: user.email, role: user.role }, accessToken)
         document.cookie = `mob-admin=1; path=/; max-age=${60 * 60 * 8}; SameSite=Strict`
-        router.push("/admin")
+        router.replace("/admin")
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao fazer login")

@@ -64,6 +64,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [mounted, token, router])
 
   if (!mounted) return null
+
+  // Login page: sem layout, e redireciona para dashboard se já autenticado
+  if (pathname === "/admin/login") {
+    if (token) {
+      router.replace("/admin")
+      return null
+    }
+    return children
+  }
+
   if (!token) return null
 
   function handleLogout() {

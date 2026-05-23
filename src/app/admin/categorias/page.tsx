@@ -13,6 +13,7 @@ import {
   ImageIcon,
 } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { useStaff } from "@/lib/staff-store"
 
 interface Category {
@@ -418,7 +419,12 @@ export default function CategoriasPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-white">{cat.name}</p>
+                    <Link
+                      href={`/admin/produtos?cat=${cat.id}`}
+                      className="text-sm font-semibold text-white transition hover:text-orange-400"
+                    >
+                      {cat.name}
+                    </Link>
                     {!cat.active && (
                       <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/40">
                         inativa

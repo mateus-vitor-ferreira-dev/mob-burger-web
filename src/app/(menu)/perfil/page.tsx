@@ -625,7 +625,7 @@ function OrderHistoryCard() {
     if (!token) return
     fetch("/api/backend/orders/my", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
-      .then((json) => setOrders(json.data ?? []))
+      .then((json) => setOrders(json.data?.orders ?? json.data ?? []))
       .finally(() => setLoading(false))
   }, [token])
 

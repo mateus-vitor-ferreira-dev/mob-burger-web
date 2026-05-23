@@ -507,6 +507,11 @@ export default function ProdutosPage() {
     load() // eslint-disable-line react-hooks/set-state-in-effect
   }, [load])
 
+  useEffect(() => {
+    const cat = new URLSearchParams(window.location.search).get("cat")
+    if (cat) setCatFilter(cat) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [])
+
   async function handleToggle(id: string) {
     setToggling(id)
     await fetch(`/api/backend/admin/products/${id}/toggle`, {
