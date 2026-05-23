@@ -573,13 +573,13 @@ function CardapioContent() {
 
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState(() => searchParams.get("cat") ?? "todos")
-  const [maxPrice, setMaxPrice] = useState(maxPriceLimit)
+  const [maxPrice, setMaxPrice] = useState<number | null>(null)
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
     return allItems.filter((item) => {
       if (category !== "todos" && item.cat !== category) return false
-      if (item.priceNum > maxPrice) return false
+      if (maxPrice !== null && item.priceNum > maxPrice) return false
       if (!q) return true
       return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
     })
@@ -654,12 +654,12 @@ function CardapioContent() {
                 min={0}
                 max={maxPriceLimit}
                 step={1}
-                value={maxPrice}
+                value={maxPrice ?? maxPriceLimit}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
                 className="flex-1 accent-orange-500"
               />
               <span className="w-14 text-right text-xs font-semibold whitespace-nowrap text-orange-400">
-                {maxPrice >= maxPriceLimit ? "Máx" : fmtPrice(maxPrice)}
+                {maxPrice === null || maxPrice >= maxPriceLimit ? "Máx" : fmtPrice(maxPrice)}
               </span>
             </div>
           </div>
@@ -717,7 +717,7 @@ function CardapioContent() {
               onClick={() => {
                 setQuery("")
                 setCategory("todos")
-                setMaxPrice(maxPriceLimit)
+                setMaxPrice(null)
               }}
               className="mt-1 text-xs text-orange-400 hover:underline"
             >
