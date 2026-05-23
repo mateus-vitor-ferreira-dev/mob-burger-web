@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { categoryImageUrl } from "@/lib/cloudinary"
+import { categoryImageUrl } from "@/lib/cloudinary-utils"
 import { useStaff } from "@/lib/staff-store"
 
 interface Category {

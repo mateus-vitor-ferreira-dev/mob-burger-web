@@ -6,7 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMenu } from "@/lib/use-menu"
-import { categoryImageUrl } from "@/lib/cloudinary"
+import { categoryImageUrl } from "@/lib/cloudinary-utils"
 
 // ─── Imagem fallback por slug ────────────────────────────────────────────────
 
