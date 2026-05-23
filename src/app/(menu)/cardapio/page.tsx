@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { Suspense, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -537,7 +537,7 @@ function CartBar() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function CardapioPage() {
+function CardapioContent() {
   const searchParams = useSearchParams()
   const { categories: rawCats, loading: menuLoading } = useMenu()
 
@@ -736,5 +736,13 @@ export default function CardapioPage() {
       <CartDrawer />
       <CartBar />
     </>
+  )
+}
+
+export default function CardapioPage() {
+  return (
+    <Suspense>
+      <CardapioContent />
+    </Suspense>
   )
 }

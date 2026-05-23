@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CheckCircle, ArrowRight, Loader2, XCircle, Clock } from "lucide-react"
@@ -18,7 +18,7 @@ interface OrderData {
   items: { id: string; quantity: number; product: { name: string } }[]
 }
 
-export default function PedidoConfirmadoPage() {
+function PedidoConfirmadoContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get("order_id")
   const redirectStatus = searchParams.get("redirect_status")
@@ -227,5 +227,13 @@ export default function PedidoConfirmadoPage() {
         </Link>
       </div>
     </main>
+  )
+}
+
+export default function PedidoConfirmadoPage() {
+  return (
+    <Suspense>
+      <PedidoConfirmadoContent />
+    </Suspense>
   )
 }
