@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Eye, EyeOff, Loader2, CheckCircle2, ArrowLeft, Lock } from "lucide-react"
 import Link from "next/link"
@@ -10,7 +10,7 @@ const INPUT =
   "focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 " +
   "transition-all placeholder:text-gray-300 disabled:opacity-60 pr-11"
 
-export default function RedefinirSenhaPage() {
+function RedefinirSenhaContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get("token") ?? ""
@@ -171,5 +171,13 @@ export default function RedefinirSenhaPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function RedefinirSenhaPage() {
+  return (
+    <Suspense>
+      <RedefinirSenhaContent />
+    </Suspense>
   )
 }
