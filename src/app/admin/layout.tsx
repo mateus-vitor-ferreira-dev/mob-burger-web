@@ -13,6 +13,7 @@ import {
   Settings,
   Users,
   Bike,
+  Ticket,
   LogOut,
   Menu,
   X,
@@ -43,6 +44,7 @@ const NAV = [
   { href: "/admin/categorias", icon: Tag, label: "Categorias" },
   { href: "/admin/zonas", icon: MapPin, label: "Zonas" },
   { href: "/admin/entregadores", icon: Bike, label: "Entregadores" },
+  { href: "/admin/cupons", icon: Ticket, label: "Cupons" },
   { href: "/admin/staff", icon: Users, label: "Equipe" },
   { href: "/admin/config", icon: Settings, label: "Config." },
 ]

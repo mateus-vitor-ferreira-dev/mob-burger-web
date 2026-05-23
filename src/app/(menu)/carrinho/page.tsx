@@ -18,6 +18,8 @@ import {
   Pencil,
   Store,
   Bike,
+  Loader2,
+  X,
 } from "lucide-react"
 import { useCart, type CartItem as CartItemType } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
@@ -418,6 +420,15 @@ export default function CarrinhoPage() {
   const [editingAddress, setEditingAddress] = useState(false)
   const [zones, setZones] = useState<DeliveryZone[]>([])
   const [storeOpen, setStoreOpen] = useState(true)
+  const [couponCode, setCouponCode] = useState("")
+  const [couponApplied, setCouponApplied] = useState<{
+    code: string
+    type: string
+    discountAmount: number
+    message: string
+  } | null>(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponError, setCouponError] = useState("")
 
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
@@ -470,7 +481,57 @@ export default function CarrinhoPage() {
 
   if (!mounted || items.length === 0) return null
 
-  const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
+  async function applyCoupon() {
+    const code = couponCode.trim().toUpperCase()
+    if (!code) return
+    setCouponLoading(true)
+    setCouponError("")
+    try {
+      const r = await fetch("/api/backend/coupons/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          code,
+          itemsTotal: subtotal,
+          deliveryFee: orderType === "PICKUP" ? 0 : deliveryFee,
+        }),
+      })
+      const json = await r.json()
+      if (!r.ok) {
+        setCouponError(json.error?.message ?? "Cupom inválido.")
+        setCouponApplied(null)
+        return
+      }
+      setCouponApplied({ code, ...json.data })
+    } catch {
+      setCouponError("Erro ao validar cupom.")
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  function removeCoupon() {
+    setCouponApplied(null)
+    setCouponCode("")
+    setCouponError("")
+  }
+
+  const effectiveDeliveryFee =
+    couponApplied?.type === "FREE_DELIVERY" ? 0 : orderType === "PICKUP" ? 0 : deliveryFee
+  const discount = couponApplied
+    ? couponApplied.type === "FREE_DELIVERY"
+      ? orderType === "PICKUP"
+        ? 0
+        : deliveryFee
+      : couponApplied.discountAmount
+    : 0
+  const total = Math.max(
+    0,
+    subtotal + effectiveDeliveryFee - (couponApplied?.type === "FREE_DELIVERY" ? 0 : discount),
+  )
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 pb-16">
@@ -521,6 +582,55 @@ export default function CarrinhoPage() {
             <CartItemRow key={entry.id} entry={entry} />
           ))}
 
+          {/* Cupom */}
+          <div
+            className="rounded-2xl px-4 py-3"
+            style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+          >
+            {couponApplied ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-green-400">
+                    🎟 Cupom <span className="tracking-widest">{couponApplied.code}</span> aplicado
+                  </p>
+                  <p className="text-[10px] text-white/30">{couponApplied.message}</p>
+                </div>
+                <button
+                  onClick={removeCoupon}
+                  className="text-white/30 transition hover:text-red-400"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded-xl px-3 py-2 text-sm placeholder-white/30 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                  style={{ background: "rgba(0,0,0,0.25)", color: "white" }}
+                  placeholder="Código do cupom"
+                  value={couponCode}
+                  onChange={(e) => {
+                    setCouponCode(e.target.value.toUpperCase())
+                    setCouponError("")
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                />
+                <button
+                  onClick={applyCoupon}
+                  disabled={couponLoading || !couponCode.trim()}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
+                  style={{
+                    background: "rgba(249,115,22,0.15)",
+                    border: "1px solid rgba(249,115,22,0.3)",
+                  }}
+                >
+                  {couponLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Aplicar"}
+                </button>
+              </div>
+            )}
+            {couponError && <p className="mt-1.5 text-xs text-red-400">{couponError}</p>}
+          </div>
+
           {/* Resumo de valores */}
           <div
             className="space-y-2 rounded-2xl px-4 py-3"
@@ -536,7 +646,9 @@ export default function CarrinhoPage() {
                   ? "Retirada no local"
                   : `Taxa de entrega${zoneId && zones.find((z) => z.id === zoneId) ? ` · ${zones.find((z) => z.id === zoneId)!.name}` : ""}`}
               </span>
-              <span className="text-white/70">
+              <span
+                className={`${couponApplied?.type === "FREE_DELIVERY" && orderType !== "PICKUP" ? "text-white/30 line-through" : "text-white/70"}`}
+              >
                 {orderType === "PICKUP"
                   ? "Grátis"
                   : zoneId
@@ -545,7 +657,16 @@ export default function CarrinhoPage() {
                       : fmtPrice(deliveryFee)
                     : "—"}
               </span>
+              {couponApplied?.type === "FREE_DELIVERY" && orderType !== "PICKUP" && (
+                <span className="text-sm text-green-400">Grátis</span>
+              )}
             </div>
+            {discount > 0 && couponApplied?.type !== "FREE_DELIVERY" && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-green-400">Desconto</span>
+                <span className="text-green-400">−{fmtPrice(discount)}</span>
+              </div>
+            )}
             <div
               className="flex items-center justify-between border-t pt-2"
               style={{ borderColor: "var(--mob-b1)" }}
@@ -652,7 +773,11 @@ export default function CarrinhoPage() {
             <DeliveryForm zones={zones} onZoneDetected={(id, fee) => setZone(id, fee)} />
           )}
           <button
-            onClick={() => router.push("/pagamento")}
+            onClick={() =>
+              router.push(
+                `/pagamento${couponApplied ? `?coupon=${encodeURIComponent(couponApplied.code)}` : ""}`,
+              )
+            }
             disabled={!isComplete() || !storeOpen}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             style={{

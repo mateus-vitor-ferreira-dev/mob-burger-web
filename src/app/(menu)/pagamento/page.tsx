@@ -326,6 +326,7 @@ export default function PagamentoPage() {
         if (mappedItems.length === 0) throw new Error("Sacola vazia.")
 
         // 3. Cria o pedido
+        const couponCode = new URLSearchParams(window.location.search).get("coupon") || undefined
         const orderRes = await fetch("/api/backend/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -333,6 +334,7 @@ export default function PagamentoPage() {
             type: orderType,
             paymentMethod: "CARD",
             items: mappedItems,
+            couponCode,
             ...(orderType === "DELIVERY"
               ? {
                   delivery: {
