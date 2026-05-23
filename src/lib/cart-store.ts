@@ -1,11 +1,21 @@
 import { create } from "zustand"
 
+export interface SelectedOption {
+  optionItemId: string
+  name: string
+  additionalPrice: number
+}
+
 export interface CartItem {
-  id: string
+  id: string // chave única: productId (sem opções) ou productId:opt1:opt2 (com opções)
+  productId: string // ID do produto no banco — usado na criação do pedido
   name: string
   price: string
   priceNum: number
   img?: string
+  description?: string
+  options?: SelectedOption[]
+  observations?: string
 }
 
 interface CartEntry extends CartItem {

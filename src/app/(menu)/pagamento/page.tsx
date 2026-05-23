@@ -8,7 +8,7 @@ import { loadStripe } from "@stripe/stripe-js"
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js"
 import { useCart } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
-import { useCustomer, DELIVERY_FEE } from "@/lib/customer-store"
+import { useCustomer } from "@/lib/customer-store"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -18,7 +18,7 @@ const STRIPE_APPEARANCE = {
     colorPrimary: "#f97316",
     colorBackground: "#110f0d",
     colorText: "#ffffff",
-    colorTextSecondary: "rgba(255,255,255,0.45)",
+    colorTextSecondary: "var(--mob-t50)",
     colorDanger: "#ef4444",
     borderRadius: "12px",
     fontFamily: "inherit",
@@ -26,8 +26,8 @@ const STRIPE_APPEARANCE = {
   },
   rules: {
     ".Input": {
-      border: "1px solid rgba(255,255,255,0.10)",
-      backgroundColor: "rgba(255,255,255,0.05)",
+      border: "1px solid var(--mob-s3)",
+      backgroundColor: "var(--mob-s2)",
       boxShadow: "none",
     },
     ".Input:focus": {
@@ -35,21 +35,21 @@ const STRIPE_APPEARANCE = {
       boxShadow: "0 0 0 3px rgba(249,115,22,0.12)",
     },
     ".Label": {
-      color: "rgba(255,255,255,0.40)",
+      color: "var(--mob-t40)",
       fontSize: "11px",
       fontWeight: "600",
       letterSpacing: "0.08em",
       textTransform: "uppercase",
     },
     ".Tab": {
-      border: "1px solid rgba(255,255,255,0.08)",
-      backgroundColor: "rgba(255,255,255,0.03)",
+      border: "1px solid var(--mob-b1)",
+      backgroundColor: "var(--mob-s1)",
     },
     ".Tab--selected": {
       border: "1px solid rgba(249,115,22,0.4)",
       backgroundColor: "rgba(249,115,22,0.08)",
     },
-    ".Tab:hover": { backgroundColor: "rgba(255,255,255,0.06)" },
+    ".Tab:hover": { backgroundColor: "var(--mob-s2)" },
   },
 }
 
@@ -102,14 +102,14 @@ function Steps() {
 function OrderReview() {
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.total())
-  const total = subtotal + DELIVERY_FEE
-  const { customerName, phone, address } = useDelivery()
+  const { customerName, phone, address, deliveryFee, orderType } = useDelivery()
+  const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
 
   return (
     <div className="space-y-3">
       <div
         className="rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <p className="mb-3 text-xs font-semibold tracking-widest text-white/30 uppercase">Pedido</p>
         <div className="space-y-2">
@@ -125,17 +125,14 @@ function OrderReview() {
             </div>
           ))}
         </div>
-        <div
-          className="mt-3 space-y-1.5 border-t pt-3"
-          style={{ borderColor: "rgba(255,255,255,0.07)" }}
-        >
+        <div className="mt-3 space-y-1.5 border-t pt-3" style={{ borderColor: "var(--mob-b1)" }}>
           <div className="flex justify-between text-xs text-white/40">
             <span>Subtotal</span>
             <span>{fmtPrice(subtotal)}</span>
           </div>
           <div className="flex justify-between text-xs text-white/40">
-            <span>Taxa de entrega</span>
-            <span>{fmtPrice(DELIVERY_FEE)}</span>
+            <span>{orderType === "PICKUP" ? "Retirada no local" : "Taxa de entrega"}</span>
+            <span>{orderType === "PICKUP" ? "Grátis" : fmtPrice(deliveryFee)}</span>
           </div>
           <div className="flex items-center justify-between pt-1">
             <span className="text-sm font-bold text-white">Total</span>
@@ -155,7 +152,7 @@ function OrderReview() {
 
       <div
         className="rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <div className="mb-2 flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-orange-400" />
@@ -167,12 +164,14 @@ function OrderReview() {
 
       <div
         className="rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <div className="mb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="h-3.5 w-3.5 text-orange-400" />
-            <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">Entrega</p>
+            <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+              {orderType === "PICKUP" ? "Retirada" : "Entrega"}
+            </p>
           </div>
           <Link
             href="/carrinho"
@@ -181,13 +180,19 @@ function OrderReview() {
             Alterar
           </Link>
         </div>
-        <p className="text-sm font-medium text-white">
-          {address.street}, {address.number}
-          {address.complement ? ` — ${address.complement}` : ""}
-        </p>
-        <p className="mt-0.5 text-xs text-white/40">
-          {address.neighborhood} · {address.city}/{address.state} · CEP {address.cep}
-        </p>
+        {orderType === "PICKUP" ? (
+          <p className="text-sm text-white/60">Retire no balcão quando o pedido estiver pronto.</p>
+        ) : (
+          <>
+            <p className="text-sm font-medium text-white">
+              {address.street}, {address.number}
+              {address.complement ? ` — ${address.complement}` : ""}
+            </p>
+            <p className="mt-0.5 text-xs text-white/40">
+              {address.neighborhood} · {address.city}/{address.state} · CEP {address.cep}
+            </p>
+          </>
+        )}
       </div>
 
       <div className="flex items-center justify-center gap-1.5 py-1">
@@ -229,7 +234,7 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div
         className="rounded-2xl p-5"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <p className="mb-5 text-xs font-semibold tracking-widest text-white/30 uppercase">
           Forma de pagamento
@@ -276,9 +281,9 @@ export default function PagamentoPage() {
   const router = useRouter()
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.total())
-  const total = subtotal + DELIVERY_FEE
   const isComplete = useDelivery((s) => s.isComplete)
-  const { address } = useDelivery()
+  const { address, zoneId, deliveryFee, orderType } = useDelivery()
+  const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
   const { token } = useCustomer()
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -287,7 +292,6 @@ export default function PagamentoPage() {
   const [mounted, setMounted] = useState(false)
   const initiated = useRef(false)
 
-   
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
@@ -311,37 +315,35 @@ export default function PagamentoPage() {
 
     async function initPayment() {
       try {
-        // 1. Busca produtos do backend para mapear IDs
-        const menuRes = await fetch("/api/backend/menu")
-        const menuJson = await menuRes.json()
-        const products: { id: string; name: string }[] = (menuJson.data ?? []).flatMap(
-          (cat: { products: { id: string; name: string }[] }) => cat.products,
-        )
+        // Mapeia itens do carrinho — productId já é o ID real do banco
+        const mappedItems = items.map((item) => ({
+          productId: item.productId ?? item.id,
+          quantity: item.qty,
+          observations: item.observations || undefined,
+          options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
+        }))
 
-        // 2. Mapeia itens do carrinho para productIds reais
-        const mappedItems = items
-          .map((item) => {
-            const match = products.find((p) => p.name.toUpperCase() === item.name.toUpperCase())
-            return match ? { productId: match.id, quantity: item.qty, options: [] } : null
-          })
-          .filter(Boolean)
-
-        if (mappedItems.length === 0) throw new Error("Nenhum produto encontrado no cardápio.")
+        if (mappedItems.length === 0) throw new Error("Sacola vazia.")
 
         // 3. Cria o pedido
         const orderRes = await fetch("/api/backend/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
-            type: "DELIVERY",
+            type: orderType,
             paymentMethod: "CARD",
             items: mappedItems,
-            delivery: {
-              street: address.street,
-              number: address.number,
-              neighborhood: address.neighborhood,
-              complement: address.complement || undefined,
-            },
+            ...(orderType === "DELIVERY"
+              ? {
+                  delivery: {
+                    street: address.street,
+                    number: address.number,
+                    neighborhood: address.neighborhood,
+                    complement: address.complement || undefined,
+                    zoneId: zoneId || undefined,
+                  },
+                }
+              : {}),
           }),
         })
         const orderJson = await orderRes.json()

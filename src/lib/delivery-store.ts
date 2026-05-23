@@ -12,11 +12,17 @@ export interface DeliveryAddress {
 }
 
 interface DeliveryStore {
+  orderType: "DELIVERY" | "PICKUP"
   customerName: string
   phone: string
   address: DeliveryAddress
-  set: (patch: Partial<Omit<DeliveryStore, "set" | "setAddress">>) => void
+  zoneId: string
+  deliveryFee: number
+  set: (
+    patch: Partial<Omit<DeliveryStore, "set" | "setAddress" | "setZone" | "isComplete">>,
+  ) => void
   setAddress: (patch: Partial<DeliveryAddress>) => void
+  setZone: (zoneId: string, fee: number) => void
   isComplete: () => boolean
 }
 
@@ -33,25 +39,31 @@ const emptyAddress: DeliveryAddress = {
 export const useDelivery = create<DeliveryStore>()(
   persist(
     (set, get) => ({
+      orderType: "DELIVERY",
       customerName: "",
       phone: "",
       address: emptyAddress,
+      zoneId: "",
+      deliveryFee: 0,
 
       set: (patch) => set(patch),
 
       setAddress: (patch) => set((s) => ({ address: { ...s.address, ...patch } })),
 
+      setZone: (zoneId, fee) => set({ zoneId, deliveryFee: fee }),
+
       isComplete: () => {
-        const { customerName, phone, address } = get()
+        const { orderType, customerName, phone, address, zoneId } = get()
+        if (!customerName.trim() || !phone.trim()) return false
+        if (orderType === "PICKUP") return true
         return !!(
-          customerName.trim() &&
-          phone.trim() &&
           address.cep &&
           address.street &&
           address.number &&
           address.neighborhood &&
           address.city &&
-          address.state
+          address.state &&
+          zoneId
         )
       },
     }),

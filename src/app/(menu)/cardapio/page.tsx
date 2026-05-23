@@ -4,22 +4,41 @@ import { useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { Search, X, ShoppingBag, Plus, Minus, Trash2, ChevronRight } from "lucide-react"
-import { ALL_ITEMS, MAX_PRICE, type AnyItem } from "@/data/menu"
-import { useCart } from "@/lib/cart-store"
+import { Search, X, ShoppingBag, Plus, Minus, Trash2, ChevronRight, Check } from "lucide-react"
+import { useCart, type SelectedOption } from "@/lib/cart-store"
+import { useMenu } from "@/lib/use-menu"
 
-// ─── Tipos e constantes ───────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type Category = "todos" | "burger" | "chicken" | "combo" | "sobremesa" | "bebida"
+interface OptionItem {
+  id: string
+  name: string
+  additionalPrice: number
+}
 
-const CATEGORIES: { id: Category; label: string }[] = [
-  { id: "todos", label: "Todos" },
-  { id: "burger", label: "Burgers" },
-  { id: "chicken", label: "Chicken" },
-  { id: "combo", label: "Combos" },
-  { id: "sobremesa", label: "Sobremesas" },
-  { id: "bebida", label: "Bebidas" },
-]
+interface ProductOption {
+  id: string
+  label: string
+  type: "RADIO" | "CHECKBOX"
+  required: boolean
+  items: OptionItem[]
+}
+
+interface MenuItem {
+  id: string
+  name: string
+  description: string
+  price: string
+  priceNum: number
+  img: string | null
+  cat: string
+  options: ProductOption[]
+}
+
+interface MenuCategory {
+  slug: string
+  name: string
+}
 
 // ─── Utilitário ───────────────────────────────────────────────────────────────
 
@@ -27,125 +46,322 @@ function fmtPrice(n: number) {
   return `R$ ${n.toFixed(2).replace(".", ",")}`
 }
 
+// ─── OptionsModal ─────────────────────────────────────────────────────────────
+
+function OptionsModal({
+  item,
+  onConfirm,
+  onClose,
+}: {
+  item: MenuItem
+  onConfirm: (selected: SelectedOption[], observations: string) => void
+  onClose: () => void
+}) {
+  const [selected, setSelected] = useState<Record<string, string[]>>({})
+  const [observations, setObservations] = useState("")
+
+  function toggleItem(optionId: string, itemId: string, type: "RADIO" | "CHECKBOX") {
+    setSelected((prev) => {
+      const current = prev[optionId] ?? []
+      if (type === "RADIO") return { ...prev, [optionId]: [itemId] }
+      if (current.includes(itemId))
+        return { ...prev, [optionId]: current.filter((id) => id !== itemId) }
+      return { ...prev, [optionId]: [...current, itemId] }
+    })
+  }
+
+  function canConfirm() {
+    return item.options.every((opt) => !opt.required || (selected[opt.id]?.length ?? 0) > 0)
+  }
+
+  function handleConfirm() {
+    const selectedOptions: SelectedOption[] = item.options.flatMap((opt) =>
+      (selected[opt.id] ?? []).map((itemId) => {
+        const optItem = opt.items.find((i) => i.id === itemId)!
+        return {
+          optionItemId: itemId,
+          name: optItem.name,
+          additionalPrice: optItem.additionalPrice,
+        }
+      }),
+    )
+    onConfirm(selectedOptions, observations.trim())
+  }
+
+  const extraTotal = item.options
+    .flatMap((opt) =>
+      (selected[opt.id] ?? []).map(
+        (id) => opt.items.find((i) => i.id === id)?.additionalPrice ?? 0,
+      ),
+    )
+    .reduce((a, b) => a + b, 0)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl p-6"
+        style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
+      >
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <h3
+              className="text-lg font-bold text-white"
+              style={{
+                fontFamily: "var(--font-bebas)",
+                letterSpacing: "0.05em",
+                fontSize: "1.5rem",
+              }}
+            >
+              {item.name.replace(/^Mob /i, "")}
+            </h3>
+            <p className="text-xs text-white/40">{item.description}</p>
+          </div>
+          <button onClick={onClose} className="ml-3 text-white/30 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {item.options.map((opt) => (
+            <div key={opt.id}>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-sm font-semibold text-white">{opt.label}</p>
+                {opt.required && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-400"
+                    style={{ background: "rgba(249,115,22,0.15)" }}
+                  >
+                    Obrigatório
+                  </span>
+                )}
+                <span className="text-[10px] text-white/30">
+                  {opt.type === "RADIO" ? "Escolha 1" : "Escolha quantos quiser"}
+                </span>
+              </div>
+              <div className="space-y-1.5">
+                {opt.items.map((optItem) => {
+                  const isSelected = (selected[opt.id] ?? []).includes(optItem.id)
+                  return (
+                    <button
+                      key={optItem.id}
+                      onClick={() => toggleItem(opt.id, optItem.id, opt.type)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition"
+                      style={{
+                        background: isSelected ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
+                      }}
+                    >
+                      <div
+                        className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+                        style={{
+                          background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
+                          border: isSelected ? "none" : "1px solid rgba(255,255,255,0.15)",
+                        }}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className="flex-1 text-sm text-white">{optItem.name}</span>
+                      {optItem.additionalPrice > 0 && (
+                        <span className="text-xs font-semibold text-orange-400">
+                          +{fmtPrice(optItem.additionalPrice)}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <p className="mb-1.5 text-xs font-semibold text-white/30">Observações (opcional)</p>
+          <textarea
+            value={observations}
+            onChange={(e) => setObservations(e.target.value)}
+            placeholder="Ex: sem cebola, ponto da carne, alergias..."
+            rows={2}
+            maxLength={200}
+            className="w-full resize-none rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+            style={{ background: "rgba(255,255,255,0.05)", color: "var(--mob-text-primary)" }}
+          />
+        </div>
+
+        <button
+          onClick={handleConfirm}
+          disabled={!canConfirm()}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition disabled:opacity-40"
+          style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+        >
+          Adicionar à sacola · {fmtPrice(item.priceNum + extraTotal)}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── ProductCard ─────────────────────────────────────────────────────────────
 
-function ProductCard({ item }: { item: AnyItem }) {
+function ProductCard({ item }: { item: MenuItem }) {
   const add = useCart((s) => s.add)
   const items = useCart((s) => s.items)
   const increment = useCart((s) => s.increment)
   const decrement = useCart((s) => s.decrement)
-  const entry = items.find((i) => i.id === item.id)
+  const [showModal, setShowModal] = useState(false)
+  // Para produtos sem opções, a entrada no carrinho usa item.id diretamente
+  const entry = items.find((i) => i.productId === item.id && !i.options?.length)
+
+  const hasOptions = item.options.length > 0
+
+  function handleAdd() {
+    if (hasOptions) {
+      setShowModal(true)
+    } else {
+      add({
+        id: item.id,
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        priceNum: item.priceNum,
+        img: item.img ?? undefined,
+        description: item.description,
+      })
+    }
+  }
+
+  function handleModalConfirm(selectedOptions: SelectedOption[], observations: string) {
+    const extraPrice = selectedOptions.reduce((sum, o) => sum + o.additionalPrice, 0)
+    const totalNum = item.priceNum + extraPrice
+    const obsSlug = observations ? `:obs:${observations.slice(0, 20).replace(/\s+/g, "_")}` : ""
+    const cartId = selectedOptions.length
+      ? `${item.id}:${selectedOptions
+          .map((o) => o.optionItemId)
+          .sort()
+          .join(":")}${obsSlug}`
+      : `${item.id}${obsSlug}`
+    add({
+      id: cartId,
+      productId: item.id,
+      name: item.name,
+      price: fmtPrice(totalNum),
+      priceNum: totalNum,
+      img: item.img ?? undefined,
+      description: item.description,
+      options: selectedOptions,
+      observations: observations || undefined,
+    })
+    setShowModal(false)
+  }
 
   return (
-    <div
-      className="group/card relative flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:translate-y-[-2px]"
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
-      }}
-    >
-      {/* Orange top accent */}
+    <>
       <div
-        className="absolute top-0 right-0 left-0 z-10 h-[2px]"
-        style={{ background: "linear-gradient(to right, #f97316, #ea580c)" }}
-      />
+        className="group/card relative flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:translate-y-[-2px]"
+        style={{
+          background: "var(--mob-s1)",
+          border: "1px solid var(--mob-b1)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+        }}
+      >
+        {/* Orange top accent */}
+        <div
+          className="absolute top-0 right-0 left-0 z-10 h-[2px]"
+          style={{ background: "linear-gradient(to right, #f97316, #ea580c)" }}
+        />
 
-      {/* Imagem */}
-      <div className="relative h-48 w-full overflow-hidden bg-black/30">
-        {item.img ? (
-          <Image
-            src={item.img}
-            alt={item.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover/card:scale-[1.06]"
-            unoptimized
-          />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center"
-            style={{
-              background:
-                "radial-gradient(ellipse at 50% 60%, rgba(249,115,22,0.12) 0%, transparent 70%)",
-            }}
-          >
-            <span className="text-6xl opacity-40">{item.emoji}</span>
-          </div>
-        )}
-        {/* Badge */}
-        {item.badge && (
-          <span
-            className="absolute top-3 left-3 rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-white uppercase"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
-          >
-            {item.badge}
-          </span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3
-          className="leading-none text-white"
-          style={{ fontFamily: "var(--font-bebas)", fontSize: "1.25rem", letterSpacing: "0.07em" }}
-        >
-          {item.name.replace("MOB ", "")}
-        </h3>
-
-        <p className="line-clamp-2 text-[11px] leading-relaxed text-white/40">
-          {item.ingredients.join(" · ")}
-        </p>
-
-        <div className="mt-auto flex items-center justify-between pt-2">
-          <span className="text-base font-bold text-orange-400">{item.price}</span>
-
-          {/* Controle de quantidade / botão adicionar */}
-          {entry ? (
-            <div
-              className="flex items-center gap-2 rounded-xl px-2 py-1"
-              style={{
-                background: "rgba(249,115,22,0.15)",
-                border: "1px solid rgba(249,115,22,0.3)",
-              }}
-            >
-              <button
-                onClick={() => decrement(item.id)}
-                className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
-              >
-                <Minus className="h-3 w-3" />
-              </button>
-              <span className="w-4 text-center text-sm font-bold text-white">{entry.qty}</span>
-              <button
-                onClick={() => increment(item.id)}
-                className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
-              >
-                <Plus className="h-3 w-3" />
-              </button>
-            </div>
+        {/* Imagem */}
+        <div className="relative h-48 w-full overflow-hidden bg-black/30">
+          {item.img ? (
+            <Image
+              src={item.img}
+              alt={item.name}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover/card:scale-[1.06]"
+              unoptimized
+            />
           ) : (
-            <button
-              onClick={() =>
-                add({
-                  id: item.id,
-                  name: item.name,
-                  price: item.price,
-                  priceNum: item.priceNum,
-                  img: item.img,
-                })
-              }
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-white transition active:scale-90"
+            <div
+              className="flex h-full w-full items-center justify-center"
               style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-                boxShadow: "0 4px 12px rgba(249,115,22,0.3)",
+                background:
+                  "radial-gradient(ellipse at 50% 60%, rgba(249,115,22,0.12) 0%, transparent 70%)",
               }}
             >
-              <Plus className="h-4 w-4" />
-            </button>
+              <span className="text-6xl opacity-40">🍔</span>
+            </div>
           )}
         </div>
+
+        {/* Info */}
+        <div className="flex flex-1 flex-col gap-2 p-4">
+          <h3
+            className="leading-none text-white"
+            style={{
+              fontFamily: "var(--font-bebas)",
+              fontSize: "1.25rem",
+              letterSpacing: "0.07em",
+            }}
+          >
+            {item.name.replace(/^Mob /i, "")}
+          </h3>
+
+          {item.description && (
+            <p className="line-clamp-2 text-[11px] leading-relaxed text-white/40">
+              {item.description}
+            </p>
+          )}
+
+          <div className="mt-auto flex items-center justify-between pt-2">
+            <span className="text-base font-bold text-orange-400">{item.price}</span>
+
+            {entry && !hasOptions ? (
+              <div
+                className="flex items-center gap-2 rounded-xl px-2 py-1"
+                style={{
+                  background: "rgba(249,115,22,0.15)",
+                  border: "1px solid rgba(249,115,22,0.3)",
+                }}
+              >
+                <button
+                  onClick={() => decrement(item.id)}
+                  className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
+                >
+                  <Minus className="h-3 w-3" />
+                </button>
+                <span className="w-4 text-center text-sm font-bold text-white">{entry.qty}</span>
+                <button
+                  onClick={() => increment(item.id)}
+                  className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
+                >
+                  <Plus className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleAdd}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-white transition active:scale-90"
+                style={{
+                  background: "linear-gradient(135deg, #f97316, #ea580c)",
+                  boxShadow: "0 4px 12px rgba(249,115,22,0.3)",
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+
+      {showModal && (
+        <OptionsModal
+          item={item}
+          onConfirm={handleModalConfirm}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </>
   )
 }
 
@@ -159,26 +375,23 @@ function CartDrawer() {
 
   return (
     <>
-      {/* Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeCart} />
       )}
 
-      {/* Drawer */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-sm flex-col"
+        className="mob-on-dark fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-sm flex-col"
         style={{
           background: "rgba(14,12,10,0.97)",
-          borderLeft: "1px solid rgba(255,255,255,0.08)",
+          borderLeft: "1px solid var(--mob-b1)",
           backdropFilter: "blur(24px)",
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1)",
         }}
       >
-        {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+          style={{ borderBottom: "1px solid var(--mob-b1)" }}
         >
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-orange-400" />
@@ -201,7 +414,6 @@ function CartDrawer() {
           </button>
         </div>
 
-        {/* Itens */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {!hasItems ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
@@ -214,12 +426,8 @@ function CartDrawer() {
                 <li
                   key={entry.id}
                   className="flex items-center gap-3 rounded-xl p-3"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                  }}
+                  style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
                 >
-                  {/* Thumb */}
                   <div className="relative h-14 w-14 flex-none overflow-hidden rounded-lg bg-black/30">
                     {entry.img && (
                       <Image
@@ -231,18 +439,14 @@ function CartDrawer() {
                       />
                     )}
                   </div>
-
-                  {/* Nome + preço */}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-white">
-                      {entry.name.replace("MOB ", "")}
+                      {entry.name.replace(/^Mob /i, "")}
                     </p>
                     <p className="text-xs text-orange-400">
                       {fmtPrice(entry.priceNum * entry.qty)}
                     </p>
                   </div>
-
-                  {/* Qty controls */}
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => decrement(entry.id)}
@@ -270,9 +474,8 @@ function CartDrawer() {
           )}
         </div>
 
-        {/* Footer com total */}
         {hasItems && (
-          <div className="px-5 py-5" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="px-5 py-5" style={{ borderTop: "1px solid var(--mob-b1)" }}>
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm text-white/50">Total</span>
               <span className="text-lg font-bold text-white">{fmtPrice(totalVal)}</span>
@@ -300,7 +503,7 @@ function CartDrawer() {
   )
 }
 
-// ─── CartBar (flutuante, estilo iFood) ────────────────────────────────────────
+// ─── CartBar ──────────────────────────────────────────────────────────────────
 
 function CartBar() {
   const count = useCart((s) => s.count())
@@ -318,16 +521,13 @@ function CartBar() {
           boxShadow: "0 8px 32px rgba(249,115,22,0.4)",
         }}
       >
-        {/* Contador */}
         <div
           className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold text-orange-600"
-          style={{ background: "rgba(255,255,255,0.25)" }}
+          style={{ background: "var(--mob-t25)" }}
         >
           {count}
         </div>
-
         <span className="flex-1 text-center text-sm font-bold text-white">Ver sacola</span>
-
         <span className="text-sm font-bold text-white/80">{fmtPrice(total)}</span>
         <ChevronRight className="ml-1 h-4 w-4 text-white/80" />
       </Link>
@@ -339,31 +539,59 @@ function CartBar() {
 
 export default function CardapioPage() {
   const searchParams = useSearchParams()
+  const { categories: rawCats, loading: menuLoading } = useMenu()
+
+  const allItems = useMemo<MenuItem[]>(
+    () =>
+      rawCats.flatMap((cat) =>
+        cat.products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description ?? "",
+          price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
+          priceNum: p.price,
+          img: p.imageUrl,
+          cat: cat.slug,
+          options: (p.options ?? []) as ProductOption[],
+        })),
+      ),
+    [rawCats],
+  )
+
+  const categories = useMemo<MenuCategory[]>(
+    () => [
+      { slug: "todos", name: "Todos" },
+      ...rawCats.map((c) => ({ slug: c.slug, name: c.name })),
+    ],
+    [rawCats],
+  )
+
+  const maxPriceLimit = useMemo(
+    () => Math.ceil(Math.max(...allItems.map((i) => i.priceNum), 50)),
+    [allItems],
+  )
+
   const [query, setQuery] = useState("")
-  const [category, setCategory] = useState<Category>(() => {
-    const cat = searchParams.get("cat")
-    const valid: Category[] = ["burger", "chicken", "combo", "sobremesa", "bebida"]
-    return valid.includes(cat as Category) ? (cat as Category) : "todos"
-  })
-  const [maxPrice, setMaxPrice] = useState(MAX_PRICE)
+  const [category, setCategory] = useState(() => searchParams.get("cat") ?? "todos")
+  const [maxPrice, setMaxPrice] = useState(maxPriceLimit)
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
-    return ALL_ITEMS.filter((item) => {
+    return allItems.filter((item) => {
       if (category !== "todos" && item.cat !== category) return false
       if (item.priceNum > maxPrice) return false
       if (!q) return true
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.ingredients.some((ing) => ing.toLowerCase().includes(q))
-      )
+      return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
     })
-  }, [query, category, maxPrice])
+  }, [allItems, query, category, maxPrice])
+
+  const inputCls =
+    "w-full rounded-xl py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
 
   return (
     <>
       <main className="mx-auto max-w-7xl px-6 pt-10 pb-32">
-        {/* ── Título ── */}
+        {/* Título */}
         <div className="mb-8">
           <p className="mb-1 text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">
             Burgers Pack Co.
@@ -380,27 +608,29 @@ export default function CardapioPage() {
           </h1>
         </div>
 
-        {/* ── Filtros ── */}
+        {/* Filtros */}
         <div
-          className="sticky top-[64px] z-20 mb-8 space-y-4 rounded-2xl p-4"
+          className="mob-on-dark sticky top-[64px] z-20 mb-8 space-y-4 rounded-2xl p-4"
           style={{
             background: "rgba(12,11,9,0.85)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.07)",
+            border: "1px solid var(--mob-b1)",
           }}
         >
-          {/* Busca + preço */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            {/* Campo de busca */}
             <div className="relative flex-1">
-              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/30" />
+              <Search
+                className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                style={{ color: "var(--mob-text-tertiary)" }}
+              />
               <input
                 type="text"
-                placeholder="Buscar por nome ou ingrediente..."
+                placeholder="Buscar por nome ou descrição..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-xl bg-white/5 py-2.5 pr-4 pl-9 text-sm text-white placeholder-white/25 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                className={`${inputCls} pr-4 pl-9`}
+                style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
               />
               {query && (
                 <button
@@ -412,55 +642,72 @@ export default function CardapioPage() {
               )}
             </div>
 
-            {/* Slider de preço */}
             <div className="flex shrink-0 items-center gap-3 sm:w-56">
-              <span className="text-xs whitespace-nowrap text-white/40">Até</span>
+              <span
+                className="text-xs whitespace-nowrap"
+                style={{ color: "var(--mob-text-tertiary)" }}
+              >
+                Até
+              </span>
               <input
                 type="range"
                 min={0}
-                max={MAX_PRICE}
+                max={maxPriceLimit}
                 step={1}
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
                 className="flex-1 accent-orange-500"
               />
-              <span className="w-16 text-right text-xs font-semibold whitespace-nowrap text-orange-400">
-                {fmtPrice(maxPrice)}
+              <span className="w-14 text-right text-xs font-semibold whitespace-nowrap text-orange-400">
+                {maxPrice >= maxPriceLimit ? "Máx" : fmtPrice(maxPrice)}
               </span>
             </div>
           </div>
 
           {/* Pills de categoria */}
           <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => {
-              const active = category === cat.id
+            {categories.map((cat) => {
+              const active = category === cat.slug
               return (
                 <button
-                  key={cat.id}
-                  onClick={() => setCategory(cat.id)}
+                  key={cat.slug}
+                  onClick={() => setCategory(cat.slug)}
                   className="rounded-full px-4 py-1.5 text-xs font-semibold transition-all"
                   style={
                     active
                       ? { background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff" }
                       : {
-                          background: "rgba(255,255,255,0.06)",
-                          color: "rgba(255,255,255,0.5)",
-                          border: "1px solid rgba(255,255,255,0.08)",
+                          background: "var(--mob-pill-inactive-bg)",
+                          color: "var(--mob-pill-inactive-text)",
+                          border: "1px solid var(--mob-b1)",
                         }
                   }
                 >
-                  {cat.label}
+                  {cat.name}
                 </button>
               )
             })}
-            <span className="ml-auto self-center text-xs text-white/25">
+            <span
+              className="ml-auto self-center text-xs"
+              style={{ color: "var(--mob-text-tertiary)" }}
+            >
               {filtered.length} {filtered.length === 1 ? "item" : "itens"}
             </span>
           </div>
         </div>
 
-        {/* ── Grid de produtos ── */}
-        {filtered.length === 0 ? (
+        {/* Grid */}
+        {menuLoading ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-72 animate-pulse rounded-2xl"
+                style={{ background: "var(--mob-s1)" }}
+              />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-center">
             <p className="text-4xl">🔍</p>
             <p className="text-sm text-white/30">
@@ -470,7 +717,7 @@ export default function CardapioPage() {
               onClick={() => {
                 setQuery("")
                 setCategory("todos")
-                setMaxPrice(MAX_PRICE)
+                setMaxPrice(maxPriceLimit)
               }}
               className="mt-1 text-xs text-orange-400 hover:underline"
             >

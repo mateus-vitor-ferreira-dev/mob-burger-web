@@ -16,11 +16,12 @@ import {
   User,
   CheckCircle2,
   Pencil,
+  Store,
+  Bike,
 } from "lucide-react"
-import { useCart } from "@/lib/cart-store"
+import { useCart, type CartItem as CartItemType } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
-import { useCustomer, DELIVERY_FEE } from "@/lib/customer-store"
-import { ALL_ITEMS } from "@/data/menu"
+import { useCustomer } from "@/lib/customer-store"
 
 function fmtPrice(n: number) {
   return `R$ ${n.toFixed(2).replace(".", ",")}`
@@ -43,57 +44,83 @@ function maskCep(v: string) {
 
 // ─── Item expandido ───────────────────────────────────────────────────────────
 
-function CartItem({ id, qty }: { id: string; qty: number }) {
-  const item = ALL_ITEMS.find((i) => i.id === id)
+function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
   const increment = useCart((s) => s.increment)
   const decrement = useCart((s) => s.decrement)
-  if (!item) return null
 
   return (
     <div
       className="flex items-center gap-4 rounded-2xl p-4"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "var(--mob-card-solid)", border: "1px solid var(--mob-b1)" }}
     >
       {/* Imagem */}
       <div className="relative h-20 w-20 flex-none overflow-hidden rounded-xl bg-black/30">
-        {item.img && (
-          <Image src={item.img} alt={item.name} fill className="object-cover" unoptimized />
+        {entry.img && (
+          <Image src={entry.img} alt={entry.name} fill className="object-cover" unoptimized />
         )}
       </div>
 
       {/* Info */}
       <div className="min-w-0 flex-1">
         <p
-          className="leading-tight text-white"
-          style={{ fontFamily: "var(--font-bebas)", fontSize: "1.1rem", letterSpacing: "0.06em" }}
+          className="leading-tight"
+          style={{
+            fontFamily: "var(--font-bebas)",
+            fontSize: "1.1rem",
+            letterSpacing: "0.06em",
+            color: "var(--mob-text-primary)",
+          }}
         >
-          {item.name.replace("MOB ", "")}
+          {entry.name.replace(/^Mob /i, "")}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-white/35">
-          {item.ingredients.join(" · ")}
+        {entry.options && entry.options.length > 0 && (
+          <p
+            className="mt-0.5 text-[11px] leading-relaxed"
+            style={{ color: "var(--mob-text-tertiary)" }}
+          >
+            {entry.options.map((o) => o.name).join(" · ")}
+          </p>
+        )}
+        {entry.observations && (
+          <p
+            className="mt-0.5 text-[11px] leading-relaxed italic"
+            style={{ color: "var(--mob-text-tertiary)" }}
+          >
+            &quot;{entry.observations}&quot;
+          </p>
+        )}
+        {entry.description && !entry.options?.length && !entry.observations && (
+          <p
+            className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed"
+            style={{ color: "var(--mob-text-tertiary)" }}
+          >
+            {entry.description}
+          </p>
+        )}
+        <p className="mt-1.5 text-sm font-bold text-orange-400">
+          {fmtPrice(entry.priceNum * entry.qty)}
         </p>
-        <p className="mt-1.5 text-sm font-bold text-orange-400">{fmtPrice(item.priceNum * qty)}</p>
       </div>
 
-      {/* Qty — alinhado ao centro verticalmente */}
+      {/* Qty */}
       <div className="flex items-center">
         <div
           className="flex items-center gap-2 rounded-xl px-2 py-1"
           style={{ background: "rgba(249,115,22,0.10)", border: "1px solid rgba(249,115,22,0.2)" }}
         >
           <button
-            onClick={() => decrement(id)}
+            onClick={() => decrement(entry.id)}
             className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
           >
-            {qty === 1 ? (
+            {entry.qty === 1 ? (
               <Trash2 className="h-3 w-3 text-red-400" />
             ) : (
               <Minus className="h-3 w-3" />
             )}
           </button>
-          <span className="w-5 text-center text-sm font-bold text-white">{qty}</span>
+          <span className="w-5 text-center text-sm font-bold text-white">{entry.qty}</span>
           <button
-            onClick={() => increment(id)}
+            onClick={() => increment(entry.id)}
             className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
           >
             <Plus className="h-3 w-3" />
@@ -118,7 +145,7 @@ function AddressConfirmation({ onEdit }: { onEdit: () => void }) {
       {/* Dados pessoais — somente leitura */}
       <div
         className="space-y-2 rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-orange-400" />
@@ -133,7 +160,7 @@ function AddressConfirmation({ onEdit }: { onEdit: () => void }) {
       {/* Endereço confirmação */}
       <div
         className="rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -174,10 +201,17 @@ function AddressConfirmation({ onEdit }: { onEdit: () => void }) {
 
 // ─── Formulário de dados e entrega ────────────────────────────────────────────
 
-function DeliveryForm() {
+function DeliveryForm({
+  zones,
+  onZoneDetected,
+}: {
+  zones: DeliveryZone[]
+  onZoneDetected: (zoneId: string, fee: number, name: string) => void
+}) {
   const { customerName, phone, address, set, setAddress } = useDelivery()
   const [cepLoading, setCepLoading] = useState(false)
   const [cepError, setCepError] = useState("")
+  const [zoneNotice, setZoneNotice] = useState("")
   const numberRef = useRef<HTMLInputElement>(null)
 
   async function fetchCep(raw: string) {
@@ -185,6 +219,7 @@ function DeliveryForm() {
     if (digits.length !== 8) return
     setCepLoading(true)
     setCepError("")
+    setZoneNotice("")
     try {
       const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
       const data = await res.json()
@@ -199,6 +234,23 @@ function DeliveryForm() {
         state: data.uf,
         complement: data.complemento ?? "",
       })
+
+      // Auto-detecta zona de entrega pelo bairro
+      if (data.bairro && zones.length > 0) {
+        const bairro = data.bairro.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+        const match = zones.find((z) => {
+          const name = z.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+          return bairro.includes(name) || name.includes(bairro.split(" ").pop() ?? "")
+        })
+        if (match) {
+          onZoneDetected(match.id, match.fee, match.name)
+          setZoneNotice(
+            `Taxa de entrega para ${match.name}: ${match.fee === 0 ? "Grátis" : fmtPrice(match.fee)}`,
+          )
+        } else {
+          setZoneNotice("Bairro fora da área de entrega. Verifique com a loja.")
+        }
+      }
       numberRef.current?.focus()
     } catch {
       setCepError("Erro ao buscar CEP.")
@@ -207,30 +259,34 @@ function DeliveryForm() {
     }
   }
 
+  const cardStyle = { background: "var(--mob-card-solid)", border: "1px solid var(--mob-b1)" }
   const inputCls =
-    "w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none ring-1 ring-white/10 transition focus:ring-orange-500/50"
+    "w-full rounded-xl px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 transition focus:ring-orange-500/50"
+  const inputStyle = { background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }
 
   return (
     <div className="space-y-4">
       {/* Dados pessoais */}
-      <div
-        className="space-y-3 rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-      >
+      <div className="space-y-3 rounded-2xl p-4" style={cardStyle}>
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-orange-400" />
-          <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+          <p
+            className="text-xs font-semibold tracking-widest uppercase"
+            style={{ color: "var(--mob-text-tertiary)" }}
+          >
             Seus dados
           </p>
         </div>
         <input
           className={inputCls}
+          style={inputStyle}
           placeholder="Nome completo"
           value={customerName}
           onChange={(e) => set({ customerName: e.target.value })}
         />
         <input
           className={inputCls}
+          style={inputStyle}
           placeholder="Telefone (11) 99999-9999"
           value={phone}
           onChange={(e) => set({ phone: maskPhone(e.target.value) })}
@@ -239,10 +295,7 @@ function DeliveryForm() {
       </div>
 
       {/* Endereço */}
-      <div
-        className="space-y-3 rounded-2xl p-4"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-      >
+      <div className="space-y-3 rounded-2xl p-4" style={cardStyle}>
         <div className="flex items-center gap-2">
           <MapPin className="h-3.5 w-3.5 text-orange-400" />
           <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
@@ -253,6 +306,7 @@ function DeliveryForm() {
         <div className="flex gap-2">
           <input
             className={`${inputCls} flex-1`}
+            style={inputStyle}
             placeholder="CEP 00000-000"
             value={address.cep}
             inputMode="numeric"
@@ -277,9 +331,18 @@ function DeliveryForm() {
           </button>
         </div>
         {cepError && <p className="text-xs text-red-400">{cepError}</p>}
+        {zoneNotice && (
+          <p
+            className="text-xs"
+            style={{ color: zoneNotice.includes("fora") ? "#f87171" : "#4ade80" }}
+          >
+            📍 {zoneNotice}
+          </p>
+        )}
 
         <input
           className={inputCls}
+          style={inputStyle}
           placeholder="Rua / Avenida"
           value={address.street}
           onChange={(e) => setAddress({ street: e.target.value })}
@@ -289,12 +352,14 @@ function DeliveryForm() {
           <input
             ref={numberRef}
             className={inputCls}
+            style={inputStyle}
             placeholder="Número"
             value={address.number}
             onChange={(e) => setAddress({ number: e.target.value })}
           />
           <input
             className={inputCls}
+            style={inputStyle}
             placeholder="Complemento"
             value={address.complement}
             onChange={(e) => setAddress({ complement: e.target.value })}
@@ -303,6 +368,7 @@ function DeliveryForm() {
 
         <input
           className={inputCls}
+          style={inputStyle}
           placeholder="Bairro"
           value={address.neighborhood}
           onChange={(e) => setAddress({ neighborhood: e.target.value })}
@@ -311,12 +377,14 @@ function DeliveryForm() {
         <div className="grid grid-cols-[1fr_80px] gap-2">
           <input
             className={inputCls}
+            style={inputStyle}
             placeholder="Cidade"
             value={address.city}
             onChange={(e) => setAddress({ city: e.target.value })}
           />
           <input
             className={inputCls}
+            style={inputStyle}
             placeholder="UF"
             value={address.state}
             maxLength={2}
@@ -330,25 +398,46 @@ function DeliveryForm() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+interface DeliveryZone {
+  id: string
+  name: string
+  fee: number
+}
+
 export default function CarrinhoPage() {
   const router = useRouter()
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.total())
   const count = useCart((s) => s.count())
   const isComplete = useDelivery((s) => s.isComplete)
+  const orderType = useDelivery((s) => s.orderType)
   const customer = useCustomer((s) => s.customer)
   const hasAddress = useCustomer((s) => s.hasAddress())
-  const { set, setAddress } = useDelivery()
+  const { set, setAddress, setZone, zoneId, deliveryFee, customerName, phone } = useDelivery()
   const [mounted, setMounted] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
+  const [zones, setZones] = useState<DeliveryZone[]>([])
+  const [storeOpen, setStoreOpen] = useState(true)
 
-   
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
 
   const token = useCustomer((s) => s.token)
   const setCustomer = useCustomer((s) => s.setCustomer)
+
+  // Busca zonas de entrega e status da loja
+  useEffect(() => {
+    if (!mounted) return
+    fetch("/api/backend/menu/delivery-zones")
+      .then((r) => r.json())
+      .then((j) => setZones(j.data ?? []))
+      .catch(() => {})
+    fetch("/api/backend/menu/status")
+      .then((r) => r.json())
+      .then((j) => setStoreOpen(j.data?.isOpen ?? true))
+      .catch(() => {})
+  }, [mounted])
 
   // Busca dados frescos da API e pré-preenche o formulário
   useEffect(() => {
@@ -381,7 +470,7 @@ export default function CarrinhoPage() {
 
   if (!mounted || items.length === 0) return null
 
-  const total = subtotal + DELIVERY_FEE
+  const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 pb-16">
@@ -409,32 +498,57 @@ export default function CarrinhoPage() {
         </div>
       </div>
 
+      {/* Banner loja fechada */}
+      {!storeOpen && (
+        <div
+          className="mb-6 flex items-center gap-3 rounded-2xl px-5 py-4"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}
+        >
+          <span className="text-xl">🔒</span>
+          <div>
+            <p className="text-sm font-semibold text-red-400">Loja fechada no momento</p>
+            <p className="text-xs text-white/40">
+              Não é possível finalizar pedidos agora. Volte durante o horário de funcionamento.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
         {/* Itens */}
         <div className="space-y-4">
           {items.map((entry) => (
-            <CartItem key={entry.id} id={entry.id} qty={entry.qty} />
+            <CartItemRow key={entry.id} entry={entry} />
           ))}
 
           {/* Resumo de valores */}
           <div
             className="space-y-2 rounded-2xl px-4 py-3"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-            }}
+            style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
           >
             <div className="flex items-center justify-between text-sm">
               <span className="text-white/50">Subtotal</span>
               <span className="text-white/70">{fmtPrice(subtotal)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-white/50">Taxa de entrega</span>
-              <span className="text-white/70">{fmtPrice(DELIVERY_FEE)}</span>
+              <span className="text-white/50">
+                {orderType === "PICKUP"
+                  ? "Retirada no local"
+                  : `Taxa de entrega${zoneId && zones.find((z) => z.id === zoneId) ? ` · ${zones.find((z) => z.id === zoneId)!.name}` : ""}`}
+              </span>
+              <span className="text-white/70">
+                {orderType === "PICKUP"
+                  ? "Grátis"
+                  : zoneId
+                    ? deliveryFee === 0
+                      ? "Grátis"
+                      : fmtPrice(deliveryFee)
+                    : "—"}
+              </span>
             </div>
             <div
               className="flex items-center justify-between border-t pt-2"
-              style={{ borderColor: "rgba(255,255,255,0.07)" }}
+              style={{ borderColor: "var(--mob-b1)" }}
             >
               <span className="text-sm font-bold text-white">Total</span>
               <span
@@ -461,21 +575,92 @@ export default function CarrinhoPage() {
 
         {/* Dados + endereço */}
         <div className="space-y-4">
-          {hasAddress && !editingAddress ? (
+          {/* Toggle Entrega / Retirada */}
+          <div
+            className="flex rounded-2xl p-1"
+            style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+          >
+            {(["DELIVERY", "PICKUP"] as const).map((type) => {
+              const active = orderType === type
+              return (
+                <button
+                  key={type}
+                  onClick={() => set({ orderType: type })}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all"
+                  style={
+                    active
+                      ? { background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff" }
+                      : { color: "rgba(255,255,255,0.4)" }
+                  }
+                >
+                  {type === "DELIVERY" ? (
+                    <>
+                      <Bike className="h-4 w-4" /> Entrega
+                    </>
+                  ) : (
+                    <>
+                      <Store className="h-4 w-4" /> Retirada
+                    </>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {orderType === "PICKUP" ? (
+            <div
+              className="space-y-3 rounded-2xl p-4"
+              style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+            >
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-orange-400" />
+                <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                  Seus dados
+                </p>
+              </div>
+              <input
+                className="w-full rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
+                placeholder="Nome completo"
+                value={customerName}
+                onChange={(e) => set({ customerName: e.target.value })}
+              />
+              <input
+                className="w-full rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
+                placeholder="Telefone (11) 99999-9999"
+                inputMode="tel"
+                value={phone}
+                onChange={(e) => set({ phone: maskPhone(e.target.value) })}
+              />
+              <div
+                className="mt-2 flex items-center gap-3 rounded-xl px-3 py-3"
+                style={{
+                  background: "rgba(249,115,22,0.08)",
+                  border: "1px solid rgba(249,115,22,0.2)",
+                }}
+              >
+                <Store className="h-4 w-4 flex-none text-orange-400" />
+                <p className="text-xs text-orange-300">
+                  Retire no balcão quando seu pedido estiver pronto. Avisaremos pelo WhatsApp!
+                </p>
+              </div>
+            </div>
+          ) : hasAddress && !editingAddress ? (
             <AddressConfirmation onEdit={() => setEditingAddress(true)} />
           ) : (
-            <DeliveryForm />
+            <DeliveryForm zones={zones} onZoneDetected={(id, fee) => setZone(id, fee)} />
           )}
           <button
             onClick={() => router.push("/pagamento")}
-            disabled={!isComplete()}
+            disabled={!isComplete() || !storeOpen}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             style={{
               background: "linear-gradient(135deg, #f97316, #ea580c)",
               boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
             }}
           >
-            Ir para pagamento
+            {!storeOpen ? "Loja fechada" : "Ir para pagamento"}
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
