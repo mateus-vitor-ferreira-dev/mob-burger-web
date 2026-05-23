@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile } from "fs/promises"
-import path from "path"
+import { uploadBuffer } from "@/lib/cloudinary"
 
 const MAX_SIZE = 3 * 1024 * 1024
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"]
@@ -21,12 +20,14 @@ export async function POST(req: NextRequest) {
     if (file.size > MAX_SIZE)
       return NextResponse.json({ error: "Arquivo muito grande. Máximo 3 MB." }, { status: 400 })
 
-    const filename = `${slug}.png`
     const buffer = Buffer.from(await file.arrayBuffer())
-    const dir = path.join(process.cwd(), "public", "categories")
-    await writeFile(path.join(dir, filename), buffer)
+    const url = await uploadBuffer(buffer, {
+      folder: "mob-burger/categories",
+      public_id: slug,
+      overwrite: true,
+    })
 
-    return NextResponse.json({ url: `/categories/${filename}` })
+    return NextResponse.json({ url })
   } catch {
     return NextResponse.json({ error: "Erro ao fazer upload" }, { status: 500 })
   }

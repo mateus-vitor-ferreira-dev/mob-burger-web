@@ -6,6 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMenu } from "@/lib/use-menu"
+import { categoryImageUrl } from "@/lib/cloudinary"
 
 // ─── Imagem fallback por slug ────────────────────────────────────────────────
 
@@ -245,7 +246,7 @@ export default function HomePage() {
           id: c.slug,
           label: c.name,
           sublabel: `${c.products.length} itens`,
-          img: FALLBACK_IMG[c.slug] ?? `/categories/${c.slug}.png`,
+          img: FALLBACK_IMG[c.slug] ?? categoryImageUrl(c.slug),
           href: `/cardapio?cat=${c.slug}`,
         })),
     [categories],

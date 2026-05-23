@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile, mkdir } from "fs/promises"
-import path from "path"
+import { uploadBuffer } from "@/lib/cloudinary"
 
 const MAX_SIZE = 3 * 1024 * 1024
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"]
@@ -25,14 +24,15 @@ export async function POST(req: NextRequest) {
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "")
-    const ext = file.type.split("/")[1].replace("jpeg", "jpg")
-    const filename = `${slug}.${ext}`
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const dir = path.join(process.cwd(), "public", "burgers")
-    await mkdir(dir, { recursive: true })
-    await writeFile(path.join(dir, filename), buffer)
 
-    return NextResponse.json({ url: `/burgers/${filename}` })
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const url = await uploadBuffer(buffer, {
+      folder: "mob-burger/products",
+      public_id: slug,
+      overwrite: true,
+    })
+
+    return NextResponse.json({ url })
   } catch {
     return NextResponse.json({ error: "Erro ao fazer upload" }, { status: 500 })
   }

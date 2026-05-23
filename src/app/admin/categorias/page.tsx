@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { categoryImageUrl } from "@/lib/cloudinary"
 import { useStaff } from "@/lib/staff-store"
 
 interface Category {
@@ -394,7 +395,7 @@ export default function CategoriasPage() {
         <div className="space-y-2">
           {categories.map((cat) => {
             // Tenta imagem salva para essa categoria
-            const imgSrc = `/categories/${cat.slug}.png`
+            const imgSrc = categoryImageUrl(cat.slug)
             return (
               <div
                 key={cat.id}
