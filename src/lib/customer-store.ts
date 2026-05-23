@@ -61,5 +61,3 @@ export const useCustomer = create<CustomerStore>()(
     { name: "mob-customer" },
   ),
 )
-
-export const DELIVERY_FEE = 7

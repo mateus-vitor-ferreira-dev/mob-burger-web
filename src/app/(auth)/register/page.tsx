@@ -33,9 +33,10 @@ type RegisterData = z.infer<typeof registerSchema>
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
 const INPUT =
-  "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white " +
-  "focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 " +
-  "transition-all placeholder:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
+  "w-full rounded-xl px-4 py-3 text-sm text-white " +
+  "bg-white/[0.07] border border-white/15 " +
+  "focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/60 " +
+  "transition-all placeholder:text-white/25 disabled:opacity-60 disabled:cursor-not-allowed"
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null
@@ -44,15 +45,10 @@ function FieldError({ msg }: { msg?: string }) {
 
 function Divider() {
   return (
-    <div className="relative my-5">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-200" />
-      </div>
-      <div className="relative flex justify-center">
-        <span className="px-3 text-xs text-gray-400" style={{ background: "#fafaf8" }}>
-          ou use seu e-mail
-        </span>
-      </div>
+    <div className="my-5 flex items-center gap-3">
+      <div className="flex-1 border-t border-white/10" />
+      <span className="text-xs text-white/30">ou use seu e-mail</span>
+      <div className="flex-1 border-t border-white/10" />
     </div>
   )
 }
@@ -80,7 +76,7 @@ function GoogleButton({ onClick, disabled }: { onClick: () => void; disabled?: b
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <GoogleIcon />
       Inscrever-se com Google
@@ -192,7 +188,7 @@ export default function RegisterPage() {
 
         <main
           className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
-          style={{ background: "#fafaf8" }}
+          style={{ background: "transparent" }}
         >
           <div className="w-full max-w-[400px] py-8">
             {/* Mobile brand */}
@@ -204,14 +200,14 @@ export default function RegisterPage() {
                 height={32}
                 className="rounded-lg object-cover"
               />
-              <span className="text-sm font-semibold tracking-wider">M.O.B</span>
+              <span className="text-sm font-semibold tracking-wider text-white">M.O.B</span>
             </div>
 
             <div style={{ animation: "mob-slide-in 0.25s ease-out both" }}>
               <Field delay={0}>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Crie sua conta 🍔</h2>
-                  <p className="mt-1 text-sm text-gray-500">É rápido, grátis e sem enrolação.</p>
+                  <h2 className="text-2xl font-bold text-white">Crie sua conta 🍔</h2>
+                  <p className="mt-1 text-sm text-white/50">É rápido, grátis e sem enrolação.</p>
                 </div>
               </Field>
 
@@ -223,7 +219,7 @@ export default function RegisterPage() {
 
               <form onSubmit={onRegister} className="space-y-4">
                 <Field delay={120}>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                  <label className="mb-1.5 block text-xs font-medium text-white/60">
                     Nome completo
                   </label>
                   <input
@@ -236,7 +232,7 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={155}>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">E-mail</label>
+                  <label className="mb-1.5 block text-xs font-medium text-white/60">E-mail</label>
                   <input
                     {...form.register("email")}
                     type="email"
@@ -248,9 +244,9 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={190}>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">Telefone</label>
+                  <label className="mb-1.5 block text-xs font-medium text-white/60">Telefone</label>
                   <div className="flex gap-2">
-                    <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 text-sm whitespace-nowrap text-gray-600">
+                    <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.07] px-3 text-sm whitespace-nowrap text-white/70">
                       🇧🇷 +55
                     </div>
                     <Controller
@@ -274,7 +270,7 @@ export default function RegisterPage() {
                 <Field delay={225}>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                      <label className="mb-1.5 block text-xs font-medium text-white/60">
                         Senha
                       </label>
                       <div className="relative">
@@ -288,7 +284,7 @@ export default function RegisterPage() {
                         <button
                           type="button"
                           onClick={() => setShowPwd((v) => !v)}
-                          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                          className="absolute top-3 right-3 text-white/30 hover:text-white/70"
                           aria-label="Alternar visibilidade"
                         >
                           {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -298,7 +294,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                      <label className="mb-1.5 block text-xs font-medium text-white/60">
                         Confirmar
                       </label>
                       <div className="relative">
@@ -312,7 +308,7 @@ export default function RegisterPage() {
                         <button
                           type="button"
                           onClick={() => setShowConfirm((v) => !v)}
-                          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                          className="absolute top-3 right-3 text-white/30 hover:text-white/70"
                           aria-label="Alternar visibilidade"
                         >
                           {showConfirm ? (
@@ -332,7 +328,7 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={330}>
-                  <p className="text-center text-xs text-gray-400">
+                  <p className="text-center text-xs text-white/40">
                     Já tem conta?{" "}
                     <a href="/login" className="font-medium text-orange-500 hover:text-orange-600">
                       Entrar
@@ -341,13 +337,13 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={350}>
-                  <p className="text-center text-xs text-gray-400/70">
+                  <p className="text-center text-xs text-white/30">
                     Ao criar conta, você concorda com os{" "}
-                    <a href="#" className="underline underline-offset-2 hover:text-gray-500">
+                    <a href="#" className="underline underline-offset-2 hover:text-white/60">
                       Termos de Uso
                     </a>{" "}
                     e a{" "}
-                    <a href="#" className="underline underline-offset-2 hover:text-gray-500">
+                    <a href="#" className="underline underline-offset-2 hover:text-white/60">
                       Política de Privacidade
                     </a>
                     .

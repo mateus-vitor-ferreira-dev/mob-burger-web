@@ -13,7 +13,7 @@ export function UserMenu() {
     <button
       onClick={() => router.push("/perfil")}
       className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl text-white/60 transition hover:ring-2 hover:ring-orange-500/50"
-      style={{ border: "1px solid rgba(255,255,255,0.10)" }}
+      style={{ border: "1px solid var(--mob-s3)" }}
       title={customer ? "Minha conta" : "Entrar"}
     >
       {customer?.avatarUrl ? (

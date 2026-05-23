@@ -3,17 +3,27 @@
 import { useState, useEffect, useRef } from "react"
 import { Utensils, ShoppingBag, MapPin } from "lucide-react"
 import Image from "next/image"
-import { MENU_ITEMS, DESSERTS, COMBOS } from "@/data/menu"
+import { useMenu } from "@/lib/use-menu"
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Types usados pelo painel ─────────────────────────────────────────────────
 
-const TOTAL_ITEMS = MENU_ITEMS.length + DESSERTS.length
+interface PanelItem {
+  id: string
+  name: string
+  img: string | null
+  cat: string
+  price: string
+}
 
-const STATS = [
-  { Icon: Utensils, value: String(TOTAL_ITEMS), label: "itens no cardápio" },
-  { Icon: ShoppingBag, value: String(COMBOS.length), label: "combos" },
-  { Icon: MapPin, value: String(DESSERTS.length), label: "sobremesas" },
+const FALLBACK_ITEMS: PanelItem[] = [
+  { id: "0", name: "Mob Classic", img: null, cat: "burger", price: "R$ 22,90" },
 ]
+
+const _STATS_BASE = [
+  { Icon: Utensils, key: "items", label: "itens no cardápio" },
+  { Icon: ShoppingBag, key: "combos", label: "combos" },
+  { Icon: MapPin, key: "sobremesas", label: "sobremesas" },
+] as const
 
 const ITEM_H = 68
 const WHEEL_H = 340
@@ -32,7 +42,7 @@ const PLACEHOLDER_BG: Record<string, string> = {
   chicken: "radial-gradient(ellipse at 30% 80%, rgba(200,150,0,0.48) 0%, transparent 60%), #0f0d06",
 }
 
-function getItemBg(item: (typeof MENU_ITEMS)[number]): string {
+function getItemBg(item: PanelItem): string {
   if (item.img) return `url("${item.img}") center/cover no-repeat`
   return PLACEHOLDER_BG[item.cat] ?? "#0a0a0a"
 }
@@ -40,14 +50,16 @@ function getItemBg(item: (typeof MENU_ITEMS)[number]): string {
 // ─── Ferris Wheel ─────────────────────────────────────────────────────────────
 
 function FerrisWheel({
+  items,
   activeIdx,
   onSelect,
 }: {
+  items: PanelItem[]
   activeIdx: number
   onSelect: (i: number) => void
 }) {
   function cyclicDist(i: number) {
-    const n = MENU_ITEMS.length
+    const n = items.length
     const d = (((i - activeIdx) % n) + n) % n
     return d > n / 2 ? d - n : d
   }
@@ -63,7 +75,7 @@ function FerrisWheel({
           "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 18%, black 35%, black 65%, rgba(0,0,0,0.6) 82%, transparent 100%)",
       }}
     >
-      {MENU_ITEMS.map((item, i) => {
+      {items.map((item, i) => {
         const d = cyclicDist(i)
         if (Math.abs(d) > 2) return null
         const slot = SLOTS.find((s) => s.offset === d)!
@@ -100,7 +112,7 @@ function FerrisWheel({
                 flexShrink: 0,
               }}
             >
-              {item.emoji}
+              🍔
             </span>
             <div className="flex flex-col gap-0.5">
               <span
@@ -136,31 +148,61 @@ function FerrisWheel({
 // ─── Left Panel ───────────────────────────────────────────────────────────────
 
 export function AuthLeftPanel() {
+  const { categories } = useMenu()
+
+  // Todos os produtos exceto combos, como painel de itens da roda
+  const panelItems: PanelItem[] = categories
+    .filter((c) => c.slug !== "combos")
+    .flatMap((c) =>
+      c.products.map((p) => ({
+        id: p.id,
+        name: p.name.replace(/^Mob /i, ""),
+        img: p.imageUrl,
+        cat: c.slug,
+        price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
+      })),
+    )
+    .slice(0, 20) // máximo 20 itens na roda
+
+  const items = panelItems.length > 0 ? panelItems : FALLBACK_ITEMS
+
+  const comboCount = categories.find((c) => c.slug === "combos")?.products.length ?? 0
+  const sobremesaCount = categories.find((c) => c.slug === "sobremesas")?.products.length ?? 0
+  const totalCount = categories
+    .filter((c) => c.slug !== "combos")
+    .reduce((s, c) => s + c.products.length, 0)
+
+  const STATS = [
+    { value: String(totalCount || 18), label: "itens no cardápio" },
+    { value: String(comboCount || 5), label: "combos" },
+    { value: String(sobremesaCount || 4), label: "sobremesas" },
+  ]
+
   const [activeIdx, setActiveIdx] = useState(0)
   const [layers, setLayers] = useState<{ a: string | null; b: string | null; front: "a" | "b" }>({
-    a: getItemBg(MENU_ITEMS[0]),
+    a: getItemBg(items[0]),
     b: null,
     front: "a",
   })
   const prevIdxRef = useRef(-1)
 
   useEffect(() => {
-    const t = setInterval(() => setActiveIdx((i) => (i + 1) % MENU_ITEMS.length), WHEEL_INTERVAL)
+    const t = setInterval(() => setActiveIdx((i) => (i + 1) % items.length), WHEEL_INTERVAL)
     return () => clearInterval(t)
-  }, [])
+  }, [items.length])
 
   useEffect(() => {
     if (prevIdxRef.current === activeIdx) return
     prevIdxRef.current = activeIdx
-    const bg = getItemBg(MENU_ITEMS[activeIdx])
+    const bg = getItemBg(items[activeIdx] ?? items[0])
     setLayers((prev) =>
       prev.front === "a" ? { a: prev.a, b: bg, front: "b" } : { a: bg, b: prev.b, front: "a" },
     )
-  }, [activeIdx])
+  }, [activeIdx, items])
 
   return (
     <aside
-      className="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex lg:w-[55%]"
+      className="mob-on-dark relative hidden flex-col justify-between overflow-hidden p-12 lg:flex lg:w-[55%]"
       style={{ background: "#0a0a0a" }}
     >
       {/* Background crossfade */}
@@ -217,7 +259,7 @@ export function AuthLeftPanel() {
           Hambúrgueres artesanais, combos exclusivos e muito sabor —&nbsp;tudo num só lugar.
         </p>
 
-        <FerrisWheel activeIdx={activeIdx} onSelect={setActiveIdx} />
+        <FerrisWheel items={items} activeIdx={activeIdx} onSelect={setActiveIdx} />
 
         <div className="mt-2 flex gap-2.5">
           {STATS.map(({ value, label }) => (

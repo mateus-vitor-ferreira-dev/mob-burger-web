@@ -107,8 +107,8 @@ export default function PedidoConfirmadoPage() {
         <div
           className="w-full max-w-md rounded-3xl p-10"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "var(--mob-s1)",
+            border: "1px solid var(--mob-b1)",
           }}
         >
           <div className="mb-6 flex justify-center">
@@ -152,7 +152,7 @@ export default function PedidoConfirmadoPage() {
     <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
       <div
         className="w-full max-w-md rounded-3xl p-8"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         {/* Ícone */}
         <div className="mb-6 flex justify-center">
@@ -192,8 +192,8 @@ export default function PedidoConfirmadoPage() {
             <div
               className="mb-4 space-y-1.5 rounded-2xl p-4 text-left"
               style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.07)",
+                background: "var(--mob-s1)",
+                border: "1px solid var(--mob-b1)",
               }}
             >
               {order.items.map((item) => (
@@ -206,7 +206,7 @@ export default function PedidoConfirmadoPage() {
               ))}
               <div
                 className="flex justify-between border-t pt-2 text-sm font-bold text-white"
-                style={{ borderColor: "rgba(255,255,255,0.07)" }}
+                style={{ borderColor: "var(--mob-b1)" }}
               >
                 <span>Total</span>
                 <span>{fmtPrice(order.totalPrice)}</span>

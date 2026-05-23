@@ -18,6 +18,9 @@ import {
   LogOut,
   Search,
   Camera,
+  ShoppingBag,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 import Image from "next/image"
 import { useCustomer } from "@/lib/customer-store"
@@ -99,7 +102,7 @@ function ProfileCard() {
   return (
     <div
       className="space-y-4 rounded-2xl p-6"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
     >
       <div className="flex items-center gap-2">
         <User className="h-4 w-4 text-orange-400" />
@@ -169,14 +172,15 @@ function ProfileCard() {
 // ─── Card: Endereço ───────────────────────────────────────────────────────────
 
 function AddressCard() {
-  const { customer, updateAddress } = useCustomer()
-  const [cep, setCep] = useState(customer?.address?.cep ?? "")
-  const [street, setStreet] = useState(customer?.address?.street ?? "")
-  const [number, setNumber] = useState(customer?.address?.number ?? "")
-  const [complement, setComplement] = useState(customer?.address?.complement ?? "")
-  const [neighborhood, setNeighborhood] = useState(customer?.address?.neighborhood ?? "")
-  const [city, setCity] = useState(customer?.address?.city ?? "")
-  const [state, setState] = useState(customer?.address?.state ?? "")
+  const { customer, token, updateAddress } = useCustomer()
+  const addr = customer?.address
+  const [cep, setCep] = useState(addr?.cep ?? "")
+  const [street, setStreet] = useState(addr?.street ?? "")
+  const [number, setNumber] = useState(addr?.number ?? "")
+  const [complement, setComplement] = useState(addr?.complement ?? "")
+  const [neighborhood, setNeighborhood] = useState(addr?.neighborhood ?? "")
+  const [city, setCity] = useState(addr?.city ?? "")
+  const [state, setState] = useState(addr?.state ?? "")
   const [cepLoading, setCepLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState<FeedbackState>(null)
@@ -202,20 +206,32 @@ function AddressCard() {
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
+    if (!token) return
     setSaving(true)
-    // Salva no store local (endereço no backend requer migração de schema)
-    updateAddress({ cep, street, number, complement, neighborhood, city, state })
-    setTimeout(() => {
-      setSaving(false)
+    setFeedback(null)
+    const address = { cep, street, number, complement, neighborhood, city, state }
+    try {
+      const r = await fetch("/api/auth/customer/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ defaultAddress: address }),
+      })
+      const json = await r.json()
+      if (!r.ok) throw new Error(json.error?.message ?? "Erro ao salvar")
+      updateAddress(address)
       setFeedback({ type: "success", message: "Endereço salvo!" })
-    }, 400)
+    } catch (e) {
+      setFeedback({ type: "error", message: e instanceof Error ? e.message : "Erro ao salvar" })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div
       className="space-y-4 rounded-2xl p-6"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
     >
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-orange-400" />
@@ -370,7 +386,7 @@ function PasswordCard() {
     return (
       <div
         className="rounded-2xl p-6"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <div className="mb-3 flex items-center gap-2">
           <Lock className="h-4 w-4 text-orange-400" />
@@ -446,7 +462,7 @@ function PasswordCard() {
   return (
     <div
       className="space-y-4 rounded-2xl p-6"
-      style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
     >
       <div className="flex items-center gap-2">
         <Lock className="h-4 w-4 text-orange-400" />
@@ -486,8 +502,8 @@ function PasswordCard() {
             disabled={loading || !current}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
             style={{
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              background: "var(--mob-b1)",
+              border: "1px solid var(--mob-b2)",
             }}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -566,7 +582,143 @@ function PasswordCard() {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Card: Histórico de pedidos ───────────────────────────────────────────────
+
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  AWAITING_PAYMENT: "Aguardando pagamento",
+  CONFIRMED: "Confirmado",
+  PREPARING: "Em preparo",
+  READY: "Pronto",
+  OUT_FOR_DELIVERY: "Saiu p/ entrega",
+  DELIVERED: "Entregue",
+  PICKED_UP: "Retirado",
+  CANCELLED: "Cancelado",
+}
+
+const ORDER_STATUS_COLOR: Record<string, string> = {
+  AWAITING_PAYMENT: "#f59e0b",
+  CONFIRMED: "#60a5fa",
+  PREPARING: "#f97316",
+  READY: "#a78bfa",
+  OUT_FOR_DELIVERY: "#22d3ee",
+  DELIVERED: "#4ade80",
+  PICKED_UP: "#4ade80",
+  CANCELLED: "#f87171",
+}
+
+function OrderHistoryCard() {
+  const { token } = useCustomer()
+  const [orders, setOrders] = useState<
+    {
+      id: string
+      orderNumber: number
+      status: string
+      totalPrice: number
+      createdAt: string
+      items: { quantity: number; product: { name: string } }[]
+    }[]
+  >([])
+  const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+    fetch("/api/backend/orders/my", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((json) => setOrders(json.data ?? []))
+      .finally(() => setLoading(false))
+  }, [token])
+
+  return (
+    <div
+      className="space-y-4 rounded-2xl p-6"
+      style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+    >
+      <div className="flex items-center gap-2">
+        <ShoppingBag className="h-4 w-4 text-orange-400" />
+        <h2 className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+          Meus pedidos
+        </h2>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+        </div>
+      ) : orders.length === 0 ? (
+        <p className="py-4 text-center text-sm text-white/25">Nenhum pedido ainda.</p>
+      ) : (
+        <div className="space-y-2">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="overflow-hidden rounded-xl"
+              style={{ background: "var(--mob-s2)", border: "1px solid var(--mob-b1)" }}
+            >
+              <button
+                onClick={() => setExpanded(expanded === order.id ? null : order.id)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left"
+              >
+                <span
+                  className="text-sm font-bold text-orange-400"
+                  style={{ fontFamily: "var(--font-bebas)", letterSpacing: "0.05em" }}
+                >
+                  #{String(order.orderNumber).padStart(4, "0")}
+                </span>
+                <span className="flex-1 truncate text-xs text-white/50">
+                  {order.items
+                    .map((i) => `${i.quantity}× ${i.product.name.replace(/^Mob /i, "")}`)
+                    .join(", ")}
+                </span>
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: ORDER_STATUS_COLOR[order.status] ?? "#888" }}
+                >
+                  {ORDER_STATUS_LABEL[order.status] ?? order.status}
+                </span>
+                <span className="text-xs font-bold text-white">
+                  R$ {order.totalPrice.toFixed(2).replace(".", ",")}
+                </span>
+                {expanded === order.id ? (
+                  <ChevronUp className="h-3.5 w-3.5 flex-none text-white/30" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 flex-none text-white/30" />
+                )}
+              </button>
+
+              {expanded === order.id && (
+                <div
+                  className="space-y-1 border-t px-4 py-3"
+                  style={{ borderColor: "var(--mob-b1)" }}
+                >
+                  {order.items.map((item, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between text-xs text-white/50"
+                    >
+                      <span>
+                        {item.quantity}× {item.product.name.replace(/^Mob /i, "")}
+                      </span>
+                    </div>
+                  ))}
+                  <p className="pt-1 text-[10px] text-white/20">
+                    {new Date(order.createdAt).toLocaleString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ─── Avatar com upload ────────────────────────────────────────────────────────
 
@@ -648,10 +800,32 @@ export default function PerfilPage() {
   const clearDelivery = useDelivery((s) => s.set)
   const [mounted, setMounted] = useState(false)
 
-   
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
+
+  // Carrega dados frescos do backend, incluindo endereço salvo
+  const {
+    setCustomer: setCustomerCtx,
+    token: customerToken,
+    updateAddress: syncAddress,
+  } = useCustomer()
+  useEffect(() => {
+    if (!mounted || !customerToken) return
+    fetch("/api/auth/customer/me", { headers: { Authorization: `Bearer ${customerToken}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        const c = json?.data?.customer
+        if (!c) return
+        setCustomerCtx(
+          { id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" },
+          customerToken,
+        )
+        if (c.defaultAddress) syncAddress(c.defaultAddress)
+      })
+      .catch(() => {})
+  }, [mounted]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (mounted && !customer) router.push("/login")
   }, [mounted, customer, router])
@@ -690,7 +864,7 @@ export default function PerfilPage() {
       {/* Avatar + info */}
       <div
         className="mb-6 rounded-2xl p-5"
-        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
         <div className="flex items-center gap-4">
           <AvatarUpload />
@@ -713,6 +887,7 @@ export default function PerfilPage() {
         <ProfileCard />
         <AddressCard />
         <PasswordCard />
+        <OrderHistoryCard />
       </div>
     </main>
   )

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { AuthLeftPanel } from "../_components/auth-left-panel"
 import { useCustomer } from "@/lib/customer-store"
+import { useStaff } from "@/lib/staff-store"
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -30,9 +31,10 @@ type ForgotData = z.infer<typeof forgotSchema>
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
 const INPUT =
-  "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-white " +
-  "focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 " +
-  "transition-all placeholder:text-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
+  "w-full rounded-xl px-4 py-3 text-sm text-white " +
+  "bg-white/[0.07] border border-white/15 " +
+  "focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/60 " +
+  "transition-all placeholder:text-white/25 disabled:opacity-60 disabled:cursor-not-allowed"
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null
@@ -41,15 +43,10 @@ function FieldError({ msg }: { msg?: string }) {
 
 function Divider() {
   return (
-    <div className="relative my-5">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-200" />
-      </div>
-      <div className="relative flex justify-center">
-        <span className="px-3 text-xs text-gray-400" style={{ background: "#fafaf8" }}>
-          ou use seu e-mail
-        </span>
-      </div>
+    <div className="my-5 flex items-center gap-3">
+      <div className="flex-1 border-t border-white/10" />
+      <span className="text-xs text-white/30">ou use seu e-mail</span>
+      <div className="flex-1 border-t border-white/10" />
     </div>
   )
 }
@@ -77,7 +74,7 @@ function GoogleButton({ onClick, disabled }: { onClick: () => void; disabled?: b
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <GoogleIcon />
       Entrar com Google
@@ -121,6 +118,7 @@ function Field({ children, delay = 0 }: { children: React.ReactNode; delay?: num
 export default function LoginPage() {
   const router = useRouter()
   const setCustomer = useCustomer((s) => s.setCustomer)
+  const setStaff = useStaff((s) => s.setStaff)
   const [showPwd, setShowPwd] = useState(false)
   const [forgotView, setForgotView] = useState<"hidden" | "form" | "sent">("hidden")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -163,25 +161,55 @@ export default function LoginPage() {
   const onLogin = loginForm.handleSubmit(async (data) => {
     setIsSubmitting(true)
     try {
-      const r = await fetch("/api/auth/customer/login", {
+      // Tenta login de cliente primeiro
+      const customerRes = await fetch("/api/auth/customer/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       })
-      const json = (await r.json().catch(() => ({}))) as {
+      const customerJson = (await customerRes.json().catch(() => ({}))) as {
         error?: { message?: string }
         data?: {
           customer?: { id: string; name: string; email: string; phone?: string }
           accessToken?: string
         }
       }
-      if (!r.ok) throw new Error(json.error?.message ?? "Credenciais inválidas")
-      const { customer: c, accessToken } = json.data ?? {}
-      if (c && accessToken) {
-        setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
+
+      if (customerRes.ok) {
+        const { customer: c, accessToken } = customerJson.data ?? {}
+        if (c && accessToken) {
+          setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
+        }
+        toast.success("Bem-vindo de volta! 🔥")
+        router.push("/")
+        return
       }
-      toast.success("Bem-vindo de volta! 🔥")
-      router.push("/")
+
+      // Se falhou, tenta login de staff (admin/atendente)
+      const staffRes = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const staffJson = (await staffRes.json().catch(() => ({}))) as {
+        error?: { message?: string }
+        data?: {
+          user?: { id: string; email: string; role: "ADMIN" | "ATTENDANT" }
+          accessToken?: string
+        }
+      }
+
+      if (staffRes.ok) {
+        const { user, accessToken } = staffJson.data ?? {}
+        if (user && accessToken) {
+          setStaff({ id: user.id, email: user.email, role: user.role }, accessToken)
+        }
+        toast.success("Bem-vindo ao painel! 🔥")
+        router.push("/admin")
+        return
+      }
+
+      throw new Error("E-mail ou senha inválidos")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao fazer login")
     } finally {
@@ -224,7 +252,7 @@ export default function LoginPage() {
 
         <main
           className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
-          style={{ background: "#fafaf8" }}
+          style={{ background: "transparent" }}
         >
           <div className="w-full max-w-[400px] py-8">
             {/* Mobile brand */}
@@ -236,7 +264,7 @@ export default function LoginPage() {
                 height={32}
                 className="rounded-lg object-cover"
               />
-              <span className="text-sm font-semibold tracking-wider">M.O.B</span>
+              <span className="text-sm font-semibold tracking-wider text-white">M.O.B</span>
             </div>
 
             {/* ── Forgot password ─────────────────────────────────── */}
@@ -247,21 +275,21 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setForgotView("hidden")}
-                      className="mb-8 flex items-center gap-1.5 text-xs text-gray-400 transition-colors hover:text-gray-600"
+                      className="mb-8 flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/70"
                     >
                       <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
                     </button>
                     <Field delay={0}>
                       <div className="mb-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Recuperar senha 🔑</h2>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <h2 className="text-2xl font-bold text-white">Recuperar senha 🔑</h2>
+                        <p className="mt-1 text-sm text-white/50">
                           Informe seu e-mail e enviaremos um link para redefinir sua senha.
                         </p>
                       </div>
                     </Field>
                     <form onSubmit={onForgot} className="space-y-4">
                       <Field delay={60}>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                        <label className="mb-1.5 block text-xs font-medium text-white/60">
                           E-mail
                         </label>
                         <input
@@ -288,9 +316,9 @@ export default function LoginPage() {
                     >
                       <CheckCircle2 className="h-8 w-8" style={{ color: "#f97316" }} />
                     </div>
-                    <h2 className="mb-2 text-xl font-bold text-gray-900">Link enviado!</h2>
-                    <p className="mb-1 text-sm text-gray-500">Verifique sua caixa de entrada em</p>
-                    <p className="mb-8 text-sm font-semibold text-gray-800">
+                    <h2 className="mb-2 text-xl font-bold text-white">Link enviado!</h2>
+                    <p className="mb-1 text-sm text-white/50">Verifique sua caixa de entrada em</p>
+                    <p className="mb-8 text-sm font-semibold text-white/80">
                       {forgotForm.getValues("email")}
                     </p>
                     <button
@@ -310,8 +338,8 @@ export default function LoginPage() {
               <div style={{ animation: "mob-slide-in 0.25s ease-out both" }}>
                 <Field delay={0}>
                   <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Bem-vindo de volta 🔥</h2>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <h2 className="text-2xl font-bold text-white">Bem-vindo de volta 🔥</h2>
+                    <p className="mt-1 text-sm text-white/50">
                       Acesse sua conta e faça seu pedido.
                     </p>
                   </div>
@@ -325,7 +353,7 @@ export default function LoginPage() {
 
                 <form onSubmit={onLogin} className="space-y-4">
                   <Field delay={120}>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-600">E-mail</label>
+                    <label className="mb-1.5 block text-xs font-medium text-white/60">E-mail</label>
                     <input
                       {...loginForm.register("email")}
                       type="email"
@@ -338,7 +366,7 @@ export default function LoginPage() {
 
                   <Field delay={160}>
                     <div className="mb-1.5 flex items-center justify-between">
-                      <label className="text-xs font-medium text-gray-600">Senha</label>
+                      <label className="text-xs font-medium text-white/60">Senha</label>
                       <button
                         type="button"
                         onClick={() => setForgotView("form")}
@@ -358,7 +386,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPwd((v) => !v)}
-                        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                        className="absolute top-3 right-3 text-white/30 hover:text-white/70"
                         aria-label="Alternar visibilidade"
                       >
                         {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -372,7 +400,7 @@ export default function LoginPage() {
                   </Field>
 
                   <Field delay={240}>
-                    <p className="text-center text-sm text-gray-500">
+                    <p className="text-center text-sm text-white/50">
                       Não tem conta?{" "}
                       <a
                         href="/register"

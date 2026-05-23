@@ -1,46 +1,25 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import useEmblaCarousel from "embla-carousel-react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
-import { MENU_ITEMS, COMBOS, DRINKS, DESSERTS } from "@/data/menu"
+import { useMenu } from "@/lib/use-menu"
 
-// ─── Card data ────────────────────────────────────────────────────────────────
+// ─── Imagem fallback por slug ────────────────────────────────────────────────
 
-const CATEGORY_CARDS = [
-  {
-    id: "burgers",
-    label: "Burgers",
-    sublabel: `${MENU_ITEMS.filter((i) => i.cat === "burger").length} itens`,
-    img: "/burgers/mob-beast.png",
-    href: "/cardapio?cat=burger",
-  },
-  {
-    id: "chicken",
-    label: "Chicken",
-    sublabel: `${MENU_ITEMS.filter((i) => i.cat === "chicken").length} itens`,
-    img: "/burgers/mob-chicken-full.png",
-    href: "/cardapio?cat=chicken",
-  },
-  {
-    id: "sobremesas",
-    label: "Sobremesas",
-    sublabel: `${DESSERTS.length} itens`,
-    img: "/burgers/sobremesa-mob-bombom-de-morango.png",
-    href: "/cardapio?cat=sobremesa",
-  },
-  {
-    id: "bebidas",
-    label: "Bebidas",
-    sublabel: `${DRINKS.length} itens`,
-    img: "/burgers/coca-cola.png",
-    href: "/cardapio?cat=bebida",
-  },
-]
+const FALLBACK_IMG: Record<string, string> = {
+  burgers: "/burgers/mob-beast.png",
+  chicken: "/burgers/mob-chicken-full.png",
+  sobremesas: "/burgers/sobremesa-mob-bombom-de-morango.png",
+  bebidas: "/burgers/coca-cola.png",
+  combos: "/burgers/combo-mob-combo-classico.png",
+  porcoes: "/burgers/batata-frita.png",
+  porções: "/burgers/batata-frita.png",
+}
 
-const COMBO_IMGS = [
+const COMBO_FALLBACK_IMGS = [
   "/burgers/combo-mob-combo-classico.png",
   "/burgers/combo-mob-combo-premium.png",
   "/burgers/combo-mob-combo-sweet.png",
@@ -58,25 +37,40 @@ interface MenuCardProps {
 }
 
 function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
+  const [imgOk, setImgOk] = useState(true)
+
   const inner = (
     <div
       className="group/card relative h-60 w-full overflow-hidden rounded-2xl transition-all duration-300 hover:scale-[1.025]"
       style={{
-        border: "1px solid rgba(255,255,255,0.10)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
+        border: "1px solid var(--mob-s3)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 var(--mob-s2)",
       }}
     >
       {/* Food photo */}
       <div className="absolute inset-x-0 top-0 z-1" style={{ bottom: 62 }}>
-        <Image
-          src={img}
-          alt={label}
-          fill
-          sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover/card:scale-[1.08]"
-          style={{ objectPosition: "center center" }}
-          unoptimized
-        />
+        {imgOk ? (
+          <Image
+            src={img}
+            alt={label}
+            fill
+            sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover/card:scale-[1.08]"
+            style={{ objectPosition: "center center" }}
+            unoptimized
+            onError={() => setImgOk(false)}
+          />
+        ) : (
+          <div
+            className="flex h-full w-full items-center justify-center"
+            style={{
+              background:
+                "radial-gradient(ellipse at 50% 60%, rgba(249,115,22,0.18) 0%, transparent 70%)",
+            }}
+          >
+            <span className="text-5xl opacity-30">🍽️</span>
+          </div>
+        )}
       </div>
 
       {/* Orange top accent */}
@@ -97,12 +91,12 @@ function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
 
       {/* Frosted glass text bar */}
       <div
-        className="absolute right-0 bottom-0 left-0 z-3 h-15.5 px-4 py-3"
+        className="mob-on-dark absolute right-0 bottom-0 left-0 z-3 h-15.5 px-4 py-3"
         style={{
           background: "rgba(10,8,6,0.72)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          borderTop: "1px solid rgba(255,255,255,0.08)",
+          borderTop: "1px solid var(--mob-b1)",
         }}
       >
         <p
@@ -140,6 +134,10 @@ function Carousel({
   children: React.ReactNode
   startDelay?: number
 }) {
+  const slides = React.Children.toArray(children)
+  // Com basis-1/3 (desktop), 3 slides = 100% — sem margem para clonar.
+  // Duplicamos 3× para garantir que o loop sempre funcione.
+  const loopSlides = slides.length <= 3 ? [...slides, ...slides, ...slides] : slides
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
     align: "start",
@@ -166,8 +164,6 @@ function Carousel({
     }
   }, [startDelay, paused])
 
-  const slides = React.Children.toArray(children)
-
   const arrowCls =
     "absolute top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/75 ring-1 ring-white/10 opacity-0 transition-all duration-200 group-hover:opacity-100 hover:bg-orange-600 hover:ring-orange-500/40 active:scale-90"
 
@@ -187,7 +183,7 @@ function Carousel({
 
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="-ml-4 flex touch-pan-x">
-          {slides.map((child, i) => (
+          {loopSlides.map((child, i) => (
             <div key={i} className="min-w-0 flex-none basis-[85%] pl-4 sm:basis-1/2 lg:basis-1/3">
               {child}
             </div>
@@ -231,11 +227,45 @@ function SectionTitle({ title }: { title: string }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+interface ComboCard {
+  id: string
+  name: string
+  price: string
+  img: string
+}
+
 export default function HomePage() {
+  const { categories } = useMenu()
+
+  const categoryCards = useMemo(
+    () =>
+      categories
+        .filter((c) => c.slug !== "combos")
+        .map((c) => ({
+          id: c.slug,
+          label: c.name,
+          sublabel: `${c.products.length} itens`,
+          img: FALLBACK_IMG[c.slug] ?? `/categories/${c.slug}.png`,
+          href: `/cardapio?cat=${c.slug}`,
+        })),
+    [categories],
+  )
+
+  const comboCards = useMemo((): ComboCard[] => {
+    const comboCat = categories.find((c) => c.slug === "combos")
+    if (!comboCat) return []
+    return comboCat.products.map((p, i) => ({
+      id: p.id,
+      name: p.name.replace(/^Mob /i, ""),
+      price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
+      img: p.imageUrl ?? COMBO_FALLBACK_IMGS[i] ?? COMBO_FALLBACK_IMGS[0],
+    }))
+  }, [categories])
+
   return (
     <main>
       {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="relative h-130 w-full overflow-hidden lg:h-145">
+      <section className="mob-on-dark relative h-130 w-full overflow-hidden lg:h-145">
         <Image
           src="/images/mob-banner.png"
           alt="MOB Burger"
@@ -293,7 +323,7 @@ export default function HomePage() {
         <section>
           <SectionTitle title="Categorias" />
           <Carousel startDelay={0}>
-            {CATEGORY_CARDS.map((cat) => (
+            {categoryCards.map((cat) => (
               <MenuCard
                 key={cat.id}
                 img={cat.img}
@@ -306,20 +336,22 @@ export default function HomePage() {
         </section>
 
         {/* ── Combos ─────────────────────────────────────────────── */}
-        <section>
-          <SectionTitle title="Combos da Casa" />
-          <Carousel startDelay={1750}>
-            {COMBOS.map((combo, i) => (
-              <MenuCard
-                key={combo.id}
-                img={COMBO_IMGS[i] ?? COMBO_IMGS[0]}
-                label={combo.name.replace("MOB ", "")}
-                sublabel={combo.price}
-                href="/cardapio?cat=combo"
-              />
-            ))}
-          </Carousel>
-        </section>
+        {comboCards.length > 0 && (
+          <section>
+            <SectionTitle title="Combos da Casa" />
+            <Carousel startDelay={1750}>
+              {comboCards.map((combo) => (
+                <MenuCard
+                  key={combo.id}
+                  img={combo.img}
+                  label={combo.name}
+                  sublabel={combo.price}
+                  href="/cardapio?cat=combos"
+                />
+              ))}
+            </Carousel>
+          </section>
+        )}
       </div>
 
       {/* ── Footer ───────────────────────────────────────────────── */}
