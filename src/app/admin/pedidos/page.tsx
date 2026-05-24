@@ -16,6 +16,9 @@ import {
   Bike,
   Phone,
   AlertTriangle,
+  Volume2,
+  VolumeX,
+  ShoppingBag,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
@@ -301,6 +304,12 @@ export default function PedidosPage() {
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null)
   const [assigning, setAssigning] = useState(false)
+  const [soundMuted, setSoundMuted] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("mob-admin-sound-muted") === "true",
+  )
+  const soundMutedRef = useRef(soundMuted)
+  const [newOrderToast, setNewOrderToast] = useState(false)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(() => {
     if (!token) return
@@ -341,6 +350,11 @@ export default function PedidosPage() {
   }, [loadDrivers])
 
   useEffect(() => {
+    soundMutedRef.current = soundMuted
+    localStorage.setItem("mob-admin-sound-muted", String(soundMuted))
+  }, [soundMuted])
+
+  useEffect(() => {
     setPage(1) // eslint-disable-line react-hooks/set-state-in-effect
   }, [statusFilter, dateFrom, dateTo])
 
@@ -374,7 +388,10 @@ export default function PedidosPage() {
             try {
               const evt = JSON.parse(line.slice(6))
               if (evt.type === "new_order") {
-                playNewOrderBeep()
+                if (!soundMutedRef.current) playNewOrderBeep()
+                if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+                setNewOrderToast(true)
+                toastTimerRef.current = setTimeout(() => setNewOrderToast(false), 6000)
                 load()
               } else if (evt.type === "status_update" && evt.order) {
                 setOrders((prev) => prev.map((o) => (o.id === evt.order.id ? evt.order : o)))
@@ -480,6 +497,30 @@ export default function PedidosPage() {
 
   return (
     <div className="p-6">
+      {/* Toast novo pedido */}
+      {newOrderToast && (
+        <div
+          className="fixed top-4 right-4 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-2xl"
+          style={{
+            background: "linear-gradient(135deg, #f97316, #ea580c)",
+            boxShadow: "0 8px 32px rgba(249,115,22,0.4)",
+            animation: "slideIn 0.3s ease",
+          }}
+        >
+          <ShoppingBag className="h-5 w-5 text-white" />
+          <div>
+            <p className="text-sm font-bold text-white">Novo pedido!</p>
+            <p className="text-xs text-white/80">Verifique a fila de pedidos</p>
+          </div>
+          <button
+            onClick={() => setNewOrderToast(false)}
+            className="ml-2 text-white/60 transition hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">Gestão</p>
@@ -531,6 +572,20 @@ export default function PedidosPage() {
               )}
             </button>
           )}
+
+          {/* Mute toggle */}
+          <button
+            onClick={() => setSoundMuted((v) => !v)}
+            className="flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-white/5"
+            style={{ color: soundMuted ? "rgba(255,255,255,0.25)" : "#f97316" }}
+            title={
+              soundMuted
+                ? "Som desativado — clique para ativar"
+                : "Som ativado — clique para silenciar"
+            }
+          >
+            {soundMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </button>
 
           {/* Indicador SSE */}
           <div className="flex items-center gap-1.5 rounded-xl px-3 py-2">

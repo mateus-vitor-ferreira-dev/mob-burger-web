@@ -11,7 +11,9 @@ import {
   Calendar,
   AlertTriangle,
   PackageSearch,
+  Trophy,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useStaff } from "@/lib/staff-store"
 
@@ -49,6 +51,11 @@ interface StockAlert {
   zeroStock: number
   lowStock: number
   items: { name: string; quantity: number; unit: string; minQuantity: number }[]
+}
+
+interface TopProduct {
+  product: { id: string; name: string; imageUrl: string | null; price: number }
+  quantity: number
 }
 
 function KpiCard({
@@ -106,6 +113,7 @@ export default function AdminDashboard() {
   const [to, setTo] = useState("")
   const [rangeActive, setRangeActive] = useState(false)
   const [stockAlert, setStockAlert] = useState<StockAlert | null>(null)
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([])
 
   useEffect(() => {
     if (!token) return
@@ -121,12 +129,16 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!token) return
-    fetch("/api/backend/admin/inventory/ingredients", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((json) => {
-        const all = json.data ?? []
+    Promise.all([
+      fetch("/api/backend/admin/inventory/ingredients", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+      fetch("/api/backend/admin/stats/top-products", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    ])
+      .then(([ingJson, topJson]) => {
+        const all = ingJson.data ?? []
         const zero = all.filter((i: { quantity: number }) => i.quantity === 0)
         const low = all.filter(
           (i: { quantity: number; minQuantity: number }) =>
@@ -134,12 +146,12 @@ export default function AdminDashboard() {
         )
         if (zero.length + low.length > 0) {
           setStockAlert({
-             
             zeroStock: zero.length,
             lowStock: low.length,
             items: [...zero, ...low].slice(0, 5),
           })
         }
+        setTopProducts(topJson.data ?? [])
       })
       .catch(() => {})
   }, [token])
@@ -371,6 +383,79 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Top produtos */}
+          {topProducts.length > 0 && (
+            <div
+              className="rounded-2xl p-5"
+              style={{
+                background: "var(--mob-s3)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: "1px solid var(--mob-s4)",
+              }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                  Mais vendidos
+                </p>
+                <Trophy className="h-4 w-4 text-orange-400" />
+              </div>
+              <div className="space-y-3">
+                {topProducts.map((tp, i) => {
+                  const max = topProducts[0]?.quantity ?? 1
+                  const pct = Math.round((tp.quantity / max) * 100)
+                  return (
+                    <div key={tp.product.id} className="flex items-center gap-3">
+                      <span className="w-4 flex-none text-right text-xs font-bold text-white/20">
+                        {i + 1}
+                      </span>
+                      <div className="relative h-8 w-8 flex-none overflow-hidden rounded-lg bg-black/30">
+                        {tp.product.imageUrl ? (
+                          <Image
+                            src={tp.product.imageUrl}
+                            alt={tp.product.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm opacity-40">
+                            🍔
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex items-center justify-between">
+                          <p className="truncate text-xs font-medium text-white">
+                            {tp.product.name.replace(/^Mob /i, "")}
+                          </p>
+                          <span className="ml-2 shrink-0 text-xs font-bold text-orange-400">
+                            {tp.quantity}×
+                          </span>
+                        </div>
+                        <div
+                          className="h-1 overflow-hidden rounded-full"
+                          style={{ background: "rgba(255,255,255,0.06)" }}
+                        >
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${pct}%`,
+                              background:
+                                i === 0
+                                  ? "linear-gradient(90deg, #f97316, #ea580c)"
+                                  : "rgba(249,115,22,0.4)",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Alerta de estoque */}
           {stockAlert && (
