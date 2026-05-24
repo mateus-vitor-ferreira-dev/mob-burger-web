@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import { Providers } from "@/components/providers"
@@ -14,7 +14,6 @@ export const metadata: Metadata = {
     "Hambúrgueres artesanais smashados na chapa. Combos exclusivos, ingredientes premium — feito na hora, sem frescura.",
   keywords: ["burger", "hamburguer", "smash burger", "artesanal", "mob burger", "delivery"],
   manifest: "/manifest.json",
-  themeColor: "#f97316",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "MOB Burger" },
   openGraph: {
     type: "website",
@@ -23,6 +22,10 @@ export const metadata: Metadata = {
     description: "Hambúrgueres artesanais smashados na chapa. Feito na hora, sem frescura.",
     images: [{ url: "/images/mob-banner.png", width: 1200, height: 630 }],
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#f97316",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

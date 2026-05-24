@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import {
@@ -16,10 +17,6 @@ import {
   Check,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
-}
 
 interface Category {
   id: string
@@ -648,13 +645,7 @@ export default function ProdutosPage() {
                       {/* Thumb */}
                       <div className="relative h-12 w-12 flex-none overflow-hidden rounded-xl bg-black/30">
                         {p.imageUrl ? (
-                          <Image
-                            src={p.imageUrl}
-                            alt={p.name}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
+                          <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-xl opacity-30">
                             🍔

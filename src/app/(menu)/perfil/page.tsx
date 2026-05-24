@@ -765,7 +765,7 @@ function AvatarUpload() {
         style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
       >
         {customer?.avatarUrl ? (
-          <Image src={customer.avatarUrl} alt="Avatar" fill className="object-cover" unoptimized />
+          <Image src={customer.avatarUrl} alt="Avatar" fill className="object-cover" />
         ) : (
           <span className="text-2xl font-bold text-white">{initials}</span>
         )}

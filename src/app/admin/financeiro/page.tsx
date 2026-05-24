@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useCallback, useEffect, useState } from "react"
 import {
   TrendingUp,
@@ -82,10 +83,6 @@ function monthRange(month: string) {
   const [year, m] = month.split("-").map(Number)
   const lastDay = new Date(year, m, 0).getDate()
   return { from: `${month}-01`, to: `${month}-${String(lastDay).padStart(2, "0")}T23:59:59` }
-}
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
 }
 
 const inputCls =

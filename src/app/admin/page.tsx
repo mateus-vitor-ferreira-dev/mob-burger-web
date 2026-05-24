@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import {
   TrendingUp,
@@ -10,10 +11,6 @@ import {
   Calendar,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
-}
 
 const STATUS_LABEL: Record<string, string> = {
   AWAITING_PAYMENT: "Aguardando pagamento",

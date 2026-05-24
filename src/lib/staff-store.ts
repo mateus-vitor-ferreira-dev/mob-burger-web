@@ -24,7 +24,7 @@ export const useStaff = create<StaffStore>()(
       logout: () => {
         set({ staff: null, token: null })
         if (typeof document !== "undefined") {
-          document.cookie = "mob-admin=; path=/; max-age=0; SameSite=Strict"
+          document.cookie = `mob-admin=; path=/; max-age=0; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}`
         }
       },
       isLoggedIn: () => !!get().token,

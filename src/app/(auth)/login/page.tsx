@@ -203,6 +203,7 @@ export default function LoginPage() {
         const { user, accessToken } = staffJson.data ?? {}
         if (user && accessToken) {
           setStaff({ id: user.id, email: user.email, role: user.role }, accessToken)
+          document.cookie = `mob-admin=1; path=/; max-age=${60 * 60 * 8}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}` // eslint-disable-line react-hooks/immutability
         }
         toast.success("Bem-vindo ao painel! 🔥")
         router.push("/admin")

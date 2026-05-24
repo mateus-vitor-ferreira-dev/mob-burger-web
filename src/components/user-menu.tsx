@@ -17,13 +17,7 @@ export function UserMenu() {
       title={customer ? "Minha conta" : "Entrar"}
     >
       {customer?.avatarUrl ? (
-        <Image
-          src={customer.avatarUrl}
-          alt={customer.name}
-          fill
-          className="object-cover"
-          unoptimized
-        />
+        <Image src={customer.avatarUrl} alt={customer.name} fill className="object-cover" />
       ) : customer ? (
         <span className="text-xs font-bold text-orange-400">
           {customer.name.split(" ")[0][0].toUpperCase()}

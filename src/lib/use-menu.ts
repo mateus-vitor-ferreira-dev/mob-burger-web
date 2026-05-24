@@ -18,6 +18,7 @@ export interface MenuProduct {
   description: string | null
   price: number
   imageUrl: string | null
+  inStock: boolean
   options: MenuOption[]
 }
 export interface MenuCategory {

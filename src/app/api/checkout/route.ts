@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
-// Stripe SDK types lag behind the latest API version — cast is safe here
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  apiVersion: "2026-03-25.dahlia" as any,
-})
-
 interface CartItem {
   id: string
   name: string
@@ -15,6 +9,14 @@ interface CartItem {
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return NextResponse.json({ error: "Pagamento não configurado" }, { status: 503 })
+  }
+  const stripe = new Stripe(
+    process.env.STRIPE_SECRET_KEY,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { apiVersion: "2026-03-25.dahlia" as any },
+  )
   try {
     const { items } = (await req.json()) as { items: CartItem[] }
 

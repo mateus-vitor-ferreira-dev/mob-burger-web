@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       const { user, accessToken } = json.data ?? {}
       if (user && accessToken) {
         setStaff({ id: user.id, email: user.email, role: user.role }, accessToken)
-        document.cookie = `mob-admin=1; path=/; max-age=${60 * 60 * 8}; SameSite=Strict`
+        document.cookie = `mob-admin=1; path=/; max-age=${60 * 60 * 8}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}`
         router.replace("/admin")
       }
     } catch (err) {

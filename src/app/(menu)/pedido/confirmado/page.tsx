@@ -1,14 +1,11 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CheckCircle, ArrowRight, Loader2, XCircle, Clock } from "lucide-react"
 import { useCart } from "@/lib/cart-store"
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
-}
 
 interface OrderData {
   id: string

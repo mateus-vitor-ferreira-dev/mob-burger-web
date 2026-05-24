@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -24,10 +25,6 @@ import {
 import { useCart, type CartItem as CartItemType } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
 import { useCustomer } from "@/lib/customer-store"
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
-}
 
 function maskPhone(v: string) {
   return v
@@ -57,9 +54,7 @@ function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
     >
       {/* Imagem */}
       <div className="relative h-20 w-20 flex-none overflow-hidden rounded-xl bg-black/30">
-        {entry.img && (
-          <Image src={entry.img} alt={entry.name} fill className="object-cover" unoptimized />
-        )}
+        {entry.img && <Image src={entry.img} alt={entry.name} fill className="object-cover" />}
       </div>
 
       {/* Info */}

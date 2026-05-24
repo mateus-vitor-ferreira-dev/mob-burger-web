@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { Suspense, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
@@ -32,6 +33,7 @@ interface MenuItem {
   priceNum: number
   img: string | null
   cat: string
+  inStock: boolean
   options: ProductOption[]
 }
 
@@ -40,10 +42,43 @@ interface MenuCategory {
   name: string
 }
 
-// ─── Utilitário ───────────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
+function ProductCardSkeleton() {
+  return (
+    <div
+      className="flex flex-col overflow-hidden rounded-2xl"
+      style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+    >
+      <div className="h-48 w-full animate-pulse" style={{ background: "var(--mob-s2)" }} />
+      <div className="flex flex-col gap-3 p-4">
+        <div
+          className="h-5 w-3/4 animate-pulse rounded-lg"
+          style={{ background: "var(--mob-s2)" }}
+        />
+        <div className="space-y-1.5">
+          <div
+            className="h-3 w-full animate-pulse rounded"
+            style={{ background: "var(--mob-s2)" }}
+          />
+          <div
+            className="h-3 w-2/3 animate-pulse rounded"
+            style={{ background: "var(--mob-s2)" }}
+          />
+        </div>
+        <div className="mt-1 flex items-center justify-between">
+          <div
+            className="h-5 w-16 animate-pulse rounded-lg"
+            style={{ background: "var(--mob-s2)" }}
+          />
+          <div
+            className="h-8 w-8 animate-pulse rounded-xl"
+            style={{ background: "var(--mob-s2)" }}
+          />
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── OptionsModal ─────────────────────────────────────────────────────────────
@@ -209,6 +244,7 @@ function ProductCard({ item }: { item: MenuItem }) {
   const increment = useCart((s) => s.increment)
   const decrement = useCart((s) => s.decrement)
   const [showModal, setShowModal] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
   // Para produtos sem opções, a entrada no carrinho usa item.id diretamente
   const entry = items.find((i) => i.productId === item.id && !i.options?.length)
 
@@ -273,14 +309,25 @@ function ProductCard({ item }: { item: MenuItem }) {
         {/* Imagem */}
         <div className="relative h-48 w-full overflow-hidden bg-black/30">
           {item.img ? (
-            <Image
-              src={item.img}
-              alt={item.name}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-500 group-hover/card:scale-[1.06]"
-              unoptimized
-            />
+            <>
+              {!imgLoaded && (
+                <div
+                  className="absolute inset-0 animate-pulse"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(249,115,22,0.07) 0%, rgba(10,8,6,0.9) 100%)",
+                  }}
+                />
+              )}
+              <Image
+                src={item.img}
+                alt={item.name}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className={`object-cover transition-all duration-500 group-hover/card:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"} ${!item.inStock ? "brightness-50" : ""}`}
+                onLoad={() => setImgLoaded(true)}
+              />
+            </>
           ) : (
             <div
               className="flex h-full w-full items-center justify-center"
@@ -290,6 +337,19 @@ function ProductCard({ item }: { item: MenuItem }) {
               }}
             >
               <span className="text-6xl opacity-40">🍔</span>
+            </div>
+          )}
+          {!item.inStock && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span
+                className="rounded-full px-3 py-1 text-xs font-bold tracking-widest text-white uppercase"
+                style={{
+                  background: "rgba(0,0,0,0.7)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
+              >
+                Esgotado
+              </span>
             </div>
           )}
         </div>
@@ -314,9 +374,15 @@ function ProductCard({ item }: { item: MenuItem }) {
           )}
 
           <div className="mt-auto flex items-center justify-between pt-2">
-            <span className="text-base font-bold text-orange-400">{item.price}</span>
+            <span
+              className={`text-base font-bold ${item.inStock ? "text-orange-400" : "text-white/30"}`}
+            >
+              {item.price}
+            </span>
 
-            {entry && !hasOptions ? (
+            {!item.inStock ? (
+              <span className="text-xs font-semibold text-white/30">Indisponível</span>
+            ) : entry && !hasOptions ? (
               <div
                 className="flex items-center gap-2 rounded-xl px-2 py-1"
                 style={{
@@ -430,13 +496,7 @@ function CartDrawer() {
                 >
                   <div className="relative h-14 w-14 flex-none overflow-hidden rounded-lg bg-black/30">
                     {entry.img && (
-                      <Image
-                        src={entry.img}
-                        alt={entry.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
+                      <Image src={entry.img} alt={entry.name} fill className="object-cover" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -552,6 +612,7 @@ function CardapioContent() {
           priceNum: p.price,
           img: p.imageUrl,
           cat: cat.slug,
+          inStock: p.inStock ?? true,
           options: (p.options ?? []) as ProductOption[],
         })),
       ),
@@ -700,11 +761,7 @@ function CardapioContent() {
         {menuLoading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="h-72 animate-pulse rounded-2xl"
-                style={{ background: "var(--mob-s1)" }}
-              />
+              <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : filtered.length === 0 ? (

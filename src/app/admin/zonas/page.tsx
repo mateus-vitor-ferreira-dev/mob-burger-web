@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useCallback, useEffect, useState } from "react"
 import {
   Plus,
@@ -13,10 +14,6 @@ import {
   Download,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
-}
 
 interface Zone {
   id: string

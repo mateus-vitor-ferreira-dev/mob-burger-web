@@ -35,10 +35,12 @@ interface MenuCardProps {
   label: string
   sublabel: string
   href?: string
+  priority?: boolean
 }
 
-function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
+function MenuCard({ img, label, sublabel, href, priority = false }: MenuCardProps) {
   const [imgOk, setImgOk] = useState(true)
+  const [imgLoaded, setImgLoaded] = useState(false)
 
   const inner = (
     <div
@@ -50,15 +52,26 @@ function MenuCard({ img, label, sublabel, href }: MenuCardProps) {
     >
       {/* Food photo */}
       <div className="absolute inset-x-0 top-0 z-1" style={{ bottom: 62 }}>
+        {/* Shimmer enquanto a imagem carrega */}
+        {!imgLoaded && imgOk && (
+          <div
+            className="absolute inset-0 animate-pulse"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(249,115,22,0.07) 0%, rgba(10,8,6,0.9) 100%)",
+            }}
+          />
+        )}
         {imgOk ? (
           <Image
             src={img}
             alt={label}
             fill
             sizes="(max-width: 640px) 85vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover/card:scale-[1.08]"
+            className={`object-cover transition-all duration-500 group-hover/card:scale-[1.08] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
             style={{ objectPosition: "center center" }}
-            unoptimized
+            priority={priority}
+            onLoad={() => setImgLoaded(true)}
             onError={() => setImgOk(false)}
           />
         ) : (
@@ -324,13 +337,14 @@ export default function HomePage() {
         <section>
           <SectionTitle title="Categorias" />
           <Carousel startDelay={0}>
-            {categoryCards.map((cat) => (
+            {categoryCards.map((cat, i) => (
               <MenuCard
                 key={cat.id}
                 img={cat.img}
                 label={cat.label}
                 sublabel={cat.sublabel}
                 href={cat.href}
+                priority={i < 3}
               />
             ))}
           </Carousel>

@@ -15,6 +15,7 @@ import {
   Bike,
   Ticket,
   TrendingUp,
+  PackageSearch,
   LogOut,
   Menu,
   X,
@@ -47,6 +48,7 @@ const NAV = [
   { href: "/admin/entregadores", icon: Bike, label: "Entregadores" },
   { href: "/admin/cupons", icon: Ticket, label: "Cupons" },
   { href: "/admin/financeiro", icon: TrendingUp, label: "Financeiro" },
+  { href: "/admin/estoque", icon: PackageSearch, label: "Estoque" },
   { href: "/admin/staff", icon: Users, label: "Equipe" },
   { href: "/admin/config", icon: Settings, label: "Config." },
 ]
@@ -62,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
   useEffect(() => {
-    if (mounted && !token) router.push("/login")
+    if (mounted && !token) router.push("/admin/login")
   }, [mounted, token, router])
 
   if (!mounted) return null

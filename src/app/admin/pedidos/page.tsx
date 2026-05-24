@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Search,
@@ -73,9 +74,6 @@ function playNewOrderBeep() {
   }
 }
 
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
-}
 function fmtDate(d: string) {
   return new Date(d).toLocaleString("pt-BR", {
     day: "2-digit",

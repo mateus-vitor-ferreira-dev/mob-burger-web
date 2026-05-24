@@ -1,5 +1,6 @@
 "use client"
 
+import { fmtPrice } from "@/lib/utils"
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -51,10 +52,6 @@ const STRIPE_APPEARANCE = {
     },
     ".Tab:hover": { backgroundColor: "var(--mob-s2)" },
   },
-}
-
-function fmtPrice(n: number) {
-  return `R$ ${n.toFixed(2).replace(".", ",")}`
 }
 
 // ─── Steps ────────────────────────────────────────────────────────────────────

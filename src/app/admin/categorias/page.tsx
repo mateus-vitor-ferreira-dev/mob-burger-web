@@ -409,7 +409,6 @@ export default function CategoriasPage() {
                     alt={cat.name}
                     fill
                     className="object-cover"
-                    unoptimized
                     onError={(e) => {
                       ;(e.target as HTMLImageElement).style.display = "none"
                     }}
