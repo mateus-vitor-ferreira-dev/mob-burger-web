@@ -26,7 +26,7 @@ interface OrderTracking {
   totalPrice: number
   createdAt: string
   customer: { id: string; name: string }
-  items: { id: string; quantity: number; product: { name: string } }[]
+  items: { id: string; quantity: number; observations?: string; product: { name: string } }[]
   delivery?: { street: string; number: string; neighborhood: string }
 }
 
@@ -342,11 +342,16 @@ export default function AcompanharPage() {
           Itens do pedido
         </p>
         {order.items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between text-sm">
-            <span className="text-white/70">
-              <span className="font-bold text-orange-400">{item.quantity}×</span>{" "}
-              {item.product.name.replace(/^Mob /i, "")}
-            </span>
+          <div key={item.id} className="space-y-0.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-white/70">
+                <span className="font-bold text-orange-400">{item.quantity}×</span>{" "}
+                {item.product.name.replace(/^Mob /i, "")}
+              </span>
+            </div>
+            {item.observations && (
+              <p className="text-xs text-amber-400/70">↳ {item.observations}</p>
+            )}
           </div>
         ))}
         <div

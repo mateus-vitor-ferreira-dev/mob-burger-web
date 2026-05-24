@@ -139,6 +139,7 @@ interface OrderItem {
   id: string
   quantity: number
   unitPrice: number
+  observations?: string
   product: { name: string }
 }
 interface Order {
@@ -170,10 +171,12 @@ function browserPrint(order: Order) {
       ? `<div><b>Endereço:</b> ${order.delivery.street}, ${order.delivery.number}${order.delivery.complement ? ` - ${order.delivery.complement}` : ""} — ${order.delivery.neighborhood}</div>`
       : "",
     `<hr style="border-top:1px dashed #000;margin:6px 0"/>`,
-    ...order.items.map(
-      (item) =>
-        `<div style="display:flex;justify-content:space-between"><span>${item.quantity}x ${item.product.name.replace("MOB ", "")}</span><span>${fmtPrice(item.unitPrice * item.quantity)}</span></div>`,
-    ),
+    ...order.items.flatMap((item) => [
+      `<div style="display:flex;justify-content:space-between"><span>${item.quantity}x ${item.product.name.replace("MOB ", "")}</span><span>${fmtPrice(item.unitPrice * item.quantity)}</span></div>`,
+      item.observations
+        ? `<div style="font-size:10px;color:#666;padding-left:12px;margin-top:-2px">↳ ${item.observations}</div>`
+        : "",
+    ]),
     `<hr style="border-top:1px dashed #000;margin:6px 0"/>`,
     `<div style="display:flex;justify-content:space-between;font-weight:bold;font-size:13px"><span>TOTAL</span><span>${fmtPrice(order.totalPrice)}</span></div>`,
     `<div style="text-align:center;margin-top:8px;font-size:10px">Obrigado pela preferência!</div>`,
@@ -787,11 +790,20 @@ export default function PedidosPage() {
                 {/* Cliente + itens */}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white">{order.customer.name}</p>
-                  <p className="truncate text-xs text-white/40">
-                    {order.items
-                      .map((i) => `${i.quantity}× ${i.product.name.replace("MOB ", "")}`)
-                      .join(", ")}
-                  </p>
+                  <div className="space-y-0.5">
+                    {order.items.map((i) => (
+                      <div key={i.id}>
+                        <p className="truncate text-xs text-white/40">
+                          {i.quantity}× {i.product.name.replace("MOB ", "")}
+                        </p>
+                        {i.observations && (
+                          <p className="truncate text-[10px] text-amber-400/70">
+                            ↳ {i.observations}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Total */}
