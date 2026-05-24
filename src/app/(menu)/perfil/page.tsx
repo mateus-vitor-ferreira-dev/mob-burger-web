@@ -917,7 +917,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10 pb-16">
+    <main className="mx-auto max-w-5xl px-6 py-10 pb-16">
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
         <Link
@@ -938,7 +938,7 @@ export default function PerfilPage() {
         </h1>
       </div>
 
-      {/* Avatar + info */}
+      {/* Avatar + info — full width */}
       <div
         className="mb-6 rounded-2xl p-5"
         style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
@@ -959,13 +959,19 @@ export default function PerfilPage() {
         </div>
       </div>
 
-      {/* Cards */}
-      <div className="space-y-4">
-        <ProfileCard />
-        <AddressCard />
-        <PasswordCard />
-        <PushNotificationCard />
-        <OrderHistoryCard />
+      {/* Cards — 2 colunas no desktop */}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-6">
+        {/* Coluna esquerda: dados pessoais, senha, notificações */}
+        <div className="space-y-4">
+          <ProfileCard />
+          <PasswordCard />
+          <PushNotificationCard />
+        </div>
+        {/* Coluna direita: endereço, histórico */}
+        <div className="space-y-4">
+          <AddressCard />
+          <OrderHistoryCard />
+        </div>
       </div>
     </main>
   )
