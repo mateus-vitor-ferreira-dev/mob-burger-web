@@ -11,11 +11,27 @@ import {
   AlertCircle,
   Package,
   ImageIcon,
+  GripVertical,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { categoryImageUrl } from "@/lib/cloudinary-utils"
 import { useStaff } from "@/lib/staff-store"
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 interface Category {
   id: string
@@ -42,6 +58,97 @@ function slugify(v: string) {
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
+}
+
+function SortableCategoryRow({
+  cat,
+  onEdit,
+  onDelete,
+  deleting,
+}: {
+  cat: Category
+  onEdit: (c: Category) => void
+  onDelete: (c: Category) => void
+  deleting: string | null
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: cat.id,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+  const imgSrc = categoryImageUrl(cat.slug)
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-4 rounded-2xl px-4 py-3.5"
+      {...attributes}
+    >
+      {/* Drag handle */}
+      <button
+        {...listeners}
+        className="flex-none cursor-grab text-white/20 hover:text-white/50 active:cursor-grabbing"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      {/* Thumbnail */}
+      <div className="relative h-10 w-10 flex-none overflow-hidden rounded-lg bg-white/5">
+        <Image
+          src={imgSrc}
+          alt={cat.name}
+          fill
+          className="object-cover"
+          onError={(e) => {
+            ;(e.target as HTMLImageElement).style.display = "none"
+          }}
+        />
+      </div>
+      <span className="w-6 text-center text-xs font-bold text-white/30">#{cat.position}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/admin/produtos?cat=${cat.id}`}
+            className="text-sm font-semibold text-white transition hover:text-orange-400"
+          >
+            {cat.name}
+          </Link>
+          {!cat.active && (
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/40">
+              inativa
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-white/30">/{cat.slug}</p>
+      </div>
+      <div className="flex items-center gap-1 text-xs text-white/30">
+        <Package className="h-3.5 w-3.5" />
+        {cat._count?.products ?? 0}
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => onEdit(cat)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => onDelete(cat)}
+          disabled={deleting === cat.id || (cat._count?.products ?? 0) > 0}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
+          title={(cat._count?.products ?? 0) > 0 ? "Remova os produtos primeiro" : "Excluir"}
+        >
+          {deleting === cat.id ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="h-3.5 w-3.5" />
+          )}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function CategoriasPage() {
@@ -162,6 +269,25 @@ export default function CategoriasPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = categories.findIndex((c) => c.id === active.id)
+    const newIndex = categories.findIndex((c) => c.id === over.id)
+    const reordered = arrayMove(categories, oldIndex, newIndex).map((c, i) => ({
+      ...c,
+      position: i + 1,
+    }))
+    setCategories(reordered)
+    await fetch("/api/backend/admin/categories/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(reordered.map((c) => ({ id: c.id, position: c.position }))),
+    })
   }
 
   async function handleDelete(cat: Category) {
@@ -392,77 +518,28 @@ export default function CategoriasPage() {
       ) : categories.length === 0 ? (
         <div className="py-16 text-center text-sm text-white/25">Nenhuma categoria cadastrada.</div>
       ) : (
-        <div className="space-y-2">
-          {categories.map((cat) => {
-            // Tenta imagem salva para essa categoria
-            const imgSrc = categoryImageUrl(cat.slug)
-            return (
-              <div
-                key={cat.id}
-                className="flex items-center gap-4 rounded-2xl px-4 py-3.5"
-                style={{ background: "var(--mob-s2)", border: "1px solid var(--mob-b1)" }}
-              >
-                {/* Thumbnail */}
-                <div className="relative h-10 w-10 flex-none overflow-hidden rounded-lg bg-white/5">
-                  <Image
-                    src={imgSrc}
-                    alt={cat.name}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).style.display = "none"
-                    }}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={categories.map((c) => c.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div
+              className="overflow-hidden rounded-2xl"
+              style={{ background: "var(--mob-s2)", border: "1px solid var(--mob-b1)" }}
+            >
+              {categories.map((cat) => (
+                <div key={cat.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <SortableCategoryRow
+                    cat={cat}
+                    onEdit={startEdit}
+                    onDelete={handleDelete}
+                    deleting={deleting}
                   />
                 </div>
-                <span className="w-6 text-center text-xs font-bold text-white/30">
-                  #{cat.position}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/admin/produtos?cat=${cat.id}`}
-                      className="text-sm font-semibold text-white transition hover:text-orange-400"
-                    >
-                      {cat.name}
-                    </Link>
-                    {!cat.active && (
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/40">
-                        inativa
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-white/30">/{cat.slug}</p>
-                </div>
-                <div className="flex items-center gap-1 text-xs text-white/30">
-                  <Package className="h-3.5 w-3.5" />
-                  {cat._count?.products ?? 0}
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => startEdit(cat)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(cat)}
-                    disabled={deleting === cat.id || (cat._count?.products ?? 0) > 0}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
-                    title={
-                      (cat._count?.products ?? 0) > 0 ? "Remova os produtos primeiro" : "Excluir"
-                    }
-                  >
-                    {deleting === cat.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   )

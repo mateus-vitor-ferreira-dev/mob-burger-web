@@ -18,6 +18,15 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react"
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 import { useStaff } from "@/lib/staff-store"
 
 interface ExpenseItem {
@@ -96,11 +105,17 @@ const inputStyle = {
 
 const EMPTY_FORM: ExpenseForm = { name: "", type: "FIXED", amount: "", items: [] }
 
+interface DailyRevenue {
+  day: string
+  revenue: number
+}
+
 export default function FinanceiroPage() {
   const { token } = useStaff()
   const [month, setMonth] = useState(currentMonthStr())
   const [revenue, setRevenue] = useState<number | null>(null)
   const [revenueLoading, setRevenueLoading] = useState(false)
+  const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [expLoading, setExpLoading] = useState(false)
   const [error, setError] = useState("")
@@ -130,11 +145,18 @@ export default function FinanceiroPage() {
     if (!token) return
     setRevenueLoading(true)
     const { from, to } = monthRange(month)
-    const r = await fetch(`/api/backend/admin/stats?from=${from}&to=${to}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    const json = await r.json()
-    setRevenue(json.data?.revenue?.range ?? json.data?.revenue?.month ?? 0)
+    const [statsRes, dailyRes] = await Promise.all([
+      fetch(`/api/backend/admin/stats?from=${from}&to=${to}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`/api/backend/admin/stats/daily?month=${month}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    ])
+    const statsJson = await statsRes.json()
+    const dailyJson = await dailyRes.json()
+    setRevenue(statsJson.data?.revenue?.range ?? statsJson.data?.revenue?.month ?? 0)
+    setDailyRevenue(dailyJson.data ?? [])
     setRevenueLoading(false)
   }, [token, month])
 
@@ -423,6 +445,63 @@ export default function FinanceiroPage() {
           <p className="mt-0.5 text-xs text-white/30">faturamento − despesas</p>
         </div>
       </div>
+
+      {/* Gráfico de receita diária */}
+      {dailyRevenue.length > 0 && dailyRevenue.some((d) => d.revenue > 0) && (
+        <div
+          className="mb-6 rounded-2xl p-5"
+          style={{ background: "var(--mob-s3)", border: "1px solid var(--mob-s4)" }}
+        >
+          <p className="mb-4 text-xs font-semibold tracking-widest text-white/30 uppercase">
+            Receita por dia — {monthLabel(month)}
+          </p>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={dailyRevenue.map((d) => ({ ...d, day: d.day.slice(8) }))}>
+              <defs>
+                <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis
+                dataKey="day"
+                tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                interval={Math.floor(dailyRevenue.length / 8)}
+              />
+              <YAxis
+                tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => `R$${v}`}
+                width={52}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "#1a1815",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 12,
+                  color: "#fff",
+                  fontSize: 12,
+                }}
+                formatter={(v: number) => [fmtPrice(v), "Receita"]}
+                labelFormatter={(l) => `Dia ${l}`}
+              />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="#f97316"
+                strokeWidth={2}
+                fill="url(#revGrad)"
+                dot={false}
+                activeDot={{ r: 4, fill: "#f97316" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Form inline */}
       {showForm && (

@@ -21,11 +21,14 @@ import {
   ShoppingBag,
   ChevronDown,
   ChevronUp,
+  Bell,
+  BellOff,
 } from "lucide-react"
 import Image from "next/image"
 import { useCustomer } from "@/lib/customer-store"
 import { useCart } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
+import { subscribePush, unsubscribePush, getPushState } from "@/lib/push"
 
 function maskPhone(v: string) {
   return v
@@ -791,6 +794,80 @@ function AvatarUpload() {
   )
 }
 
+// ─── Card: Notificações push ──────────────────────────────────────────────────
+
+function PushNotificationCard() {
+  const { token } = useCustomer()
+  const [state, setState] = useState<
+    "unsupported" | "denied" | "subscribed" | "prompt" | "loading"
+  >("loading")
+
+  useEffect(() => {
+    getPushState().then(setState)
+  }, [])
+
+  async function handleToggle() {
+    if (!token) return
+    if (state === "subscribed") {
+      await unsubscribePush(token)
+      setState("prompt")
+    } else {
+      setState("loading")
+      const ok = await subscribePush(token)
+      setState(ok ? "subscribed" : await getPushState())
+    }
+  }
+
+  if (state === "unsupported") return null
+
+  return (
+    <div
+      className="rounded-2xl p-5"
+      style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4 text-orange-400" />
+            <p className="text-sm font-semibold text-white">Notificações de pedido</p>
+          </div>
+          <p className="mt-1 text-xs text-white/40">
+            {state === "denied"
+              ? "Notificações bloqueadas. Habilite nas configurações do navegador."
+              : state === "subscribed"
+                ? "Você receberá avisos quando o pedido estiver pronto ou saindo para entrega."
+                : "Ative para receber avisos quando seu pedido estiver pronto."}
+          </p>
+        </div>
+        <button
+          onClick={handleToggle}
+          disabled={state === "denied" || state === "loading"}
+          className="flex flex-none items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition disabled:opacity-40"
+          style={
+            state === "subscribed"
+              ? { background: "rgba(249,115,22,0.15)", color: "#f97316" }
+              : state === "denied"
+                ? { background: "rgba(239,68,68,0.1)", color: "#f87171" }
+                : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }
+          }
+        >
+          {state === "loading" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : state === "subscribed" ? (
+            <>
+              <BellOff className="h-3.5 w-3.5" /> Desativar
+            </>
+          ) : (
+            <>
+              <Bell className="h-3.5 w-3.5" /> Ativar
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PerfilPage() {
@@ -887,6 +964,7 @@ export default function PerfilPage() {
         <ProfileCard />
         <AddressCard />
         <PasswordCard />
+        <PushNotificationCard />
         <OrderHistoryCard />
       </div>
     </main>

@@ -15,8 +15,24 @@ import {
   Loader2,
   Settings2,
   Check,
+  GripVertical,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 interface Category {
   id: string
@@ -255,6 +271,198 @@ function ProductOptions({ productId, token }: { productId: string; token: string
         </button>
       </div>
     </div>
+  )
+}
+
+// ─── Sortable product row ─────────────────────────────────────────────────────
+
+function SortableProductRow({
+  p,
+  token,
+  toggling,
+  deleting,
+  expandedOptions,
+  draggable,
+  onToggle,
+  onEdit,
+  onOptions,
+  onDelete,
+}: {
+  p: Product
+  token: string
+  toggling: string | null
+  deleting: string | null
+  expandedOptions: string | null
+  draggable: boolean
+  onToggle: (id: string) => void
+  onEdit: (p: Product) => void
+  onOptions: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: p.id,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        className="flex items-center gap-3 rounded-2xl p-3 transition"
+        style={{
+          background: "var(--mob-s3)",
+          border: "1px solid var(--mob-s4)",
+          opacity: p.active ? 1 : 0.5,
+        }}
+      >
+        {draggable && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="flex-none cursor-grab touch-none text-white/20 hover:text-white/50 active:cursor-grabbing"
+            tabIndex={-1}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        )}
+        <div className="relative h-12 w-12 flex-none overflow-hidden rounded-xl bg-black/30">
+          {p.imageUrl ? (
+            <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xl opacity-30">
+              🍔
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">{p.name}</p>
+          {p.description && <p className="truncate text-xs text-white/30">{p.description}</p>}
+        </div>
+        <span className="shrink-0 text-sm font-bold text-orange-400">{fmtPrice(p.price)}</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onToggle(p.id)}
+            disabled={toggling === p.id}
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+            title={p.active ? "Desativar" : "Ativar"}
+          >
+            {toggling === p.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : p.active ? (
+              <ToggleRight className="h-4 w-4 text-green-400" />
+            ) : (
+              <ToggleLeft className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            onClick={() => onEdit(p)}
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
+            title="Editar"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => onOptions(p.id)}
+            className="flex h-8 w-8 items-center justify-center rounded-xl transition hover:bg-white/5"
+            style={{ color: expandedOptions === p.id ? "#f97316" : "rgba(255,255,255,0.4)" }}
+            title="Opções de personalização"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => onDelete(p.id)}
+            disabled={deleting === p.id}
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+            title="Remover"
+          >
+            {deleting === p.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
+      </div>
+      {expandedOptions === p.id && <ProductOptions productId={p.id} token={token} />}
+    </div>
+  )
+}
+
+// ─── Sortable category group ──────────────────────────────────────────────────
+
+function SortableCategoryGroup({
+  cat,
+  items,
+  token,
+  toggling,
+  deleting,
+  expandedOptions,
+  draggable,
+  onToggle,
+  onEdit,
+  onOptions,
+  onDelete,
+  onReorder,
+}: {
+  cat: Category
+  items: Product[]
+  token: string
+  toggling: string | null
+  deleting: string | null
+  expandedOptions: string | null
+  draggable: boolean
+  onToggle: (id: string) => void
+  onEdit: (p: Product) => void
+  onOptions: (id: string) => void
+  onDelete: (id: string) => void
+  onReorder: (catId: string, newItems: Product[]) => void
+}) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = items.findIndex((p) => p.id === active.id)
+    const newIndex = items.findIndex((p) => p.id === over.id)
+    const newItems = arrayMove(items, oldIndex, newIndex)
+    onReorder(cat.id, newItems)
+    await fetch("/api/backend/admin/products/reorder", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ items: newItems.map((p, i) => ({ id: p.id, position: i + 1 })) }),
+    })
+  }
+
+  return (
+    <section>
+      <p className="mb-3 text-xs font-semibold tracking-widest text-orange-400 uppercase">
+        {cat.name}
+      </p>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2">
+            {items.map((p) => (
+              <SortableProductRow
+                key={p.id}
+                p={p}
+                token={token}
+                toggling={toggling}
+                deleting={deleting}
+                expandedOptions={expandedOptions}
+                draggable={draggable}
+                onToggle={onToggle}
+                onEdit={onEdit}
+                onOptions={onOptions}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </section>
   )
 }
 
@@ -530,6 +738,10 @@ export default function ProdutosPage() {
     load()
   }
 
+  function handleReorder(catId: string, newItems: Product[]) {
+    setProducts((prev) => [...prev.filter((p) => p.category.id !== catId), ...newItems])
+  }
+
   const filtered = products.filter((p) => {
     if (catFilter && p.category.id !== catFilter) return false
     if (!query) return true
@@ -627,105 +839,21 @@ export default function ProdutosPage() {
       ) : (
         <div className="space-y-8">
           {grouped.map(({ cat, items }) => (
-            <section key={cat.id}>
-              <p className="mb-3 text-xs font-semibold tracking-widest text-orange-400 uppercase">
-                {cat.name}
-              </p>
-              <div className="space-y-2">
-                {items.map((p) => (
-                  <div key={p.id}>
-                    <div
-                      className="flex items-center gap-3 rounded-2xl p-3 transition"
-                      style={{
-                        background: "var(--mob-s3)",
-                        border: "1px solid var(--mob-s4)",
-                        opacity: p.active ? 1 : 0.5,
-                      }}
-                    >
-                      {/* Thumb */}
-                      <div className="relative h-12 w-12 flex-none overflow-hidden rounded-xl bg-black/30">
-                        {p.imageUrl ? (
-                          <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xl opacity-30">
-                            🍔
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">{p.name}</p>
-                        {p.description && (
-                          <p className="truncate text-xs text-white/30">{p.description}</p>
-                        )}
-                      </div>
-
-                      {/* Preço */}
-                      <span className="shrink-0 text-sm font-bold text-orange-400">
-                        {fmtPrice(p.price)}
-                      </span>
-
-                      {/* Ações */}
-                      <div className="flex items-center gap-1">
-                        {/* Toggle ativo */}
-                        <button
-                          onClick={() => handleToggle(p.id)}
-                          disabled={toggling === p.id}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
-                          title={p.active ? "Desativar" : "Ativar"}
-                        >
-                          {toggling === p.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : p.active ? (
-                            <ToggleRight className="h-4 w-4 text-green-400" />
-                          ) : (
-                            <ToggleLeft className="h-4 w-4" />
-                          )}
-                        </button>
-
-                        {/* Editar */}
-                        <button
-                          onClick={() => setModalProduct(p)}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
-                          title="Editar"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-
-                        {/* Opções */}
-                        <button
-                          onClick={() => setExpandedOptions(expandedOptions === p.id ? null : p.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl transition hover:bg-white/5"
-                          style={{
-                            color: expandedOptions === p.id ? "#f97316" : "rgba(255,255,255,0.4)",
-                          }}
-                          title="Opções de personalização"
-                        >
-                          <Settings2 className="h-3.5 w-3.5" />
-                        </button>
-
-                        {/* Deletar */}
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          disabled={deleting === p.id}
-                          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
-                          title="Remover"
-                        >
-                          {deleting === p.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {expandedOptions === p.id && <ProductOptions productId={p.id} token={token!} />}
-                  </div>
-                ))}
-              </div>
-            </section>
+            <SortableCategoryGroup
+              key={cat.id}
+              cat={cat}
+              items={items}
+              token={token!}
+              toggling={toggling}
+              deleting={deleting}
+              expandedOptions={expandedOptions}
+              draggable={!query}
+              onToggle={handleToggle}
+              onEdit={setModalProduct}
+              onOptions={(id) => setExpandedOptions(expandedOptions === id ? null : id)}
+              onDelete={handleDelete}
+              onReorder={handleReorder}
+            />
           ))}
         </div>
       )}

@@ -14,6 +14,7 @@ import {
   FlaskConical,
   ChevronDown,
   PlusCircle,
+  History,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
@@ -37,6 +38,15 @@ interface ProductIngredient {
   ingredientId: string
   quantity: number
   ingredient: Ingredient
+}
+
+interface StockMovement {
+  id: string
+  type: string
+  delta: number
+  reason: string | null
+  createdAt: string
+  ingredient: { name: string; unit: string }
 }
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
@@ -661,12 +671,14 @@ function FichaTecnica({
 
 export default function EstoquePage() {
   const { token } = useStaff()
-  const [tab, setTab] = useState<"ingredientes" | "fichas">("ingredientes")
+  const [tab, setTab] = useState<"ingredientes" | "fichas" | "historico">("ingredientes")
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showAddForm, setShowAddForm] = useState(false)
+  const [movements, setMovements] = useState<StockMovement[]>([])
+  const [movementsLoading, setMovementsLoading] = useState(false)
 
   const load = useCallback(async () => {
     if (!token) return
@@ -699,12 +711,26 @@ export default function EstoquePage() {
     load() // eslint-disable-line react-hooks/set-state-in-effect
   }, [load])
 
+  useEffect(() => {
+    if (tab !== "historico" || movements.length > 0 || !token) return
+    setMovementsLoading(true) // eslint-disable-line react-hooks/set-state-in-effect
+    fetch("/api/backend/admin/inventory/movements", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((j) => {
+        setMovements(j.data ?? [])
+      })
+      .finally(() => setMovementsLoading(false))
+  }, [tab, token, movements.length])
+
   const lowStock = ingredients.filter((i) => i.minQuantity > 0 && i.quantity <= i.minQuantity)
   const outOfStock = ingredients.filter((i) => i.quantity === 0)
 
   const tabs = [
     { id: "ingredientes" as const, label: "Ingredientes", icon: PackageSearch },
     { id: "fichas" as const, label: "Fichas Técnicas", icon: FlaskConical },
+    { id: "historico" as const, label: "Histórico", icon: History },
   ]
 
   return (
@@ -864,6 +890,100 @@ export default function EstoquePage() {
       {/* Tab: Fichas Técnicas */}
       {tab === "fichas" && (
         <FichaTecnica products={products} ingredients={ingredients} token={token!} />
+      )}
+
+      {/* Tab: Histórico */}
+      {tab === "historico" && (
+        <div className="overflow-hidden rounded-2xl" style={cardStyle}>
+          {movementsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-white/30" />
+            </div>
+          ) : movements.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <History className="h-10 w-10 text-white/10" />
+              <p className="text-sm text-white/30">Nenhuma movimentação registrada</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: "1px solid var(--mob-b1)",
+                      background: "rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      Ingrediente
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      Tipo
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      Quantidade
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      Motivo
+                    </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      Data
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {movements.map((m) => {
+                    const isPos = m.delta > 0
+                    const typeLabel =
+                      m.type === "RESTOCK"
+                        ? "Reposição"
+                        : m.type === "DEDUCTION"
+                          ? "Dedução"
+                          : "Ajuste"
+                    const typeColor =
+                      m.type === "RESTOCK"
+                        ? { bg: "rgba(34,197,94,0.12)", color: "#4ade80" }
+                        : m.type === "DEDUCTION"
+                          ? { bg: "rgba(239,68,68,0.12)", color: "#f87171" }
+                          : { bg: "rgba(245,158,11,0.12)", color: "#fbbf24" }
+                    return (
+                      <tr key={m.id} style={{ borderBottom: "1px solid var(--mob-b1)" }}>
+                        <td className="px-4 py-3 text-sm font-medium text-white">
+                          {m.ingredient.name}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            style={typeColor}
+                          >
+                            {typeLabel}
+                          </span>
+                        </td>
+                        <td
+                          className="px-4 py-3 text-sm font-semibold"
+                          style={{ color: isPos ? "#4ade80" : "#f87171" }}
+                        >
+                          {isPos ? "+" : ""}
+                          {m.delta} {m.ingredient.unit}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-white/50">{m.reason ?? "—"}</td>
+                        <td className="px-4 py-3 text-sm text-white/40">
+                          {new Date(m.createdAt).toLocaleString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
