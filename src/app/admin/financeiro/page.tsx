@@ -486,7 +486,7 @@ export default function FinanceiroPage() {
                   color: "#fff",
                   fontSize: 12,
                 }}
-                formatter={(v: number) => [fmtPrice(v), "Receita"]}
+                formatter={(v) => [fmtPrice(Number(v ?? 0)), "Receita"]}
                 labelFormatter={(l) => `Dia ${l}`}
               />
               <Area
