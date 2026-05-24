@@ -15,6 +15,7 @@ import {
   Download,
   Bike,
   Phone,
+  AlertTriangle,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
@@ -306,6 +307,8 @@ export default function PedidosPage() {
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter) params.set("status", statusFilter)
+    if (dateFrom) params.set("from", dateFrom)
+    if (dateTo) params.set("to", dateTo + "T23:59:59")
     params.set("page", String(page))
     params.set("limit", String(PAGE_SIZE))
     fetch(`/api/backend/orders?${params}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -320,7 +323,7 @@ export default function PedidosPage() {
         setMaxPrice(Math.ceil(max))
       })
       .finally(() => setLoading(false))
-  }, [token, statusFilter, page])
+  }, [token, statusFilter, page, dateFrom, dateTo])
 
   useEffect(() => {
     load() // eslint-disable-line react-hooks/set-state-in-effect
@@ -336,6 +339,10 @@ export default function PedidosPage() {
   useEffect(() => {
     loadDrivers() // eslint-disable-line react-hooks/set-state-in-effect
   }, [loadDrivers])
+
+  useEffect(() => {
+    setPage(1) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [statusFilter, dateFrom, dateTo])
 
   // ─── SSE — atualizações em tempo real ──────────────────────────────────────
   useEffect(() => {
@@ -462,8 +469,6 @@ export default function PedidosPage() {
 
   const filtered = orders.filter((o) => {
     if (o.totalPrice > maxPrice) return false
-    if (dateFrom && new Date(o.createdAt) < new Date(dateFrom)) return false
-    if (dateTo && new Date(o.createdAt) > new Date(dateTo + "T23:59:59")) return false
     if (!query) return true
     const q = query.toLowerCase()
     return o.customer.name.toLowerCase().includes(q) || String(o.orderNumber).includes(q)
@@ -765,6 +770,23 @@ export default function PedidosPage() {
                   )
                 })()}
               </div>
+
+              {/* Aviso de reembolso manual (PIX / dinheiro) */}
+              {order.status === "CANCELLED" &&
+                order.paymentStatus === "REFUNDED" &&
+                order.paymentMethod !== "CARD" && (
+                  <div
+                    className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-amber-400"
+                    style={{
+                      background: "rgba(245,158,11,0.08)",
+                      border: "1px solid rgba(245,158,11,0.2)",
+                    }}
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5 flex-none" />
+                    Reembolso manual necessário via{" "}
+                    {order.paymentMethod === "PIX" ? "PIX" : "dinheiro"}
+                  </div>
+                )}
 
               {/* Endereço + entregador (delivery) */}
               {order.delivery && (

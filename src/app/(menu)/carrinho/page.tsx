@@ -410,7 +410,8 @@ export default function CarrinhoPage() {
   const orderType = useDelivery((s) => s.orderType)
   const customer = useCustomer((s) => s.customer)
   const hasAddress = useCustomer((s) => s.hasAddress())
-  const { set, setAddress, setZone, zoneId, deliveryFee, customerName, phone } = useDelivery()
+  const { set, setAddress, setZone, zoneId, deliveryFee, customerName, phone, address } =
+    useDelivery()
   const [mounted, setMounted] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
   const [zones, setZones] = useState<DeliveryZone[]>([])
@@ -431,6 +432,7 @@ export default function CarrinhoPage() {
 
   const token = useCustomer((s) => s.token)
   const setCustomer = useCustomer((s) => s.setCustomer)
+  const updateAddress = useCustomer((s) => s.updateAddress)
 
   // Busca zonas de entrega e status da loja
   useEffect(() => {
@@ -506,6 +508,20 @@ export default function CarrinhoPage() {
     } finally {
       setCouponLoading(false)
     }
+  }
+
+  function handleGoToPayment() {
+    if (orderType === "DELIVERY" && token) {
+      updateAddress(address)
+      fetch("/api/auth/customer/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ defaultAddress: address }),
+      }).catch(() => {})
+    }
+    router.push(
+      `/pagamento${couponApplied ? `?coupon=${encodeURIComponent(couponApplied.code)}` : ""}`,
+    )
   }
 
   function removeCoupon() {
@@ -768,11 +784,7 @@ export default function CarrinhoPage() {
             <DeliveryForm zones={zones} onZoneDetected={(id, fee) => setZone(id, fee)} />
           )}
           <button
-            onClick={() =>
-              router.push(
-                `/pagamento${couponApplied ? `?coupon=${encodeURIComponent(couponApplied.code)}` : ""}`,
-              )
-            }
+            onClick={handleGoToPayment}
             disabled={!isComplete() || !storeOpen}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
             style={{
