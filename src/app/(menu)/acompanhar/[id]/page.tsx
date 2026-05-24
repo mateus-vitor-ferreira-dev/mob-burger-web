@@ -15,8 +15,10 @@ import {
   Home,
   XCircle,
   AlertTriangle,
+  Bell,
 } from "lucide-react"
 import { useCustomer } from "@/lib/customer-store"
+import { getPushState, subscribePush } from "@/lib/push"
 
 interface OrderTracking {
   id: string
@@ -73,6 +75,20 @@ export default function AcompanharPage() {
   const [error, setError] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState("")
+  const [pushState, setPushState] = useState<
+    "prompt" | "subscribed" | "denied" | "unsupported" | "loading"
+  >("loading")
+
+  useEffect(() => {
+    getPushState().then(setPushState)
+  }, [])
+
+  async function handleSubscribePush() {
+    if (!token) return
+    setPushState("loading")
+    const ok = await subscribePush(token)
+    setPushState(ok ? "subscribed" : await getPushState())
+  }
 
   async function handleCancel() {
     if (!token) return
@@ -260,6 +276,21 @@ export default function AcompanharPage() {
         >
           <AlertTriangle className="h-4 w-4 flex-none" /> {cancelError}
         </div>
+      )}
+
+      {/* Banner push — só exibe se pedido ativo e ainda não assinou */}
+      {!isCancelled && !isDone && pushState === "prompt" && token && (
+        <button
+          onClick={handleSubscribePush}
+          className="mb-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition hover:opacity-90"
+          style={{ background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)" }}
+        >
+          <Bell className="h-4 w-4 flex-none text-orange-400" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-orange-400">Ativar notificações</p>
+            <p className="text-xs text-white/40">Avise quando o pedido estiver pronto ou saindo.</p>
+          </div>
+        </button>
       )}
 
       {/* Status card */}
