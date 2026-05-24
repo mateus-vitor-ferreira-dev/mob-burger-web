@@ -52,22 +52,26 @@ function PedidoConfirmadoContent() {
           clearCart()
           setStatus("success")
         } else if (o.paymentStatus === "PENDING" || o.status === "AWAITING_PAYMENT") {
-          // Webhook ainda não chegou — polling breve
           setStatus("processing")
-          setTimeout(() => {
-            fetch(`/api/backend/orders/${orderId}`)
-              .then((r) => r.json())
-              .then((json2) => {
-                const o2 = json2?.data
-                if (o2?.paymentStatus === "PAID" || o2?.status === "CONFIRMED") {
-                  clearCart()
-                  setStatus("success")
-                  setOrder(o2)
-                } else {
-                  setStatus("processing")
-                }
-              })
-              .catch(() => setStatus("processing"))
+          let attempts = 0
+          const MAX = 40 // 40 × 3s = 2 min
+          const interval = setInterval(async () => {
+            attempts++
+            try {
+              const r2 = await fetch(`/api/backend/orders/${orderId}`)
+              const json2 = await r2.json()
+              const o2 = json2?.data
+              if (o2?.paymentStatus === "PAID" || o2?.status === "CONFIRMED") {
+                clearInterval(interval)
+                clearCart()
+                setStatus("success")
+                setOrder(o2)
+              } else if (attempts >= MAX) {
+                clearInterval(interval)
+              }
+            } catch {
+              if (attempts >= MAX) clearInterval(interval)
+            }
           }, 3000)
         } else {
           setStatus("failed")

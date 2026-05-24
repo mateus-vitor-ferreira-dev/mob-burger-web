@@ -23,6 +23,7 @@ import {
   ChevronUp,
   Bell,
   BellOff,
+  RotateCcw,
 } from "lucide-react"
 import Image from "next/image"
 import { useCustomer } from "@/lib/customer-store"
@@ -611,6 +612,8 @@ const ORDER_STATUS_COLOR: Record<string, string> = {
 
 function OrderHistoryCard() {
   const { token } = useCustomer()
+  const addToCart = useCart((s) => s.add)
+  const openCart = useCart((s) => s.openCart)
   const [orders, setOrders] = useState<
     {
       id: string
@@ -618,11 +621,33 @@ function OrderHistoryCard() {
       status: string
       totalPrice: number
       createdAt: string
-      items: { quantity: number; product: { name: string } }[]
+      items: {
+        quantity: number
+        unitPrice: number
+        product: { id: string; name: string; imageUrl: string | null; price: number }
+      }[]
     }[]
   >([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
+
+  function reorder(order: (typeof orders)[0]) {
+    for (const item of order.items) {
+      const p = item.product
+      const cartItem = {
+        id: p.id,
+        productId: p.id,
+        name: p.name,
+        price: `R$ ${item.unitPrice.toFixed(2).replace(".", ",")}`,
+        priceNum: item.unitPrice,
+        img: p.imageUrl ?? undefined,
+      }
+      for (let i = 0; i < item.quantity; i++) {
+        addToCart(cartItem)
+      }
+    }
+    openCart()
+  }
 
   useEffect(() => {
     if (!token) return
@@ -690,29 +715,39 @@ function OrderHistoryCard() {
               </button>
 
               {expanded === order.id && (
-                <div
-                  className="space-y-1 border-t px-4 py-3"
-                  style={{ borderColor: "var(--mob-b1)" }}
-                >
-                  {order.items.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between text-xs text-white/50"
+                <div className="border-t px-4 py-3" style={{ borderColor: "var(--mob-b1)" }}>
+                  <div className="space-y-1">
+                    {order.items.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between text-xs text-white/50"
+                      >
+                        <span>
+                          {item.quantity}× {item.product.name.replace(/^Mob /i, "")}
+                        </span>
+                        <span className="text-white/30">
+                          R$ {(item.unitPrice * item.quantity).toFixed(2).replace(".", ",")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-[10px] text-white/20">
+                      {new Date(order.createdAt).toLocaleString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <button
+                      onClick={() => reorder(order)}
+                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-orange-400 transition hover:bg-orange-400/10 active:scale-95"
                     >
-                      <span>
-                        {item.quantity}× {item.product.name.replace(/^Mob /i, "")}
-                      </span>
-                    </div>
-                  ))}
-                  <p className="pt-1 text-[10px] text-white/20">
-                    {new Date(order.createdAt).toLocaleString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+                      <RotateCcw className="h-3 w-3" /> Refazer pedido
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
