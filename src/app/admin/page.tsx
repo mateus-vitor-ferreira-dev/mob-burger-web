@@ -9,7 +9,10 @@ import {
   Smartphone,
   CheckCircle,
   Calendar,
+  AlertTriangle,
+  PackageSearch,
 } from "lucide-react"
+import Link from "next/link"
 import { useStaff } from "@/lib/staff-store"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -40,6 +43,12 @@ interface Stats {
   byStatus: { status: string; count: number }[]
   todayOrders: number
   rangeOrders: number | null
+}
+
+interface StockAlert {
+  zeroStock: number
+  lowStock: number
+  items: { name: string; quantity: number; unit: string; minQuantity: number }[]
 }
 
 function KpiCard({
@@ -96,6 +105,7 @@ export default function AdminDashboard() {
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [rangeActive, setRangeActive] = useState(false)
+  const [stockAlert, setStockAlert] = useState<StockAlert | null>(null)
 
   useEffect(() => {
     if (!token) return
@@ -108,6 +118,31 @@ export default function AdminDashboard() {
       })
       .finally(() => setLoading(false))
   }, [token, rangeActive, from, to])
+
+  useEffect(() => {
+    if (!token) return
+    fetch("/api/backend/admin/inventory/ingredients", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        const all = json.data ?? []
+        const zero = all.filter((i: { quantity: number }) => i.quantity === 0)
+        const low = all.filter(
+          (i: { quantity: number; minQuantity: number }) =>
+            i.quantity > 0 && i.minQuantity > 0 && i.quantity <= i.minQuantity,
+        )
+        if (zero.length + low.length > 0) {
+          setStockAlert({
+             
+            zeroStock: zero.length,
+            lowStock: low.length,
+            items: [...zero, ...low].slice(0, 5),
+          })
+        }
+      })
+      .catch(() => {})
+  }, [token])
 
   const card = stats?.byPaymentMethod.find((m) => m.method === "CARD")
   const pix = stats?.byPaymentMethod.find((m) => m.method === "PIX")
@@ -336,6 +371,65 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Alerta de estoque */}
+          {stockAlert && (
+            <div
+              className="rounded-2xl p-5"
+              style={{
+                background: "var(--mob-s3)",
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+                border: `1px solid ${stockAlert.zeroStock > 0 ? "rgba(239,68,68,0.25)" : "rgba(245,158,11,0.25)"}`,
+              }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                  Estoque
+                </p>
+                <Link
+                  href="/admin/estoque"
+                  className="flex items-center gap-1 text-xs text-orange-400 transition hover:text-orange-300"
+                >
+                  <PackageSearch className="h-3.5 w-3.5" />
+                  Gerenciar
+                </Link>
+              </div>
+              <div className="mb-3 flex flex-wrap gap-2">
+                {stockAlert.zeroStock > 0 && (
+                  <span
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-red-400"
+                    style={{ background: "rgba(239,68,68,0.12)" }}
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    {stockAlert.zeroStock} sem estoque
+                  </span>
+                )}
+                {stockAlert.lowStock > 0 && (
+                  <span
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-amber-400"
+                    style={{ background: "rgba(245,158,11,0.12)" }}
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    {stockAlert.lowStock} abaixo do mínimo
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                {stockAlert.items.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <p className="text-xs text-white/60">{item.name}</p>
+                    <span
+                      className="text-xs font-semibold"
+                      style={{ color: item.quantity === 0 ? "#f87171" : "#fbbf24" }}
+                    >
+                      {item.quantity} {item.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

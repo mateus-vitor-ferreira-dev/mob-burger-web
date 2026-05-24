@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, Save, Power } from "lucide-react"
+import { Loader2, Save, Power, EyeOff } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
 function maskWhatsApp(v: string) {
@@ -34,6 +34,7 @@ interface StoreConfig {
   isOpen: boolean
   whatsappNumber: string
   openingHours: Record<DayKey, DaySchedule>
+  hideOutOfStock: boolean
 }
 
 const DEFAULT_HOURS: Record<DayKey, DaySchedule> = {
@@ -52,6 +53,7 @@ export default function ConfigPage() {
     isOpen: true,
     whatsappNumber: "",
     openingHours: DEFAULT_HOURS,
+    hideOutOfStock: false,
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -67,6 +69,7 @@ export default function ConfigPage() {
             isOpen: json.data.isOpen ?? true,
             whatsappNumber: json.data.whatsappNumber ?? "",
             openingHours: { ...DEFAULT_HOURS, ...(json.data.openingHours ?? {}) },
+            hideOutOfStock: json.data.hideOutOfStock ?? false,
           })
         }
       })
@@ -235,6 +238,38 @@ export default function ConfigPage() {
                 </div>
               )
             })}
+          </div>
+        </section>
+
+        {/* Estoque — ocultar esgotados */}
+        <section
+          className="rounded-2xl p-5"
+          style={{ background: "var(--mob-s3)", border: "1px solid var(--mob-s4)" }}
+        >
+          <h2 className="mb-4 text-sm font-semibold text-white/70">Cardápio & Estoque</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-semibold text-white">
+                <EyeOff className="h-4 w-4 text-white/40" />
+                Ocultar produtos esgotados
+              </p>
+              <p className="mt-0.5 text-xs text-white/30">
+                {config.hideOutOfStock
+                  ? "Produtos sem estoque ficam invisíveis no cardápio."
+                  : "Produtos sem estoque aparecem com badge 'Esgotado' (padrão)."}
+              </p>
+            </div>
+            <button
+              onClick={() => setConfig((p) => ({ ...p, hideOutOfStock: !p.hideOutOfStock }))}
+              className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition"
+              style={
+                config.hideOutOfStock
+                  ? { background: "rgba(249,115,22,0.15)", color: "#f97316" }
+                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" }
+              }
+            >
+              {config.hideOutOfStock ? "Ocultar" : "Mostrar"}
+            </button>
           </div>
         </section>
       </div>

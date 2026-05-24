@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   FlaskConical,
   ChevronDown,
+  PlusCircle,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 
@@ -69,6 +70,8 @@ function IngredientRow({
   onDeleted: (id: string) => void
 }) {
   const [editing, setEditing] = useState(false)
+  const [replenishing, setReplenishing] = useState(false)
+  const [addQty, setAddQty] = useState("")
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
@@ -95,6 +98,26 @@ function IngredientRow({
       const { data } = await res.json()
       onUpdated(data)
       setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleReplenish() {
+    const amt = parseFloat(addQty)
+    if (!amt || amt <= 0) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/backend/admin/inventory/ingredients/${ingredient.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quantity: ingredient.quantity + amt }),
+      })
+      if (!res.ok) throw new Error()
+      const { data } = await res.json()
+      onUpdated(data)
+      setReplenishing(false)
+      setAddQty("")
     } finally {
       setSaving(false)
     }
@@ -183,50 +206,124 @@ function IngredientRow({
   }
 
   return (
-    <tr style={{ borderBottom: "1px solid var(--mob-b1)" }} className="group">
-      <td className="px-4 py-3 text-sm font-medium text-white">
-        <div className="flex items-center gap-2">
-          {isLow && <AlertTriangle className="h-3.5 w-3.5 flex-none text-amber-400" />}
-          {ingredient.name}
-        </div>
-      </td>
-      <td className="px-4 py-3 text-sm text-white/50">{ingredient.unit}</td>
-      <td className="px-4 py-3 text-sm">
-        <span
-          className={
-            ingredient.quantity === 0
-              ? "font-bold text-red-400"
-              : isLow
-                ? "font-semibold text-amber-400"
-                : "text-white"
-          }
-        >
-          {ingredient.quantity}
-        </span>
-      </td>
-      <td className="px-4 py-3 text-sm text-white/50">{ingredient.minQuantity || "—"}</td>
-      <td className="px-4 py-3">
-        <div className="flex gap-2 opacity-0 transition group-hover:opacity-100">
-          <button
-            onClick={() => setEditing(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+    <>
+      <tr
+        style={{ borderBottom: replenishing ? "none" : "1px solid var(--mob-b1)" }}
+        className="group"
+      >
+        <td className="px-4 py-3 text-sm font-medium text-white">
+          <div className="flex items-center gap-2">
+            {isLow && <AlertTriangle className="h-3.5 w-3.5 flex-none text-amber-400" />}
+            {ingredient.name}
+          </div>
+        </td>
+        <td className="px-4 py-3 text-sm text-white/50">{ingredient.unit}</td>
+        <td className="px-4 py-3 text-sm">
+          <span
+            className={
+              ingredient.quantity === 0
+                ? "font-bold text-red-400"
+                : isLow
+                  ? "font-semibold text-amber-400"
+                  : "text-white"
+            }
           >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
-          >
-            {deleting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Trash2 className="h-3.5 w-3.5" />
-            )}
-          </button>
-        </div>
-      </td>
-    </tr>
+            {ingredient.quantity}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-sm text-white/50">{ingredient.minQuantity || "—"}</td>
+        <td className="px-4 py-3">
+          <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
+            <button
+              onClick={() => {
+                setReplenishing((v) => !v)
+                setAddQty("")
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-green-500/10 hover:text-green-400"
+              style={{ color: replenishing ? "#4ade80" : "rgba(255,255,255,0.4)" }}
+              title="Repor estoque"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setEditing(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
+            >
+              {deleting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+        </td>
+      </tr>
+      {replenishing && (
+        <tr style={{ borderBottom: "1px solid var(--mob-b1)", background: "rgba(34,197,94,0.04)" }}>
+          <td colSpan={5} className="px-4 py-2.5">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-white/40">
+                Atual: <span className="font-semibold text-white">{ingredient.quantity}</span>{" "}
+                {ingredient.unit} → adicionar:
+              </span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                autoFocus
+                placeholder="0"
+                value={addQty}
+                onChange={(e) => setAddQty(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleReplenish()
+                  if (e.key === "Escape") setReplenishing(false)
+                }}
+                className="w-24 rounded-lg px-2.5 py-1.5 text-sm ring-1 transition outline-none focus:ring-green-500/50"
+                style={
+                  {
+                    background: "rgba(0,0,0,0.3)",
+                    color: "white",
+                    "--tw-ring-color": "rgba(255,255,255,0.12)",
+                  } as React.CSSProperties
+                }
+              />
+              <span className="text-xs text-white/40">{ingredient.unit}</span>
+              {addQty && parseFloat(addQty) > 0 && (
+                <span className="text-xs text-green-400">
+                  = {ingredient.quantity + parseFloat(addQty)} total
+                </span>
+              )}
+              <button
+                onClick={handleReplenish}
+                disabled={saving || !addQty || parseFloat(addQty) <= 0}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition disabled:opacity-40"
+                style={{ background: "rgba(34,197,94,0.2)", color: "#4ade80" }}
+              >
+                {saving ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Check className="h-3 w-3" />
+                )}
+                Confirmar
+              </button>
+              <button
+                onClick={() => setReplenishing(false)}
+                className="text-xs text-white/30 transition hover:text-white"
+              >
+                Cancelar
+              </button>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -393,8 +490,8 @@ function FichaTecnica({
     if (selectedProduct) {
       loadProductIngredients(selectedProduct) // eslint-disable-line react-hooks/set-state-in-effect
     } else {
-      setProductIngredients([])  
-      setDraft([])  
+      setProductIngredients([])
+      setDraft([])
     }
   }, [selectedProduct, loadProductIngredients])
 
