@@ -17,6 +17,7 @@ import {
   ChevronUp,
   Loader2,
   AlertCircle,
+  Download,
 } from "lucide-react"
 import {
   AreaChart,
@@ -186,6 +187,40 @@ export default function FinanceiroPage() {
     .reduce((s, e) => s + e.amount, 0)
   const profit = (revenue ?? 0) - totalExpenses
 
+  function exportCSV() {
+    const esc = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+    const rows: string[][] = [
+      ["Data", "Receita (R$)", "Despesas Fixas (R$)", "Despesas Variáveis (R$)", "Lucro (R$)"],
+    ]
+    for (const d of dailyRevenue) {
+      const dayExpenses = expenses.filter((e) => e.createdAt?.startsWith(d.day))
+      const fixed = dayExpenses.filter((e) => e.type === "FIXED").reduce((s, e) => s + e.amount, 0)
+      const variable = dayExpenses
+        .filter((e) => e.type === "VARIABLE")
+        .reduce((s, e) => s + e.amount, 0)
+      rows.push([
+        d.day,
+        d.revenue.toFixed(2),
+        fixed.toFixed(2),
+        variable.toFixed(2),
+        (d.revenue - fixed - variable).toFixed(2),
+      ])
+    }
+    rows.push([
+      "TOTAL",
+      (revenue ?? 0).toFixed(2),
+      totalFixed.toFixed(2),
+      totalVariable.toFixed(2),
+      profit.toFixed(2),
+    ])
+    const csv = rows.map((r) => r.map(esc).join(";")).join("\n")
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" })
+    const a = document.createElement("a")
+    a.href = URL.createObjectURL(blob)
+    a.download = `financeiro-${month}.csv`
+    a.click()
+  }
+
   function startCreate(type: "FIXED" | "VARIABLE") {
     setEditingId(null)
     setForm({ ...EMPTY_FORM, type })
@@ -308,7 +343,7 @@ export default function FinanceiroPage() {
             Financeiro
           </h1>
         </div>
-        {/* Month nav */}
+        {/* Month nav + export */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMonth(prevMonth(month))}
@@ -327,6 +362,14 @@ export default function FinanceiroPage() {
             className="flex h-9 w-9 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
           >
             <ChevronRight className="h-4 w-4" />
+          </button>
+          <button
+            onClick={exportCSV}
+            disabled={dailyRevenue.length === 0}
+            title="Exportar relatório mensal como CSV"
+            className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-white/50 transition hover:bg-white/5 hover:text-white disabled:opacity-30"
+          >
+            <Download className="h-4 w-4" /> CSV
           </button>
         </div>
       </div>

@@ -51,6 +51,41 @@ export async function unsubscribePush(token: string): Promise<void> {
   await sub.unsubscribe()
 }
 
+export async function subscribeStaffPush(token: string): Promise<boolean> {
+  if (!VAPID_PUBLIC || !("serviceWorker" in navigator) || !("PushManager" in window)) return false
+  try {
+    const reg = await navigator.serviceWorker.ready
+    let sub = await reg.pushManager.getSubscription()
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
+      })
+    }
+    await fetch("/api/auth/push/staff/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(sub.toJSON()),
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function unsubscribeStaffPush(token: string): Promise<void> {
+  if (!("serviceWorker" in navigator)) return
+  const reg = await navigator.serviceWorker.ready
+  const sub = await reg.pushManager.getSubscription()
+  if (!sub) return
+  await fetch("/api/auth/push/staff/subscribe", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ endpoint: sub.endpoint }),
+  })
+  await sub.unsubscribe()
+}
+
 export async function getPushState(): Promise<"unsupported" | "denied" | "subscribed" | "prompt"> {
   if (
     typeof window === "undefined" ||

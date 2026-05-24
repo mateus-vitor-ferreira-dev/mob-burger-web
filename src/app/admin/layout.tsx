@@ -20,9 +20,12 @@ import {
   Menu,
   X,
   ExternalLink,
+  Bell,
+  BellOff,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { getPushState, subscribeStaffPush, unsubscribeStaffPush } from "@/lib/push"
 
 const SVG_SHAPE =
   `<text x="8" y="54" font-family="Arial Black,Impact,Arial,sans-serif" font-weight="900" font-size="42" letter-spacing="8">MOB</text>` +
@@ -59,6 +62,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { staff, token, logout } = useStaff()
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [pushState, setPushState] = useState<"unsupported" | "denied" | "subscribed" | "prompt">(
+    "prompt",
+  )
+  const [pushLoading, setPushLoading] = useState(false)
 
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
@@ -66,6 +73,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (mounted && !token) router.push("/admin/login")
   }, [mounted, token, router])
+  useEffect(() => {
+    if (mounted) getPushState().then(setPushState)
+  }, [mounted])
+
+  async function togglePush() {
+    if (!token) return
+    setPushLoading(true)
+    try {
+      if (pushState === "subscribed") {
+        await unsubscribeStaffPush(token)
+        setPushState("prompt")
+      } else {
+        const ok = await subscribeStaffPush(token)
+        setPushState(ok ? "subscribed" : "denied")
+      }
+    } finally {
+      setPushLoading(false)
+    }
+  }
 
   if (!mounted) return null
 
@@ -184,6 +210,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <ThemeToggle />
             <span className="text-xs text-white/30">Tema</span>
           </div>
+          {pushState !== "unsupported" && (
+            <button
+              onClick={togglePush}
+              disabled={pushLoading || pushState === "denied"}
+              title={
+                pushState === "subscribed"
+                  ? "Desativar notificações push"
+                  : pushState === "denied"
+                    ? "Notificações bloqueadas no navegador"
+                    : "Ativar notificações push"
+              }
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition hover:bg-white/5 disabled:opacity-40"
+              style={{ color: pushState === "subscribed" ? "#f97316" : "rgba(255,255,255,0.4)" }}
+            >
+              {pushState === "subscribed" ? (
+                <Bell className="h-4 w-4" />
+              ) : (
+                <BellOff className="h-4 w-4" />
+              )}
+              {pushState === "subscribed" ? "Push ativo" : "Ativar push"}
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"

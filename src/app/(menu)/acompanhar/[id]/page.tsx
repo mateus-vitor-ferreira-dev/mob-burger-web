@@ -14,7 +14,9 @@ import {
   Bike,
   Home,
   XCircle,
+  AlertTriangle,
 } from "lucide-react"
+import { useCustomer } from "@/lib/customer-store"
 
 interface OrderTracking {
   id: string
@@ -23,9 +25,19 @@ interface OrderTracking {
   type: "DELIVERY" | "PICKUP"
   totalPrice: number
   createdAt: string
-  customer: { name: string }
+  customer: { id: string; name: string }
   items: { id: string; quantity: number; product: { name: string } }[]
   delivery?: { street: string; number: string; neighborhood: string }
+}
+
+const ETA: Record<string, string> = {
+  AWAITING_PAYMENT: "Confirmando pagamento...",
+  CONFIRMED: "~40 min",
+  PREPARING: "~25 min",
+  READY: "Pronto!",
+  OUT_FOR_DELIVERY: "~15 min",
+  DELIVERED: "Entregue!",
+  PICKED_UP: "Retirado!",
 }
 
 const STEPS: { status: string; label: string; icon: React.ElementType; delivery?: boolean }[] = [
@@ -54,10 +66,33 @@ function getStepIndex(status: string) {
 export default function AcompanharPage() {
   const params = useParams()
   const id = params.id as string
+  const { token, customer } = useCustomer()
 
   const [order, setOrder] = useState<OrderTracking | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState("")
+
+  async function handleCancel() {
+    if (!token) return
+    if (!confirm("Tem certeza que deseja cancelar este pedido?")) return
+    setCancelling(true)
+    setCancelError("")
+    try {
+      const r = await fetch(`/api/backend/orders/${id}/cancel`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await r.json()
+      if (!r.ok) throw new Error(json.error?.message ?? "Erro ao cancelar")
+      setOrder((o) => (o ? { ...o, status: "CANCELLED" } : o))
+    } catch (e) {
+      setCancelError(e instanceof Error ? e.message : "Erro ao cancelar")
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -188,6 +223,44 @@ export default function AcompanharPage() {
           </h1>
         </div>
       </div>
+
+      {/* ETA + Cancel */}
+      {!isCancelled && !isDone && ETA[order.status] && (
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-orange-400" />
+            <span className="text-sm font-semibold text-orange-400">
+              Estimativa: {ETA[order.status]}
+            </span>
+          </div>
+          {token &&
+            customer &&
+            order.customer.id === customer.id &&
+            ["AWAITING_PAYMENT", "CONFIRMED"].includes(order.status) && (
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-red-400 transition hover:bg-red-400/10 disabled:opacity-50"
+              >
+                {cancelling ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <XCircle className="h-3 w-3" />
+                )}
+                Cancelar pedido
+              </button>
+            )}
+        </div>
+      )}
+
+      {cancelError && (
+        <div
+          className="mb-4 flex items-center gap-2 rounded-xl px-4 py-3 text-sm text-red-400"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
+        >
+          <AlertTriangle className="h-4 w-4 flex-none" /> {cancelError}
+        </div>
+      )}
 
       {/* Status card */}
       <div
