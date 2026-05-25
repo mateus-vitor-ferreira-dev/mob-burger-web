@@ -368,7 +368,7 @@ function ProductCard({ item }: { item: MenuItem }) {
           </h3>
 
           {item.description && (
-            <p className="line-clamp-2 text-[11px] leading-relaxed text-white/40">
+            <p className="line-clamp-3 text-[13px] leading-relaxed text-white/60">
               {item.description}
             </p>
           )}
