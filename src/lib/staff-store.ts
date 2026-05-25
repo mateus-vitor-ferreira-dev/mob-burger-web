@@ -10,6 +10,8 @@ export interface StaffUser {
 interface StaffStore {
   staff: StaffUser | null
   token: string | null
+  _hasHydrated: boolean
+  setHasHydrated: (v: boolean) => void
   setStaff: (staff: StaffUser, token: string) => void
   logout: () => void
   isLoggedIn: () => boolean
@@ -20,6 +22,8 @@ export const useStaff = create<StaffStore>()(
     (set, get) => ({
       staff: null,
       token: null,
+      _hasHydrated: false,
+      setHasHydrated: (v) => set({ _hasHydrated: v }),
       setStaff: (staff, token) => set({ staff, token }),
       logout: () => {
         set({ staff: null, token: null })
@@ -29,6 +33,11 @@ export const useStaff = create<StaffStore>()(
       },
       isLoggedIn: () => !!get().token,
     }),
-    { name: "mob-staff" },
+    {
+      name: "mob-staff",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
+    },
   ),
 )

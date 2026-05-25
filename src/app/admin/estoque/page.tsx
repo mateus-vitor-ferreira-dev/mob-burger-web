@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   PackageSearch,
   Plus,
@@ -455,6 +455,90 @@ function AddIngredientForm({
   )
 }
 
+// ─── AdminSelect ──────────────────────────────────────────────────────────────
+
+function AdminSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "— selecione —",
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: { id: string; label: string }[]
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [open])
+
+  const selected = options.find((o) => o.id === value)
+
+  return (
+    <div ref={ref} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition focus:outline-none"
+        style={{
+          background: "rgba(0,0,0,0.35)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          color: selected ? "white" : "rgba(255,255,255,0.35)",
+        }}
+      >
+        <span className="truncate">{selected?.label ?? placeholder}</span>
+        <ChevronDown
+          className="ml-2 h-4 w-4 flex-none text-white/30 transition-transform"
+          style={{ transform: open ? "rotate(180deg)" : "none" }}
+        />
+      </button>
+      {open && (
+        <div
+          className="absolute top-full right-0 left-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-xl py-1"
+          style={{
+            background: "#1c1410",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              onChange("")
+              setOpen(false)
+            }}
+            className="w-full px-3 py-2 text-left text-sm text-white/30 transition hover:bg-white/5"
+          >
+            {placeholder}
+          </button>
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => {
+                onChange(o.id)
+                setOpen(false)
+              }}
+              className="w-full truncate px-3 py-2 text-left text-sm transition hover:bg-white/5"
+              style={{ color: value === o.id ? "#f97316" : "rgba(255,255,255,0.85)" }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── FichaTecnica ─────────────────────────────────────────────────────────────
 
 function FichaTecnica({
@@ -553,22 +637,12 @@ function FichaTecnica({
       {/* Product selector */}
       <div className="rounded-2xl p-5" style={cardStyle}>
         <label className="mb-2 block text-sm font-semibold text-white">Selecionar produto</label>
-        <div className="relative">
-          <select
-            value={selectedProduct}
-            onChange={(e) => setSelectedProduct(e.target.value)}
-            className="w-full appearance-none rounded-xl px-3 py-2.5 pr-9 text-sm ring-1 transition outline-none focus:ring-orange-500/50"
-            style={{ ...inputStyle, background: "rgba(0,0,0,0.25)" }}
-          >
-            <option value="">— escolha um produto —</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-white/30" />
-        </div>
+        <AdminSelect
+          value={selectedProduct}
+          onChange={setSelectedProduct}
+          placeholder="— escolha um produto —"
+          options={products.map((p) => ({ id: p.id, label: p.name }))}
+        />
       </div>
 
       {/* Ficha editor */}
@@ -591,27 +665,29 @@ function FichaTecnica({
           <div className="space-y-2">
             {draft.map((line, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <select
+                <div className="flex-1">
+                  <AdminSelect
                     value={line.ingredientId}
-                    onChange={(e) => updateLine(idx, "ingredientId", e.target.value)}
-                    className="w-full appearance-none rounded-xl px-3 py-2 pr-8 text-sm ring-1 transition outline-none focus:ring-orange-500/50"
-                    style={{ ...inputStyle, background: "rgba(0,0,0,0.25)" }}
-                  >
-                    {unusedIngredients(idx).map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.name} ({i.unit})
-                      </option>
-                    ))}
-                    {/* keep current if not in unused list */}
-                    {!unusedIngredients(idx).find((i) => i.id === line.ingredientId) && (
-                      <option value={line.ingredientId}>
-                        {ingredients.find((i) => i.id === line.ingredientId)?.name ??
-                          line.ingredientId}
-                      </option>
-                    )}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-white/30" />
+                    onChange={(v) => updateLine(idx, "ingredientId", v)}
+                    placeholder="— ingrediente —"
+                    options={[
+                      ...unusedIngredients(idx).map((i) => ({
+                        id: i.id,
+                        label: `${i.name} (${i.unit})`,
+                      })),
+                      ...(!unusedIngredients(idx).find((i) => i.id === line.ingredientId) &&
+                      line.ingredientId
+                        ? [
+                            {
+                              id: line.ingredientId,
+                              label:
+                                ingredients.find((i) => i.id === line.ingredientId)?.name ??
+                                line.ingredientId,
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
                 </div>
                 <input
                   type="number"

@@ -23,6 +23,8 @@ export interface Customer {
 interface CustomerStore {
   customer: Customer | null
   token: string | null
+  _hasHydrated: boolean
+  setHasHydrated: (v: boolean) => void
   setCustomer: (customer: Customer, token: string) => void
   updateAddress: (address: CustomerAddress) => void
   updateAvatar: (avatarUrl: string) => void
@@ -36,6 +38,8 @@ export const useCustomer = create<CustomerStore>()(
     (set, get) => ({
       customer: null,
       token: null,
+      _hasHydrated: false,
+      setHasHydrated: (v) => set({ _hasHydrated: v }),
 
       setCustomer: (customer, token) => set({ customer, token }),
 
@@ -58,6 +62,11 @@ export const useCustomer = create<CustomerStore>()(
         return !!(a?.street && a?.number && a?.neighborhood && a?.city)
       },
     }),
-    { name: "mob-customer" },
+    {
+      name: "mob-customer",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true)
+      },
+    },
   ),
 )

@@ -9,13 +9,22 @@ import {
   Check,
   X,
   AlertCircle,
-  Package,
   ImageIcon,
   GripVertical,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { categoryImageUrl } from "@/lib/cloudinary-utils"
+
+const CATEGORY_FALLBACK: Record<string, string> = {
+  burgers: "/burgers/mob-beast.png",
+  chicken: "/burgers/mob-chicken-full.png",
+  sobremesas: "/burgers/sobremesa-mob-bombom-de-morango.png",
+  bebidas: "/burgers/coca-cola.png",
+  combos: "/burgers/combo-mob-combo-classico.png",
+  porcoes: "/burgers/batata-frita.png",
+  porções: "/burgers/batata-frita.png",
+}
 import { useStaff } from "@/lib/staff-store"
 import {
   DndContext,
@@ -79,7 +88,9 @@ function SortableCategoryRow({
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
-  const imgSrc = categoryImageUrl(cat.slug)
+  const cloudSrc = categoryImageUrl(cat.slug)
+  const fallbackSrc = CATEGORY_FALLBACK[cat.slug] ?? null
+  const [imgSrc, setImgSrc] = useState(cloudSrc)
   return (
     <div
       ref={setNodeRef}
@@ -96,15 +107,18 @@ function SortableCategoryRow({
       </button>
       {/* Thumbnail */}
       <div className="relative h-10 w-10 flex-none overflow-hidden rounded-lg bg-white/5">
-        <Image
-          src={imgSrc}
-          alt={cat.name}
-          fill
-          className="object-cover"
-          onError={(e) => {
-            ;(e.target as HTMLImageElement).style.display = "none"
-          }}
-        />
+        {imgSrc ? (
+          <Image
+            src={imgSrc}
+            alt={cat.name}
+            fill
+            className="object-cover"
+            onError={() => {
+              if (fallbackSrc && imgSrc !== fallbackSrc) setImgSrc(fallbackSrc)
+              else setImgSrc("")
+            }}
+          />
+        ) : null}
       </div>
       <span className="w-6 text-center text-xs font-bold text-white/30">#{cat.position}</span>
       <div className="min-w-0 flex-1">
@@ -123,10 +137,9 @@ function SortableCategoryRow({
         </div>
         <p className="text-xs text-white/30">/{cat.slug}</p>
       </div>
-      <div className="flex items-center gap-1 text-xs text-white/30">
-        <Package className="h-3.5 w-3.5" />
-        {cat._count?.products ?? 0}
-      </div>
+      <span className="min-w-[3.5rem] text-right text-xs text-white/30">
+        {cat._count?.products ?? 0} prod.
+      </span>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onEdit(cat)}

@@ -22,9 +22,11 @@ import {
   ExternalLink,
   Bell,
   BellOff,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { useTheme } from "next-themes"
 import { getPushState, subscribeStaffPush, unsubscribeStaffPush } from "@/lib/push"
 
 const SVG_SHAPE =
@@ -59,7 +61,8 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { staff, token, logout } = useStaff()
+  const { staff, token, logout, _hasHydrated } = useStaff()
+  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pushState, setPushState] = useState<"unsupported" | "denied" | "subscribed" | "prompt">(
@@ -71,8 +74,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
   useEffect(() => {
-    if (mounted && !token) router.push("/admin/login")
-  }, [mounted, token, router])
+    if (mounted && _hasHydrated && !token) router.push("/admin/login")
+  }, [mounted, _hasHydrated, token, router])
   useEffect(() => {
     if (mounted) getPushState().then(setPushState)
   }, [mounted])
@@ -206,10 +209,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <ExternalLink className="h-4 w-4" /> Ver site
           </Link>
-          <div className="flex items-center gap-2 px-3 py-1">
-            <ThemeToggle />
-            <span className="text-xs text-white/30">Tema</span>
-          </div>
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            Tema
+          </button>
           {pushState !== "unsupported" && (
             <button
               onClick={togglePush}
