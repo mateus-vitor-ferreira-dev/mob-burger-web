@@ -671,19 +671,22 @@ function CardapioContent() {
     [allItems],
   )
 
+  const { isFavorite } = useFavorites()
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState(() => searchParams.get("cat") ?? "todos")
   const [maxPrice, setMaxPrice] = useState<number | null>(null)
+  const [onlyFavs, setOnlyFavs] = useState(false)
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim()
     return allItems.filter((item) => {
+      if (onlyFavs && !isFavorite(item.id)) return false
       if (category !== "todos" && item.cat !== category) return false
       if (maxPrice !== null && item.priceNum > maxPrice) return false
       if (!q) return true
       return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
     })
-  }, [allItems, query, category, maxPrice])
+  }, [allItems, query, category, maxPrice, onlyFavs, isFavorite])
 
   const inputCls =
     "w-full rounded-xl py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
@@ -766,6 +769,28 @@ function CardapioContent() {
 
           {/* Pills de categoria */}
           <div className="flex flex-wrap gap-2">
+            {/* Pill Favoritos */}
+            <button
+              onClick={() => setOnlyFavs((v) => !v)}
+              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all"
+              style={
+                onlyFavs
+                  ? {
+                      background: "linear-gradient(135deg, #dc2626, #b91c1c)",
+                      color: "#fff",
+                      boxShadow: "0 2px 10px rgba(220,38,38,0.4)",
+                    }
+                  : {
+                      background: "var(--mob-pill-inactive-bg)",
+                      color: "var(--mob-pill-inactive-text)",
+                      border: "1px solid var(--mob-b1)",
+                    }
+              }
+            >
+              <Heart className="h-3 w-3" fill={onlyFavs ? "#fff" : "none"} />
+              Favoritos
+            </button>
+
             {categories.map((cat) => {
               const active = category === cat.slug
               return (
@@ -814,6 +839,7 @@ function CardapioContent() {
                 setQuery("")
                 setCategory("todos")
                 setMaxPrice(null)
+                setOnlyFavs(false)
               }}
               className="mt-1 text-xs text-orange-400 hover:underline"
             >
