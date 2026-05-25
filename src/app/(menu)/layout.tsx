@@ -72,7 +72,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-6">
           {/* Brand */}
-          <Link href="/" className="flex shrink-0 items-center gap-2.5">
+          <Link href="/" className="flex shrink-0 items-center">
             <Image
               src="/mob-logo.png"
               alt="M.O.B"
@@ -80,17 +80,6 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
               height={36}
               className="rounded-lg object-cover"
             />
-            <div className="hidden sm:block">
-              <p
-                className="text-sm leading-none font-semibold tracking-[0.18em]"
-                style={{ color: "var(--mob-text-primary)" }}
-              >
-                M.O.B
-              </p>
-              <p className="text-[10px]" style={{ color: "var(--mob-text-tertiary)" }}>
-                Burgers Pack Co.
-              </p>
-            </div>
           </Link>
 
           {/* Nav — centro */}

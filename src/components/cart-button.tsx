@@ -10,14 +10,13 @@ export function CartButton() {
   return (
     <Link
       href="/carrinho"
-      className="relative flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all active:scale-95"
+      className="relative flex items-center justify-center rounded-xl p-2.5 text-white transition-all active:scale-95"
       style={{
         background: "linear-gradient(135deg, #f97316, #ea580c)",
         boxShadow: "0 4px 12px rgba(249,115,22,0.25)",
       }}
     >
-      <ShoppingBag className="h-4 w-4" />
-      Carrinho
+      <ShoppingBag className="h-5 w-5" />
       {count > 0 && (
         <span
           className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
