@@ -5,9 +5,20 @@ import { Suspense, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { Search, X, ShoppingBag, Plus, Minus, Trash2, ChevronRight, Check } from "lucide-react"
+import {
+  Search,
+  X,
+  ShoppingBag,
+  Plus,
+  Minus,
+  Trash2,
+  ChevronRight,
+  Check,
+  Heart,
+} from "lucide-react"
 import { useCart, type SelectedOption } from "@/lib/cart-store"
 import { useMenu } from "@/lib/use-menu"
+import { useFavorites } from "@/lib/use-favorites"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -243,8 +254,10 @@ function ProductCard({ item }: { item: MenuItem }) {
   const items = useCart((s) => s.items)
   const increment = useCart((s) => s.increment)
   const decrement = useCart((s) => s.decrement)
+  const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const [showModal, setShowModal] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
+  const fav = isFavorite(item.id)
   // Para produtos sem opções, a entrada no carrinho usa item.id diretamente
   const entry = items.find((i) => i.productId === item.id && !i.options?.length)
 
@@ -352,6 +365,29 @@ function ProductCard({ item }: { item: MenuItem }) {
               </span>
             </div>
           )}
+
+          {/* Coração — favoritar */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleFavorite(item.id)
+            }}
+            className="absolute top-2.5 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-90"
+            style={{
+              background: fav ? "rgba(220,0,0,0.85)" : "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(6px)",
+              boxShadow: fav ? "0 0 12px rgba(220,0,0,0.5)" : "none",
+              border: fav
+                ? "1.5px solid rgba(255,80,80,0.6)"
+                : "1.5px solid rgba(255,255,255,0.15)",
+            }}
+          >
+            <Heart
+              className="h-4 w-4 transition-all"
+              fill={fav ? "#fff" : "none"}
+              stroke={fav ? "#fff" : "rgba(255,255,255,0.7)"}
+            />
+          </button>
         </div>
 
         {/* Info */}
@@ -373,18 +409,20 @@ function ProductCard({ item }: { item: MenuItem }) {
             </p>
           )}
 
-          <div className="mt-auto flex items-center justify-between pt-2">
+          <div className="mt-auto flex items-center gap-3 pt-2">
             <span
-              className={`text-base font-bold ${item.inStock ? "text-orange-400" : "text-white/30"}`}
+              className={`shrink-0 text-base font-bold ${item.inStock ? "text-orange-400" : "text-white/30"}`}
             >
               {item.price}
             </span>
 
             {!item.inStock ? (
-              <span className="text-xs font-semibold text-white/30">Indisponível</span>
+              <span className="flex-1 text-right text-xs font-semibold text-white/30">
+                Indisponível
+              </span>
             ) : entry && !hasOptions ? (
               <div
-                className="flex items-center gap-2 rounded-xl px-2 py-1"
+                className="flex flex-1 items-center justify-between rounded-xl px-3 py-1.5"
                 style={{
                   background: "rgba(249,115,22,0.15)",
                   border: "1px solid rgba(249,115,22,0.3)",
@@ -394,26 +432,27 @@ function ProductCard({ item }: { item: MenuItem }) {
                   onClick={() => decrement(item.id)}
                   className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
                 >
-                  <Minus className="h-3 w-3" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
-                <span className="w-4 text-center text-sm font-bold text-white">{entry.qty}</span>
+                <span className="text-sm font-bold text-white">{entry.qty} na sacola</span>
                 <button
                   onClick={() => increment(item.id)}
                   className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={handleAdd}
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-white transition active:scale-90"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-[0.97]"
                 style={{
                   background: "linear-gradient(135deg, #f97316, #ea580c)",
-                  boxShadow: "0 4px 12px rgba(249,115,22,0.3)",
+                  boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
                 }}
               >
-                <Plus className="h-4 w-4" />
+                <ShoppingBag className="h-4 w-4" />
+                Pedir
               </button>
             )}
           </div>
