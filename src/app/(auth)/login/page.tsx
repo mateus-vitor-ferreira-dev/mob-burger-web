@@ -74,7 +74,7 @@ function GoogleButton({ onClick, disabled }: { onClick: () => void; disabled?: b
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <GoogleIcon />
       Entrar com Google
@@ -255,7 +255,7 @@ export default function LoginPage() {
           className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
           style={{ background: "transparent" }}
         >
-          <div className="w-full max-w-[400px] py-8">
+          <div className="w-full max-w-100 py-8">
             {/* Mobile brand */}
             <div className="mb-8 flex items-center gap-2 lg:hidden">
               <Image
