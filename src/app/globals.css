@@ -55,15 +55,15 @@
   ─────────────────────────────────────────────────────── */
   --mob-bg: #fdf4e7;
   --mob-header-bg: rgba(253, 244, 231, 0.92);
-  /* surfaces — amber ghost */
-  --mob-s1: rgba(190, 80, 10, 0.04);
-  --mob-s2: rgba(190, 80, 10, 0.07);
+  /* surfaces — card branco sobre fundo bege */
+  --mob-s1: rgba(255, 255, 255, 0.88);
+  --mob-s2: rgba(255, 255, 255, 0.65);
   --mob-s3: rgba(190, 80, 10, 0.1);
   --mob-s4: rgba(190, 80, 10, 0.16);
-  /* borders — warm tan */
-  --mob-b1: rgba(150, 60, 5, 0.09);
-  --mob-b2: rgba(150, 60, 5, 0.14);
-  --mob-b3: rgba(150, 60, 5, 0.22);
+  /* borders — warm tan mais visível */
+  --mob-b1: rgba(150, 60, 5, 0.18);
+  --mob-b2: rgba(150, 60, 5, 0.28);
+  --mob-b3: rgba(150, 60, 5, 0.38);
   /* foreground — espresso brown */
   --mob-t20: rgba(30, 12, 2, 0.2);
   --mob-t25: rgba(30, 12, 2, 0.25);
@@ -266,6 +266,17 @@ html:not(.dark) .text-white\/60 {
 }
 html:not(.dark) .text-white\/70 {
   color: rgba(30, 12, 2, 0.7) !important;
+}
+
+/* Containers com fundo sempre escuro: restaura CSS vars para dark dentro de .mob-on-dark */
+html:not(.dark) .mob-on-dark {
+  --mob-pill-inactive-bg: rgba(255, 255, 255, 0.09);
+  --mob-pill-inactive-text: rgba(255, 255, 255, 0.65);
+  --mob-b1: rgba(255, 255, 255, 0.1);
+  --mob-input-bg: rgba(255, 255, 255, 0.07);
+  --mob-text-tertiary: rgba(255, 255, 255, 0.35);
+  --mob-text-secondary: rgba(255, 255, 255, 0.55);
+  --mob-text-primary: rgba(255, 255, 255, 0.9);
 }
 
 /* Containers com fundo sempre escuro: restaura texto branco (.mob-on-dark) */
