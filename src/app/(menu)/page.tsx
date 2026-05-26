@@ -370,20 +370,6 @@ export default function HomePage() {
           </section>
         )}
       </div>
-
-      {/* ── Footer ───────────────────────────────────────────────── */}
-      <footer className="border-t border-white/5 px-6 py-8 text-center">
-        <p className="text-xs text-white/20">
-          © {new Date().getFullYear()} M.O.B — Burgers Pack Co. Todos os direitos reservados.
-        </p>
-        <Link
-          href="/privacidade"
-          className="mt-2 inline-block text-xs transition hover:text-white/40"
-          style={{ color: "var(--mob-text-tertiary)" }}
-        >
-          Privacidade & Termos
-        </Link>
-      </footer>
     </main>
   )
 }

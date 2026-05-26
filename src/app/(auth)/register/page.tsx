@@ -339,11 +339,17 @@ export default function RegisterPage() {
                 <Field delay={350}>
                   <p className="text-center text-xs text-white/30">
                     Ao criar conta, você concorda com os{" "}
-                    <a href="#" className="underline underline-offset-2 hover:text-white/60">
+                    <a
+                      href="/privacidade"
+                      className="underline underline-offset-2 hover:text-white/60"
+                    >
                       Termos de Uso
                     </a>{" "}
                     e a{" "}
-                    <a href="#" className="underline underline-offset-2 hover:text-white/60">
+                    <a
+                      href="/privacidade"
+                      className="underline underline-offset-2 hover:text-white/60"
+                    >
                       Política de Privacidade
                     </a>
                     .

@@ -4,10 +4,18 @@ import Image from "next/image"
 import { CartButton } from "@/components/cart-button"
 import { UserMenu } from "@/components/user-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NavLinks } from "@/components/nav-links"
+import { StoreStatusBanner } from "@/components/store-status-banner"
 
 export const metadata: Metadata = {
   title: { default: "M.O.B Burger", template: "%s | M.O.B Burger" },
 }
+
+// Configuração de contato — atualizar com os dados reais
+const CONTACT_EMAIL = "contato@mobburguer.com.br"
+// Para ativar o link de WhatsApp, defina NEXT_PUBLIC_WHATSAPP no Vercel
+// Formato: código do país + DDD + número (ex: 5535991234567)
+const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP ?? ""
 
 const SVG_SHAPE =
   `<text x="8" y="54" font-family="Arial Black,Impact,Arial,sans-serif" font-weight="900" font-size="42" letter-spacing="8">MOB</text>` +
@@ -27,7 +35,7 @@ const patternBase: React.CSSProperties = {
 export default function MenuLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen" style={{ background: "var(--mob-bg)" }}>
-      {/* ── Background fixo — dá profundidade ao glassmorphism ── */}
+      {/* ── Background fixo ── */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <Image
           src="/images/mob-banner.png"
@@ -37,14 +45,12 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
           className="object-cover opacity-[0.22] dark:opacity-[0.28]"
           style={{ filter: "var(--mob-banner-filter)" }}
         />
-        {/* Vignette */}
         <div
           className="absolute inset-0"
           style={{
             background: `radial-gradient(ellipse 80% 80% at 50% 40%, transparent 0%, var(--mob-vignette) 100%)`,
           }}
         />
-        {/* Padrão diagonal — dark: branco / light: marrom */}
         <div className="absolute inset-0 overflow-hidden">
           <div
             className="mob-pattern-dark"
@@ -61,7 +67,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
         </div>
       </div>
 
-      {/* ── Header sticky ─────────────────────────────────────── */}
+      {/* ── Header sticky ── */}
       <header
         className="sticky top-0 z-50 border-b border-white/[0.07]"
         style={{
@@ -71,7 +77,6 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
         }}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-6">
-          {/* Brand */}
           <Link href="/" className="flex shrink-0 items-center">
             <Image
               src="/mob-logo.png"
@@ -82,35 +87,59 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
             />
           </Link>
 
-          {/* Nav — centro */}
-          <nav className="flex flex-1 items-center justify-center gap-6">
-            <Link
-              href="/"
-              className="text-sm font-medium transition-colors hover:text-orange-500"
-              style={{ color: "var(--mob-text-secondary)" }}
-            >
-              Início
-            </Link>
-            <Link
-              href="/cardapio"
-              className="text-sm font-medium transition-colors hover:text-orange-500"
-              style={{ color: "var(--mob-text-secondary)" }}
-            >
-              Cardápio
-            </Link>
-          </nav>
+          <NavLinks />
 
-          {/* Ações — direita */}
           <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
             <UserMenu />
             <CartButton />
           </div>
         </div>
+
+        {/* Banner de loja fechada — aparece dentro do header sticky */}
+        <StoreStatusBanner />
       </header>
 
-      {/* ── Conteúdo sobre o background ───────────────────────── */}
+      {/* ── Conteúdo ── */}
       <div className="relative z-10">{children}</div>
+
+      {/* ── Footer ── */}
+      <footer className="relative z-10 border-t border-white/5 px-6 py-8 text-center">
+        <p className="text-xs text-white/20">
+          © {new Date().getFullYear()} M.O.B — Burgers Pack Co. Todos os direitos reservados.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          {WHATSAPP && (
+            <>
+              <a
+                href={`https://wa.me/${WHATSAPP}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs transition hover:text-white/50"
+                style={{ color: "var(--mob-text-tertiary)" }}
+              >
+                WhatsApp
+              </a>
+              <span className="text-white/10">·</span>
+            </>
+          )}
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="text-xs transition hover:text-white/50"
+            style={{ color: "var(--mob-text-tertiary)" }}
+          >
+            {CONTACT_EMAIL}
+          </a>
+          <span className="text-white/10">·</span>
+          <Link
+            href="/privacidade"
+            className="text-xs transition hover:text-white/40"
+            style={{ color: "var(--mob-text-tertiary)" }}
+          >
+            Privacidade & Termos
+          </Link>
+        </div>
+      </footer>
     </div>
   )
 }
