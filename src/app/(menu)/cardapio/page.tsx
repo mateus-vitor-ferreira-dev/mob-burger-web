@@ -1,7 +1,7 @@
 "use client"
 
 import { fmtPrice } from "@/lib/utils"
-import { Suspense, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -368,6 +368,7 @@ function ProductCard({ item }: { item: MenuItem }) {
 
           {/* Coração — favoritar */}
           <button
+            aria-label={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
             onClick={(e) => {
               e.stopPropagation()
               toggleFavorite(item.id)
@@ -478,6 +479,16 @@ function CartDrawer() {
   const totalVal = total()
   const hasItems = items.length > 0
 
+  // Fecha com ESC
+  useEffect(() => {
+    if (!isOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closeCart()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [isOpen, closeCart])
+
   return (
     <>
       {isOpen && (
@@ -512,6 +523,7 @@ function CartDrawer() {
             </span>
           </div>
           <button
+            aria-label="Fechar sacola"
             onClick={closeCart}
             className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/5 hover:text-white"
           >
@@ -548,6 +560,9 @@ function CartDrawer() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
+                      aria-label={
+                        entry.qty === 1 ? "Remover item da sacola" : "Diminuir quantidade"
+                      }
                       onClick={() => decrement(entry.id)}
                       className="flex h-6 w-6 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/10 hover:text-white active:scale-90"
                     >
@@ -561,6 +576,7 @@ function CartDrawer() {
                       {entry.qty}
                     </span>
                     <button
+                      aria-label="Aumentar quantidade"
                       onClick={() => increment(entry.id)}
                       className="flex h-6 w-6 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/10 hover:text-white active:scale-90"
                     >

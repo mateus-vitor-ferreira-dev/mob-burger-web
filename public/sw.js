@@ -6,8 +6,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title ?? 'M.O.B Burger', {
       body: payload.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
       data: { url: payload.url ?? '/' },
     })
   );

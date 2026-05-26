@@ -75,6 +75,7 @@ export default function AcompanharPage() {
   const [error, setError] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState("")
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pushState, setPushState] = useState<
     "prompt" | "subscribed" | "denied" | "unsupported" | "loading"
   >("loading")
@@ -92,7 +93,7 @@ export default function AcompanharPage() {
 
   async function handleCancel() {
     if (!token) return
-    if (!confirm("Tem certeza que deseja cancelar este pedido?")) return
+    setShowCancelConfirm(false)
     setCancelling(true)
     setCancelError("")
     try {
@@ -254,7 +255,7 @@ export default function AcompanharPage() {
             order.customer.id === customer.id &&
             ["AWAITING_PAYMENT", "CONFIRMED"].includes(order.status) && (
               <button
-                onClick={handleCancel}
+                onClick={() => setShowCancelConfirm(true)}
                 disabled={cancelling}
                 className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-red-400 transition hover:bg-red-400/10 disabled:opacity-50"
               >
@@ -401,6 +402,61 @@ export default function AcompanharPage() {
           style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
         >
           📍 {order.delivery.street}, {order.delivery.number} — {order.delivery.neighborhood}
+        </div>
+      )}
+
+      {/* Modal confirmação de cancelamento */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowCancelConfirm(false)}
+          />
+          <div
+            className="relative w-full max-w-sm rounded-2xl p-6"
+            style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            <div className="mb-4 flex justify-center">
+              <div
+                className="flex h-14 w-14 items-center justify-center rounded-full"
+                style={{
+                  background: "rgba(239,68,68,0.12)",
+                  border: "2px solid rgba(239,68,68,0.3)",
+                }}
+              >
+                <XCircle className="h-7 w-7 text-red-400" />
+              </div>
+            </div>
+            <h3
+              className="mb-2 text-center text-white"
+              style={{
+                fontFamily: "var(--font-bebas)",
+                fontSize: "1.6rem",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Cancelar pedido?
+            </h3>
+            <p className="mb-6 text-center text-sm text-white/40">
+              Esta ação não pode ser desfeita. O pedido será cancelado imediatamente.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 rounded-xl py-3 text-sm font-semibold text-white/50 transition hover:bg-white/5"
+                style={{ border: "1px solid var(--mob-b1)" }}
+              >
+                Voltar
+              </button>
+              <button
+                onClick={handleCancel}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.97]"
+                style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}
+              >
+                Sim, cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

@@ -312,53 +312,62 @@ export default function PagamentoPage() {
 
     async function initPayment() {
       try {
-        // Mapeia itens do carrinho — productId já é o ID real do banco
-        const mappedItems = items.map((item) => ({
-          productId: item.productId ?? item.id,
-          quantity: item.qty,
-          observations: item.observations || undefined,
-          options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
-        }))
+        const params = new URLSearchParams(window.location.search)
+        const retryOrderId = params.get("retry_order_id")
 
-        if (mappedItems.length === 0) throw new Error("Sacola vazia.")
+        let targetOrderId: string
 
-        // 3. Cria o pedido
-        const couponCode = new URLSearchParams(window.location.search).get("coupon") || undefined
-        const orderRes = await fetch("/api/backend/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            type: orderType,
-            paymentMethod: "CARD",
-            items: mappedItems,
-            couponCode,
-            ...(orderType === "DELIVERY"
-              ? {
-                  delivery: {
-                    street: address.street,
-                    number: address.number,
-                    neighborhood: address.neighborhood,
-                    complement: address.complement || undefined,
-                    zoneId: zoneId || undefined,
-                  },
-                }
-              : {}),
-          }),
-        })
-        const orderJson = await orderRes.json()
-        if (!orderRes.ok) throw new Error(orderJson.error?.message ?? "Erro ao criar pedido.")
-        const createdOrderId: string = orderJson.data.id
+        if (retryOrderId) {
+          // Retentativa: reutiliza o pedido existente, só cria novo PaymentIntent
+          targetOrderId = retryOrderId
+        } else {
+          // Mapeia itens do carrinho — productId já é o ID real do banco
+          const mappedItems = items.map((item) => ({
+            productId: item.productId ?? item.id,
+            quantity: item.qty,
+            observations: item.observations || undefined,
+            options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
+          }))
 
-        // 4. Cria o PaymentIntent vinculado ao pedido
+          if (mappedItems.length === 0) throw new Error("Sacola vazia.")
+
+          const couponCode = params.get("coupon") || undefined
+          const orderRes = await fetch("/api/backend/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              type: orderType,
+              paymentMethod: "CARD",
+              items: mappedItems,
+              couponCode,
+              ...(orderType === "DELIVERY"
+                ? {
+                    delivery: {
+                      street: address.street,
+                      number: address.number,
+                      neighborhood: address.neighborhood,
+                      complement: address.complement || undefined,
+                      zoneId: zoneId || undefined,
+                    },
+                  }
+                : {}),
+            }),
+          })
+          const orderJson = await orderRes.json()
+          if (!orderRes.ok) throw new Error(orderJson.error?.message ?? "Erro ao criar pedido.")
+          targetOrderId = orderJson.data.id
+        }
+
+        // Cria o PaymentIntent vinculado ao pedido
         const payRes = await fetch("/api/backend/payments/intent", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ orderId: createdOrderId }),
+          body: JSON.stringify({ orderId: targetOrderId }),
         })
         const payJson = await payRes.json()
         if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
 
-        setOrderId(createdOrderId)
+        setOrderId(targetOrderId)
         setClientSecret(payJson.data.clientSecret)
       } catch (e) {
         setFetchError(e instanceof Error ? e.message : "Erro ao iniciar checkout.")

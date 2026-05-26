@@ -13,6 +13,7 @@
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [
-    { "src": "/images/mob-banner.png", "sizes": "1200x630", "type": "image/png", "form_factor": "wide" }
+    { "src": "/images/mob-banner.png", "sizes": "1200x630", "type": "image/png", "form_factor": "wide" },
+    { "src": "/images/mob-screenshot-mobile.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" }
   ]
 }

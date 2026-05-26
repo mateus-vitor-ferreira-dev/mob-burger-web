@@ -21,8 +21,15 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: [
           // Permite que o popup do Google OAuth se comunique com a janela pai.
-          // O padrão "same-origin" do Next.js bloqueia window.closed no popup OAuth.
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(self)",
+          },
         ],
       },
     ]

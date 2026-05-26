@@ -133,7 +133,7 @@ function PedidoConfirmadoContent() {
             Não foi possível processar o pagamento. Tente novamente ou use outro método.
           </p>
           <Link
-            href="/pagamento"
+            href={orderId ? `/pagamento?retry_order_id=${orderId}` : "/carrinho"}
             className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition active:scale-95"
             style={{
               background: "linear-gradient(135deg, #f97316, #ea580c)",
@@ -216,16 +216,30 @@ function PedidoConfirmadoContent() {
           </>
         )}
 
-        <Link
-          href="/cardapio"
-          className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white transition active:scale-95"
-          style={{
-            background: "linear-gradient(135deg, #f97316, #ea580c)",
-            boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
-          }}
-        >
-          Fazer novo pedido <ArrowRight className="h-4 w-4" />
-        </Link>
+        <div className="flex flex-col gap-3">
+          {orderId && !isProcessing && (
+            <Link
+              href={`/acompanhar/${orderId}`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition active:scale-95"
+              style={{
+                background: "linear-gradient(135deg, #f97316, #ea580c)",
+                boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
+              }}
+            >
+              Acompanhar pedido <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+          <Link
+            href="/cardapio"
+            className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition active:scale-95"
+            style={{
+              color: "rgba(255,255,255,0.5)",
+              border: "1px solid var(--mob-b1)",
+            }}
+          >
+            Fazer novo pedido
+          </Link>
+        </div>
       </div>
     </main>
   )

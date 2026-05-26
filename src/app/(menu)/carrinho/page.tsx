@@ -245,6 +245,8 @@ function DeliveryForm({
             `Taxa de entrega para ${match.name}: ${match.fee === 0 ? "Grátis" : fmtPrice(match.fee)}`,
           )
         } else {
+          // Limpa zone persistida para não deixar zoneId antigo habilitar o checkout
+          onZoneDetected("", 0, "")
           setZoneNotice("Bairro fora da área de entrega. Verifique com a loja.")
         }
       }

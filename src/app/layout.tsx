@@ -9,6 +9,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const bebasNeue = Bebas_Neue({ variable: "--font-bebas", weight: "400", subsets: ["latin"] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: { default: "M.O.B Burger — Burgers Pack Co.", template: "%s | M.O.B Burger" },
   description:
     "Hambúrgueres artesanais smashados na chapa. Combos exclusivos, ingredientes premium — feito na hora, sem frescura.",
@@ -17,10 +18,18 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "MOB Burger" },
   openGraph: {
     type: "website",
+    url: "/",
     siteName: "M.O.B Burger",
     title: "M.O.B Burger — Burgers Pack Co.",
     description: "Hambúrgueres artesanais smashados na chapa. Feito na hora, sem frescura.",
-    images: [{ url: "/images/mob-banner.png", width: 1200, height: 630 }],
+    images: [{ url: "/images/mob-banner.png", width: 1200, height: 630, alt: "M.O.B Burger" }],
+    locale: "pt_BR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "M.O.B Burger — Burgers Pack Co.",
+    description: "Hambúrgueres artesanais smashados na chapa. Feito na hora, sem frescura.",
+    images: ["/images/mob-banner.png"],
   },
 }
 

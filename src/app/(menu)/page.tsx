@@ -189,6 +189,7 @@ function Carousel({
   return (
     <div className="group relative px-12">
       <button
+        aria-label="Slide anterior"
         onClick={() => handleManualNav(() => emblaApi?.scrollPrev())}
         className={`${arrowCls} left-1.5`}
       >
@@ -206,6 +207,7 @@ function Carousel({
       </div>
 
       <button
+        aria-label="Próximo slide"
         onClick={() => handleManualNav(() => emblaApi?.scrollNext())}
         className={`${arrowCls} right-1.5`}
       >
@@ -374,6 +376,13 @@ export default function HomePage() {
         <p className="text-xs text-white/20">
           © {new Date().getFullYear()} M.O.B — Burgers Pack Co. Todos os direitos reservados.
         </p>
+        <Link
+          href="/privacidade"
+          className="mt-2 inline-block text-xs transition hover:text-white/40"
+          style={{ color: "var(--mob-text-tertiary)" }}
+        >
+          Privacidade & Termos
+        </Link>
       </footer>
     </main>
   )

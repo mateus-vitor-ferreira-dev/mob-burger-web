@@ -24,6 +24,7 @@ import {
   Bell,
   BellOff,
   RotateCcw,
+  ArrowRight,
 } from "lucide-react"
 import Image from "next/image"
 import { useCustomer } from "@/lib/customer-store"
@@ -588,6 +589,14 @@ function PasswordCard() {
 
 // ─── Card: Histórico de pedidos ───────────────────────────────────────────────
 
+const ACTIVE_STATUSES = new Set([
+  "AWAITING_PAYMENT",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "OUT_FOR_DELIVERY",
+])
+
 const ORDER_STATUS_LABEL: Record<string, string> = {
   AWAITING_PAYMENT: "Aguardando pagamento",
   CONFIRMED: "Confirmado",
@@ -741,12 +750,22 @@ function OrderHistoryCard() {
                         minute: "2-digit",
                       })}
                     </p>
-                    <button
-                      onClick={() => reorder(order)}
-                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-orange-400 transition hover:bg-orange-400/10 active:scale-95"
-                    >
-                      <RotateCcw className="h-3 w-3" /> Refazer pedido
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {ACTIVE_STATUSES.has(order.status) && (
+                        <Link
+                          href={`/acompanhar/${order.id}`}
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-orange-400 transition hover:bg-orange-400/10 active:scale-95"
+                        >
+                          Acompanhar <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => reorder(order)}
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/40 transition hover:bg-white/5 hover:text-white active:scale-95"
+                      >
+                        <RotateCcw className="h-3 w-3" /> Refazer
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
