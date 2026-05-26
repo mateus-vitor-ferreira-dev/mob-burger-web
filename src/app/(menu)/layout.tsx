@@ -3,7 +3,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { CartButton } from "@/components/cart-button"
 import { UserMenu } from "@/components/user-menu"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { NavLinks } from "@/components/nav-links"
 import { StoreStatusBanner } from "@/components/store-status-banner"
 
@@ -22,7 +21,6 @@ const SVG_SHAPE =
   `<g transform="translate(158,14)"><path d="M5 32 Q5 4 38 4 Q70 4 70 32Z"/><rect x="2" y="32" width="70" height="7" rx="3"/><rect x="2" y="40" width="70" height="12" rx="3"/><rect x="4" y="53" width="66" height="13" rx="6"/></g>`
 
 const MOB_PATTERN_DARK = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="110" fill="white">${SVG_SHAPE}</svg>`)}`
-const MOB_PATTERN_LIGHT = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="110" fill="rgba(60,35,10,0.85)">${SVG_SHAPE}</svg>`)}`
 
 const patternBase: React.CSSProperties = {
   position: "absolute",
@@ -42,7 +40,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
           alt=""
           fill
           priority
-          className="object-cover opacity-[0.22] dark:opacity-[0.28]"
+          className="object-cover opacity-[0.28]"
           style={{ filter: "var(--mob-banner-filter)" }}
         />
         <div
@@ -53,16 +51,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
         />
         <div className="absolute inset-0 overflow-hidden">
           <div
-            className="mob-pattern-dark"
             style={{ ...patternBase, backgroundImage: `url("${MOB_PATTERN_DARK}")`, opacity: 0.07 }}
-          />
-          <div
-            className="mob-pattern-light"
-            style={{
-              ...patternBase,
-              backgroundImage: `url("${MOB_PATTERN_LIGHT}")`,
-              opacity: 0.14,
-            }}
           />
         </div>
       </div>
@@ -90,7 +79,6 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
           <NavLinks />
 
           <div className="flex shrink-0 items-center gap-2">
-            <ThemeToggle />
             <UserMenu />
             <CartButton />
           </div>

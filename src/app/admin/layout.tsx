@@ -22,11 +22,8 @@ import {
   ExternalLink,
   Bell,
   BellOff,
-  Sun,
-  Moon,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
-import { useTheme } from "next-themes"
 import { getPushState, subscribeStaffPush, unsubscribeStaffPush } from "@/lib/push"
 
 const SVG_SHAPE =
@@ -34,7 +31,6 @@ const SVG_SHAPE =
   `<g transform="translate(158,14)"><path d="M5 32 Q5 4 38 4 Q70 4 70 32Z"/><rect x="2" y="32" width="70" height="7" rx="3"/><rect x="2" y="40" width="70" height="12" rx="3"/><rect x="4" y="53" width="66" height="13" rx="6"/></g>`
 
 const MOB_PATTERN_DARK = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="110" fill="white">${SVG_SHAPE}</svg>`)}`
-const MOB_PATTERN_LIGHT = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="110" fill="rgba(60,35,10,0.85)">${SVG_SHAPE}</svg>`)}`
 
 const patternBase: React.CSSProperties = {
   position: "absolute",
@@ -62,7 +58,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const pathname = usePathname()
   const { staff, token, logout, _hasHydrated } = useStaff()
-  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pushState, setPushState] = useState<"unsupported" | "denied" | "subscribed" | "prompt">(
@@ -123,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           alt=""
           fill
           priority
-          className="object-cover opacity-[0.22] dark:opacity-[0.28]"
+          className="object-cover opacity-[0.28]"
           style={{ filter: "var(--mob-banner-filter)" }}
         />
         <div
@@ -134,16 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
         <div className="absolute inset-0 overflow-hidden">
           <div
-            className="mob-pattern-dark"
             style={{ ...patternBase, backgroundImage: `url("${MOB_PATTERN_DARK}")`, opacity: 0.07 }}
-          />
-          <div
-            className="mob-pattern-light"
-            style={{
-              ...patternBase,
-              backgroundImage: `url("${MOB_PATTERN_LIGHT}")`,
-              opacity: 0.14,
-            }}
           />
         </div>
       </div>
@@ -209,13 +195,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <ExternalLink className="h-4 w-4" /> Ver site
           </Link>
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            Tema
-          </button>
           {pushState !== "unsupported" && (
             <button
               onClick={togglePush}

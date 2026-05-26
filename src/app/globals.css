@@ -49,83 +49,7 @@
 }
 
 :root {
-  /* ── MOB App tokens · Ember & Cream ──────────────────
-     Psicologia das cores: parchment dourado (pão fresco),
-     amber ghost (queijo/caramelização), espresso (café/carne)
-  ─────────────────────────────────────────────────────── */
-  --mob-bg: #fdf4e7;
-  --mob-header-bg: rgba(253, 244, 231, 0.92);
-  /* surfaces — card branco sobre fundo bege */
-  --mob-s1: rgba(255, 255, 255, 0.88);
-  --mob-s2: rgba(255, 255, 255, 0.65);
-  --mob-s3: rgba(190, 80, 10, 0.1);
-  --mob-s4: rgba(190, 80, 10, 0.16);
-  /* borders — warm tan mais visível */
-  --mob-b1: rgba(150, 60, 5, 0.18);
-  --mob-b2: rgba(150, 60, 5, 0.28);
-  --mob-b3: rgba(150, 60, 5, 0.38);
-  /* foreground — espresso brown */
-  --mob-t20: rgba(30, 12, 2, 0.2);
-  --mob-t25: rgba(30, 12, 2, 0.25);
-  --mob-t30: rgba(30, 12, 2, 0.3);
-  --mob-t40: rgba(30, 12, 2, 0.4);
-  --mob-t50: rgba(30, 12, 2, 0.5);
-  --mob-t60: rgba(30, 12, 2, 0.6);
-  --mob-t70: rgba(30, 12, 2, 0.7);
-  --mob-t80: rgba(30, 12, 2, 0.8);
-  /* Admin sidebar — escura independente do tema */
-  --mob-admin-sidebar: rgba(28, 14, 3, 0.97);
-  --mob-admin-mobile-header: rgba(22, 10, 2, 0.99);
-  --mob-admin-sidebar-solid: #1c0e03;
-  --mob-sidebar-inactive: rgba(255, 248, 240, 0.45);
-
-  /* ── Tokens adaptativos de texto e superfície (light mode) ─ */
-  --mob-text-primary: rgba(30, 12, 2, 0.9);
-  --mob-text-secondary: rgba(30, 12, 2, 0.55);
-  --mob-text-tertiary: rgba(30, 12, 2, 0.35);
-  --mob-card-solid: rgba(255, 255, 255, 0.82);
-  --mob-pill-inactive-bg: rgba(190, 80, 10, 0.08);
-  --mob-pill-inactive-text: rgba(30, 12, 2, 0.55);
-  --mob-input-bg: rgba(255, 255, 255, 0.75);
-
-  /* orange-600 como primary da marca */
-  --primary: oklch(0.646 0.222 41.116);
-  --primary-foreground: oklch(0.985 0 0);
-
-  --background: oklch(0.977 0.016 76);
-  --foreground: oklch(0.155 0.048 46);
-  --card: oklch(0.999 0.004 80);
-  --card-foreground: oklch(0.155 0.048 46);
-  --popover: oklch(0.999 0.004 80);
-  --popover-foreground: oklch(0.155 0.048 46);
-  --secondary: oklch(0.958 0.02 76);
-  --secondary-foreground: oklch(0.2 0.04 46);
-  --muted: oklch(0.958 0.02 76);
-  --muted-foreground: oklch(0.48 0.035 50);
-  --accent: oklch(0.958 0.02 76);
-  --accent-foreground: oklch(0.2 0.04 46);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.878 0.028 72);
-  --input: oklch(0.878 0.028 72);
-  --ring: oklch(0.646 0.222 41.116);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.14 0.045 42);
-  --sidebar-foreground: oklch(0.962 0.01 72);
-  --sidebar-primary: oklch(0.646 0.222 41.116);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.21 0.04 42);
-  --sidebar-accent-foreground: oklch(0.962 0.01 72);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.646 0.222 41.116);
-}
-
-.dark {
-  /* ── MOB App tokens (dark) ───────────────────────── */
+  /* ── MOB App tokens — dark only ───────────────── */
   --mob-bg: #0c0b09;
   --mob-header-bg: rgba(12, 11, 9, 0.75);
   /* surfaces */
@@ -146,8 +70,12 @@
   --mob-t60: rgba(255, 255, 255, 0.6);
   --mob-t70: rgba(255, 255, 255, 0.7);
   --mob-t80: rgba(255, 255, 255, 0.8);
-
-  /* ── Tokens adaptativos dark mode ─────────────────────── */
+  /* Admin sidebar */
+  --mob-admin-sidebar: rgba(12, 11, 9, 0.6);
+  --mob-admin-mobile-header: rgba(10, 9, 8, 0.95);
+  --mob-admin-sidebar-solid: #0f0e0c;
+  --mob-sidebar-inactive: rgba(255, 255, 255, 0.45);
+  /* Text & surface tokens */
   --mob-text-primary: rgba(255, 255, 255, 0.92);
   --mob-text-secondary: rgba(255, 255, 255, 0.55);
   --mob-text-tertiary: rgba(255, 255, 255, 0.3);
@@ -155,11 +83,13 @@
   --mob-pill-inactive-bg: rgba(255, 255, 255, 0.06);
   --mob-pill-inactive-text: rgba(255, 255, 255, 0.55);
   --mob-input-bg: rgba(255, 255, 255, 0.05);
+  /* Background effects */
+  --mob-vignette: rgba(12, 11, 9, 0.75);
+  --mob-banner-filter: blur(48px) saturate(2.2) brightness(0.9);
 
-  /* orange-500 no dark — mais vibrante no fundo escuro */
+  /* shadcn tokens */
   --primary: oklch(0.705 0.213 47.604);
   --primary-foreground: oklch(0.145 0 0);
-
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -181,6 +111,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.705 0.213 47.604);
@@ -189,11 +120,6 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.705 0.213 47.604);
-  /* Admin sidebar glassmorphism como antes */
-  --mob-admin-sidebar: rgba(12, 11, 9, 0.6);
-  --mob-admin-mobile-header: rgba(10, 9, 8, 0.95);
-  --mob-admin-sidebar-solid: #0f0e0c;
-  --mob-sidebar-inactive: rgba(255, 255, 255, 0.45);
 }
 
 @layer base {
@@ -208,118 +134,12 @@
   }
 }
 
-/* Background layers por tema */
-:root {
-  --mob-vignette: rgba(253, 244, 231, 0.18);
-  --mob-banner-filter: blur(56px) saturate(1.4) brightness(0.9) sepia(0.12);
-}
-.dark {
-  --mob-vignette: rgba(12, 11, 9, 0.75);
-  --mob-banner-filter: blur(48px) saturate(2.2) brightness(0.9);
-}
-
-/* Padrão MOB: alterna entre branco (dark) e marrom (light) */
-.mob-pattern-dark {
-  display: block;
-}
-.mob-pattern-light {
-  display: none;
-}
-html:not(.dark) .mob-pattern-dark {
-  display: none;
-}
-html:not(.dark) .mob-pattern-light {
-  display: block;
-}
-
-/* Fix autofill do Chrome — impede o fundo azul/amarelo nos inputs */
+/* Chrome autofill — dark background */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 30px #fdf4e7 inset !important;
-  -webkit-text-fill-color: #1e0c02 !important;
+  -webkit-box-shadow: 0 0 0 30px #110f0d inset !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
   transition: background-color 5000s ease-in-out 0s;
-  caret-color: #1e0c02;
-}
-
-/* Light mode: text-white → espresso brown */
-html:not(.dark) .text-white {
-  color: oklch(0.155 0.048 46) !important;
-}
-html:not(.dark) .text-white\/20 {
-  color: rgba(30, 12, 2, 0.2) !important;
-}
-html:not(.dark) .text-white\/25 {
-  color: rgba(30, 12, 2, 0.25) !important;
-}
-html:not(.dark) .text-white\/30 {
-  color: rgba(30, 12, 2, 0.3) !important;
-}
-html:not(.dark) .text-white\/40 {
-  color: rgba(30, 12, 2, 0.4) !important;
-}
-html:not(.dark) .text-white\/50 {
-  color: rgba(30, 12, 2, 0.5) !important;
-}
-html:not(.dark) .text-white\/60 {
-  color: rgba(30, 12, 2, 0.6) !important;
-}
-html:not(.dark) .text-white\/70 {
-  color: rgba(30, 12, 2, 0.7) !important;
-}
-
-/* Containers com fundo sempre escuro: restaura CSS vars para dark dentro de .mob-on-dark */
-html:not(.dark) .mob-on-dark {
-  --mob-pill-inactive-bg: rgba(255, 255, 255, 0.09);
-  --mob-pill-inactive-text: rgba(255, 255, 255, 0.65);
-  --mob-b1: rgba(255, 255, 255, 0.1);
-  --mob-input-bg: rgba(255, 255, 255, 0.07);
-  --mob-text-tertiary: rgba(255, 255, 255, 0.35);
-  --mob-text-secondary: rgba(255, 255, 255, 0.55);
-  --mob-text-primary: rgba(255, 255, 255, 0.9);
-}
-
-/* Containers com fundo sempre escuro: restaura texto branco (.mob-on-dark) */
-html:not(.dark) .mob-on-dark .text-white {
-  color: rgba(255, 255, 255, 1) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/70 {
-  color: rgba(255, 255, 255, 0.7) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/60 {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/50 {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/40 {
-  color: rgba(255, 255, 255, 0.4) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/30 {
-  color: rgba(255, 255, 255, 0.3) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/25 {
-  color: rgba(255, 255, 255, 0.25) !important;
-}
-html:not(.dark) .mob-on-dark .text-white\/20 {
-  color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Light mode: suaviza overlays bg-black */
-html:not(.dark) .bg-black\/30 {
-  background-color: rgba(0, 0, 0, 0.08) !important;
-}
-html:not(.dark) .bg-black\/50 {
-  background-color: rgba(0, 0, 0, 0.18) !important;
-}
-html:not(.dark) .bg-black\/60 {
-  background-color: rgba(0, 0, 0, 0.22) !important;
-}
-html:not(.dark) .bg-black\/75 {
-  background-color: rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Light mode: hover:text-white → laranja da marca (visível no fundo claro) */
-html:not(.dark) .hover\:text-white:hover {
-  color: oklch(0.646 0.222 41.116) !important;
+  caret-color: rgba(255, 255, 255, 0.9);
 }
