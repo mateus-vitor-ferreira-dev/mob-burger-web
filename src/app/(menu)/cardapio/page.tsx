@@ -122,6 +122,17 @@ function OptionsModal({
   const [observations, setObservations] = useState("")
   const [cheeseType, setCheeseType] = useState<string | null>(null)
 
+  const { categories } = useMenu()
+  const productInfoMap = useMemo(() => {
+    const map = new Map<string, { description: string | null; imageUrl: string | null }>()
+    categories.forEach((c) =>
+      c.products.forEach((p) =>
+        map.set(p.name, { description: p.description, imageUrl: p.imageUrl }),
+      ),
+    )
+    return map
+  }, [categories])
+
   const showCheeseSelector = item.cat === "burgers"
 
   function toggleItem(optionId: string, itemId: string, type: "RADIO" | "CHECKBOX") {
@@ -216,56 +227,101 @@ function OptionsModal({
 
         <div className="space-y-5">
           {/* Opções específicas do produto */}
-          {item.options.map((opt) => (
-            <div key={opt.id}>
-              <div className="mb-2 flex items-center gap-2">
-                <p className="text-sm font-semibold text-white">{opt.label}</p>
-                {opt.required && (
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-400"
-                    style={{ background: "rgba(249,115,22,0.15)" }}
-                  >
-                    Obrigatório
-                  </span>
-                )}
-                <span className="text-[10px] text-white/30">
-                  {opt.type === "RADIO" ? "Escolha 1" : "Escolha quantos quiser"}
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                {opt.items.map((optItem) => {
-                  const isSelected = (selected[opt.id] ?? []).includes(optItem.id)
-                  return (
-                    <button
-                      key={optItem.id}
-                      onClick={() => toggleItem(opt.id, optItem.id, opt.type)}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition"
-                      style={{
-                        background: isSelected ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
-                      }}
+          {item.options.map((opt) => {
+            // Para combos: mostrar delta em relação ao mais barato (que fica "incluído")
+            const minOptPrice = item.comboConfig
+              ? Math.min(...opt.items.map((i) => i.additionalPrice))
+              : 0
+            return (
+              <div key={opt.id}>
+                <div className="mb-2 flex items-center gap-2">
+                  <p className="text-sm font-semibold text-white">{opt.label}</p>
+                  {opt.required && (
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-400"
+                      style={{ background: "rgba(249,115,22,0.15)" }}
                     >
-                      <div
-                        className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+                      Obrigatório
+                    </span>
+                  )}
+                  <span className="text-[10px] text-white/30">
+                    {opt.type === "RADIO" ? "Escolha 1" : "Escolha quantos quiser"}
+                  </span>
+                </div>
+                <div className="space-y-1.5">
+                  {opt.items.map((optItem) => {
+                    const isSelected = (selected[opt.id] ?? []).includes(optItem.id)
+                    const displayDelta = item.comboConfig
+                      ? optItem.additionalPrice - minOptPrice
+                      : optItem.additionalPrice
+                    const info = item.comboConfig ? productInfoMap.get(optItem.name) : null
+                    return (
+                      <button
+                        key={optItem.id}
+                        onClick={() => toggleItem(opt.id, optItem.id, opt.type)}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition"
                         style={{
-                          background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
-                          border: isSelected ? "none" : "1px solid rgba(255,255,255,0.15)",
+                          background: isSelected
+                            ? "rgba(249,115,22,0.12)"
+                            : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
                         }}
                       >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <span className="flex-1 text-sm text-white">{optItem.name}</span>
-                      {optItem.additionalPrice > 0 && (
-                        <span className="text-xs font-semibold text-orange-400">
-                          +{fmtPrice(optItem.additionalPrice)}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+                        {/* Thumbnail */}
+                        {info && (
+                          <div className="relative h-10 w-10 flex-none overflow-hidden rounded-lg bg-black/40">
+                            {info.imageUrl ? (
+                              <Image
+                                src={info.imageUrl}
+                                alt={optItem.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <span className="flex h-full w-full items-center justify-center text-lg">
+                                🍔
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {/* Radio */}
+                        <div
+                          className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+                          style={{
+                            background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
+                            border: isSelected ? "none" : "1px solid rgba(255,255,255,0.15)",
+                          }}
+                        >
+                          {isSelected && <Check className="h-3 w-3 text-white" />}
+                        </div>
+                        {/* Nome + descrição */}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm leading-tight font-semibold text-white">
+                            {optItem.name.replace(/^Mob /i, "")}
+                          </p>
+                          {info?.description && (
+                            <p className="mt-0.5 line-clamp-1 text-[11px] leading-tight text-white/40">
+                              {info.description}
+                            </p>
+                          )}
+                        </div>
+                        {/* Preço delta */}
+                        {displayDelta > 0 ? (
+                          <span className="shrink-0 text-xs font-semibold text-orange-400">
+                            +{fmtPrice(displayDelta)}
+                          </span>
+                        ) : item.comboConfig ? (
+                          <span className="shrink-0 text-xs font-semibold text-white/30">
+                            incluído
+                          </span>
+                        ) : null}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {/* Tipo de queijo */}
           {showCheeseSelector && (
