@@ -228,7 +228,10 @@ function OptionsModal({
         <div className="space-y-5">
           {/* Opções específicas do produto */}
           {item.options.map((opt) => {
-            // Para combos: mostrar delta em relação ao mais barato (que fica "incluído")
+            // Para combos: ordenar por preço crescente (incluído primeiro) e mostrar delta
+            const sortedItems = item.comboConfig
+              ? [...opt.items].sort((a, b) => a.additionalPrice - b.additionalPrice)
+              : opt.items
             const minOptPrice = item.comboConfig
               ? Math.min(...opt.items.map((i) => i.additionalPrice))
               : 0
@@ -249,7 +252,7 @@ function OptionsModal({
                   </span>
                 </div>
                 <div className="space-y-1.5">
-                  {opt.items.map((optItem) => {
+                  {sortedItems.map((optItem) => {
                     const isSelected = (selected[opt.id] ?? []).includes(optItem.id)
                     const displayDelta = item.comboConfig
                       ? optItem.additionalPrice - minOptPrice

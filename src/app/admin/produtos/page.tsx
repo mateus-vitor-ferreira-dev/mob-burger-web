@@ -76,8 +76,10 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
   const [open, setOpen] = useState(false)
   const [numBurgers, setNumBurgers] = useState("2")
   const [numDrinks, setNumDrinks] = useState("2")
-  const [drinkCostPrice, setDrinkCostPrice] = useState("5.50")
   const [allowedSlugs, setAllowedSlugs] = useState<string[]>(["burgers", "chicken"])
+  const [includeDrinks, setIncludeDrinks] = useState(true)
+  const [numDesserts, setNumDesserts] = useState("0")
+  const [includeDesserts, setIncludeDesserts] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -97,10 +99,14 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
-        numBurgers: parseInt(numBurgers) || 2,
+        numBurgers: parseInt(numBurgers) || 1,
         numDrinks: parseInt(numDrinks) || 0,
-        drinkCostPrice: parseFloat(drinkCostPrice) || 5.5,
+        drinkCostPrice: 5.5,
         allowedSlugs,
+        ...(includeDrinks && parseInt(numDrinks) > 0 ? { drinkSlugs: ["bebidas"] } : {}),
+        ...(includeDesserts && parseInt(numDesserts) > 0
+          ? { numDesserts: parseInt(numDesserts), dessertSlugs: ["sobremesas"] }
+          : { numDesserts: 0 }),
       }),
     })
     setSaving(false)
@@ -128,8 +134,9 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
       {open && (
         <div className="space-y-3 px-3 pb-3">
           <p className="text-[10px] text-white/30">
-            Ao salvar, o preço do produto é atualizado para o custo das bebidas e as opções de
-            personalização são substituídas pelos lanches disponíveis.
+            Ao salvar, o preço do produto é zerado e as opções de personalização são recriadas com
+            lanches, bebidas e sobremesas disponíveis. O valor total é calculado pela soma dos itens
+            escolhidos.
           </p>
 
           <div className="grid grid-cols-3 gap-2">
@@ -156,16 +163,35 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
               />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] text-white/40">Custo bebida (R$)</label>
+              <label className="mb-1 block text-[10px] text-white/40">Qtd. Sobremesas</label>
               <input
                 className={`${inputCls} w-full`}
                 type="number"
                 min="0"
-                step="0.50"
-                value={drinkCostPrice}
-                onChange={(e) => setDrinkCostPrice(e.target.value)}
+                max="8"
+                value={numDesserts}
+                onChange={(e) => setNumDesserts(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="flex gap-3">
+            <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/40">
+              <input
+                type="checkbox"
+                checked={includeDrinks}
+                onChange={(e) => setIncludeDrinks(e.target.checked)}
+              />
+              Cliente escolhe bebida
+            </label>
+            <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/40">
+              <input
+                type="checkbox"
+                checked={includeDesserts}
+                onChange={(e) => setIncludeDesserts(e.target.checked)}
+              />
+              Cliente escolhe sobremesa
+            </label>
           </div>
 
           <div>
