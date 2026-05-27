@@ -28,6 +28,7 @@ import {
 import { useCart, type CartItem as CartItemType } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
 import { useCustomer } from "@/lib/customer-store"
+import { useMenu, type MenuProduct } from "@/lib/use-menu"
 
 function maskPhone(v: string) {
   return v
@@ -403,6 +404,101 @@ function DeliveryForm({
   )
 }
 
+// ─── Recomendações ────────────────────────────────────────────────────────────
+
+const SUGGESTION_CATEGORIES = ["bebidas", "porcoes", "sobremesas"]
+
+function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
+  const { categories } = useMenu()
+  const add = useCart((s) => s.add)
+  const [added, setAdded] = useState<Set<string>>(new Set())
+
+  const suggestions = categories
+    .filter((c) => SUGGESTION_CATEGORIES.includes(c.slug))
+    .flatMap((c) => c.products.filter((p) => p.inStock && !cartIds.has(p.id)))
+    .slice(0, 5)
+
+  if (suggestions.length === 0) return null
+
+  function handleAdd(p: MenuProduct) {
+    add({
+      id: p.id,
+      productId: p.id,
+      name: p.name,
+      price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
+      priceNum: p.price,
+      img: p.imageUrl ?? undefined,
+      description: p.description ?? undefined,
+      options: [],
+      extras: [],
+    })
+    setAdded((prev) => new Set(prev).add(p.id))
+  }
+
+  return (
+    <div className="mt-1">
+      <p className="mb-3 text-xs font-semibold tracking-widest text-white/30 uppercase">
+        Também vai bem…
+      </p>
+      <div className="flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {suggestions.map((p) => {
+          const isAdded = added.has(p.id)
+          return (
+            <div
+              key={p.id}
+              className="flex w-36 flex-none flex-col overflow-hidden rounded-2xl transition"
+              style={{
+                background: "var(--mob-card-solid)",
+                border: isAdded ? "1px solid rgba(249,115,22,0.4)" : "1px solid var(--mob-b1)",
+              }}
+            >
+              {/* Imagem */}
+              <div className="relative h-24 w-full overflow-hidden bg-black/30">
+                {p.imageUrl ? (
+                  <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-2xl">🍔</div>
+                )}
+              </div>
+              {/* Info + botão */}
+              <div className="flex flex-1 flex-col gap-1 p-2.5">
+                <p className="line-clamp-2 text-xs leading-tight font-semibold text-white">
+                  {p.name.replace(/^Mob /i, "")}
+                </p>
+                <p className="text-xs font-bold text-orange-400">
+                  R$ {p.price.toFixed(2).replace(".", ",")}
+                </p>
+                <button
+                  onClick={() => !isAdded && handleAdd(p)}
+                  className="mt-auto flex w-full items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs font-bold transition active:scale-95"
+                  style={
+                    isAdded
+                      ? { background: "rgba(34,197,94,0.15)", color: "#4ade80" }
+                      : {
+                          background: "linear-gradient(135deg, #f97316, #ea580c)",
+                          color: "#fff",
+                        }
+                  }
+                >
+                  {isAdded ? (
+                    <>
+                      <CheckCircle2 className="h-3 w-3" /> Adicionado
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-3 w-3" /> Adicionar
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface DeliveryZone {
@@ -414,6 +510,7 @@ interface DeliveryZone {
 export default function CarrinhoPage() {
   const router = useRouter()
   const items = useCart((s) => s.items)
+  const cartIds = new Set(items.map((i) => i.productId))
   const subtotal = useCart((s) => s.total())
   const count = useCart((s) => s.count())
   const isComplete = useDelivery((s) => s.isComplete)
@@ -717,6 +814,9 @@ export default function CarrinhoPage() {
               </span>
             </div>
           </div>
+
+          {/* Recomendações */}
+          <CartRecommendations cartIds={cartIds} />
 
           <Link
             href="/cardapio"
