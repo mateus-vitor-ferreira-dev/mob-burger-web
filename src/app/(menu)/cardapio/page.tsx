@@ -100,6 +100,11 @@ function ProductCardSkeleton() {
 
 // ─── OptionsModal ─────────────────────────────────────────────────────────────
 
+const CHEESE_OPTIONS = [
+  { id: "cheese-cheddar", name: "Cheddar" },
+  { id: "cheese-mussarela", name: "Mussarela" },
+]
+
 function OptionsModal({
   item,
   globalExtras,
@@ -114,6 +119,9 @@ function OptionsModal({
   const [selected, setSelected] = useState<Record<string, string[]>>({})
   const [extraQtys, setExtraQtys] = useState<Record<string, number>>({})
   const [observations, setObservations] = useState("")
+  const [cheeseType, setCheeseType] = useState<string | null>(null)
+
+  const showCheeseSelector = item.cat === "burgers"
 
   function toggleItem(optionId: string, itemId: string, type: "RADIO" | "CHECKBOX") {
     setSelected((prev) => {
@@ -137,7 +145,11 @@ function OptionsModal({
   }
 
   function canConfirm() {
-    return item.options.every((opt) => !opt.required || (selected[opt.id]?.length ?? 0) > 0)
+    const optionsOk = item.options.every(
+      (opt) => !opt.required || (selected[opt.id]?.length ?? 0) > 0,
+    )
+    const cheeseOk = !showCheeseSelector || cheeseType !== null
+    return optionsOk && cheeseOk
   }
 
   function handleConfirm() {
@@ -151,6 +163,14 @@ function OptionsModal({
         }
       }),
     )
+    if (showCheeseSelector && cheeseType) {
+      const cheese = CHEESE_OPTIONS.find((c) => c.id === cheeseType)!
+      selectedOptions.push({
+        optionItemId: cheeseType,
+        name: `Queijo ${cheese.name}`,
+        additionalPrice: 0,
+      })
+    }
     const selectedExtras: SelectedExtra[] = globalExtras
       .filter((e) => (extraQtys[e.id] ?? 0) > 0)
       .map((e) => ({ extraId: e.id, name: e.name, price: e.price, qty: extraQtys[e.id] }))
@@ -245,6 +265,49 @@ function OptionsModal({
               </div>
             </div>
           ))}
+
+          {/* Tipo de queijo */}
+          {showCheeseSelector && (
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-sm font-semibold text-white">Tipo de queijo</p>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-400"
+                  style={{ background: "rgba(249,115,22,0.15)" }}
+                >
+                  Obrigatório
+                </span>
+                <span className="text-[10px] text-white/30">Escolha 1</span>
+              </div>
+              <div className="space-y-1.5">
+                {CHEESE_OPTIONS.map((cheese) => {
+                  const isSelected = cheeseType === cheese.id
+                  return (
+                    <button
+                      key={cheese.id}
+                      onClick={() => setCheeseType(cheese.id)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition"
+                      style={{
+                        background: isSelected ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
+                      }}
+                    >
+                      <div
+                        className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+                        style={{
+                          background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
+                          border: isSelected ? "none" : "1px solid rgba(255,255,255,0.15)",
+                        }}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <span className="flex-1 text-sm text-white">{cheese.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Adicionais globais */}
           {globalExtras.length > 0 && (
