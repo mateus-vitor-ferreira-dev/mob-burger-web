@@ -4,7 +4,18 @@ import { fmtPrice } from "@/lib/utils"
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Loader2, AlertCircle, MapPin, User, ShoppingBag, Lock } from "lucide-react"
+import {
+  ArrowLeft,
+  Loader2,
+  AlertCircle,
+  MapPin,
+  User,
+  ShoppingBag,
+  Lock,
+  Copy,
+  Check,
+  Clock,
+} from "lucide-react"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js"
 import { useCart } from "@/lib/cart-store"
@@ -200,9 +211,9 @@ function OrderReview() {
   )
 }
 
-// ─── Formulário Stripe ────────────────────────────────────────────────────────
+// ─── Cartão (Stripe Elements) ─────────────────────────────────────────────────
 
-function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
+function CardPaymentForm({ orderId, total }: { orderId: string; total: number }) {
   const stripe = useStripe()
   const elements = useElements()
   const [loading, setLoading] = useState(false)
@@ -272,18 +283,173 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
   )
 }
 
+// ─── PIX ──────────────────────────────────────────────────────────────────────
+
+function PixPayment({
+  orderId,
+  qrCode,
+  qrCodeImage,
+  expiresAt,
+  total,
+}: {
+  orderId: string
+  qrCode: string | null
+  qrCodeImage: string | null
+  expiresAt: number | null
+  total: number
+}) {
+  const router = useRouter()
+  const [copied, setCopied] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(() =>
+    expiresAt ? Math.max(0, expiresAt - Math.floor(Date.now() / 1000)) : 0,
+  )
+
+  // Countdown
+  useEffect(() => {
+    if (!expiresAt) return
+    const id = setInterval(() => {
+      setTimeLeft(Math.max(0, expiresAt - Math.floor(Date.now() / 1000)))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [expiresAt])
+
+  // Poll for confirmation
+  useEffect(() => {
+    let attempts = 0
+    const id = setInterval(async () => {
+      attempts++
+      try {
+        const r = await fetch(`/api/backend/orders/${orderId}`)
+        const json = await r.json()
+        const o = json?.data
+        if (o?.paymentStatus === "PAID" || o?.status === "CONFIRMED") {
+          clearInterval(id)
+          router.push(`/pedido/confirmado?order_id=${orderId}`)
+        }
+      } catch {}
+      if (attempts >= 60) clearInterval(id)
+    }, 3000)
+    return () => clearInterval(id)
+  }, [orderId, router])
+
+  function copyCode() {
+    if (!qrCode) return
+    navigator.clipboard.writeText(qrCode).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
+
+  const minutes = Math.floor(timeLeft / 60)
+  const seconds = String(timeLeft % 60).padStart(2, "0")
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="rounded-2xl p-5"
+        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+      >
+        <p className="mb-4 text-xs font-semibold tracking-widest text-white/30 uppercase">
+          Pague via PIX
+        </p>
+
+        {/* QR Code */}
+        {qrCodeImage ? (
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-2xl bg-white p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrCodeImage} alt="QR Code PIX" className="h-52 w-52 object-contain" />
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4 flex h-52 items-center justify-center rounded-2xl bg-white/5">
+            <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
+          </div>
+        )}
+
+        {/* Timer */}
+        {expiresAt && (
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <Clock className="h-3.5 w-3.5 text-white/30" />
+            <p className={`text-xs ${timeLeft < 60 ? "text-red-400" : "text-white/40"}`}>
+              {timeLeft > 0
+                ? `Expira em ${minutes}:${seconds}`
+                : "QR Code expirado — atualize a página"}
+            </p>
+          </div>
+        )}
+
+        {/* Copy button */}
+        {qrCode && (
+          <button
+            onClick={copyCode}
+            className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all active:scale-[0.98]"
+            style={{
+              background: copied ? "rgba(34,197,94,0.15)" : "rgba(249,115,22,0.12)",
+              border: `1px solid ${copied ? "rgba(34,197,94,0.3)" : "rgba(249,115,22,0.3)"}`,
+              color: copied ? "#4ade80" : "#f97316",
+            }}
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" /> Código copiado!
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" /> Copiar código PIX
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
+      <div
+        className="rounded-xl px-4 py-3 text-center"
+        style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.15)" }}
+      >
+        <p className="text-xs text-orange-300/70">
+          Total a pagar: <span className="font-bold text-orange-400">{fmtPrice(total)}</span>
+        </p>
+        <p className="mt-1 text-[11px] text-white/25">
+          Após o pagamento, seu pedido será confirmado automaticamente.
+        </p>
+      </div>
+
+      <Link
+        href={`/pedido/confirmado?order_id=${orderId}`}
+        className="block text-center text-xs text-white/30 transition hover:text-white/50"
+      >
+        Já paguei — ver status do pedido
+      </Link>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
+
+type PaymentView =
+  | { type: "card"; clientSecret: string }
+  | { type: "pix"; qrCode: string | null; qrCodeImage: string | null; expiresAt: number | null }
 
 export default function PagamentoPage() {
   const router = useRouter()
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.total())
   const isComplete = useDelivery((s) => s.isComplete)
-  const { address, zoneId, deliveryFee, orderType } = useDelivery()
+  const {
+    address,
+    zoneId,
+    deliveryFee,
+    orderType,
+    paymentMethod,
+    needsChange,
+    changeFor,
+    orderNotes,
+  } = useDelivery()
   const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
   const { token, _hasHydrated } = useCustomer()
 
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [paymentView, setPaymentView] = useState<PaymentView | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -318,28 +484,34 @@ export default function PagamentoPage() {
         let targetOrderId: string
 
         if (retryOrderId) {
-          // Retentativa: reutiliza o pedido existente, só cria novo PaymentIntent
           targetOrderId = retryOrderId
         } else {
-          // Mapeia itens do carrinho — productId já é o ID real do banco
           const mappedItems = items.map((item) => ({
             productId: item.productId ?? item.id,
             quantity: item.qty,
             observations: item.observations || undefined,
             options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
+            extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
           }))
 
           if (mappedItems.length === 0) throw new Error("Sacola vazia.")
 
           const couponCode = params.get("coupon") || undefined
+
+          // Mapeia método de pagamento do frontend para o backend
+          const backendMethod =
+            paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod === "PIX" ? "PIX" : "CARD"
+
           const orderRes = await fetch("/api/backend/orders", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify({
               type: orderType,
-              paymentMethod: "CARD",
+              paymentMethod: backendMethod,
               items: mappedItems,
               couponCode,
+              ...(paymentMethod === "CASH" && needsChange && changeFor ? { changeFor } : {}),
+              ...(orderNotes ? { notes: orderNotes } : {}),
               ...(orderType === "DELIVERY"
                 ? {
                     delivery: {
@@ -358,7 +530,6 @@ export default function PagamentoPage() {
           targetOrderId = orderJson.data.id
         }
 
-        // Cria o PaymentIntent vinculado ao pedido
         const payRes = await fetch("/api/backend/payments/intent", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -368,7 +539,27 @@ export default function PagamentoPage() {
         if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
 
         setOrderId(targetOrderId)
-        setClientSecret(payJson.data.clientSecret)
+
+        const method = payJson.data.method as string
+
+        if (method === "CASH_ON_DELIVERY" || method === "CARD_ON_DELIVERY") {
+          // Pedido já confirmado pelo backend — vai direto para a tela de confirmação
+          router.push(`/pedido/confirmado?order_id=${targetOrderId}`)
+          return
+        }
+
+        if (method === "PIX") {
+          setPaymentView({
+            type: "pix",
+            qrCode: payJson.data.qrCode ?? null,
+            qrCodeImage: payJson.data.qrCodeImage ?? null,
+            expiresAt: payJson.data.expiresAt ?? null,
+          })
+          return
+        }
+
+        // CARD
+        setPaymentView({ type: "card", clientSecret: payJson.data.clientSecret })
       } catch (e) {
         setFetchError(e instanceof Error ? e.message : "Erro ao iniciar checkout.")
       }
@@ -419,20 +610,30 @@ export default function PagamentoPage() {
             </div>
           )}
 
-          {!clientSecret && !fetchError && (
+          {!paymentView && !fetchError && (
             <div className="flex flex-col items-center justify-center gap-3 py-24">
               <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
               <p className="text-xs text-white/25">Preparando checkout seguro...</p>
             </div>
           )}
 
-          {clientSecret && orderId && (
+          {paymentView?.type === "card" && orderId && (
             <Elements
               stripe={stripePromise}
-              options={{ clientSecret, appearance: STRIPE_APPEARANCE }}
+              options={{ clientSecret: paymentView.clientSecret, appearance: STRIPE_APPEARANCE }}
             >
-              <PaymentForm orderId={orderId} total={total} />
+              <CardPaymentForm orderId={orderId} total={total} />
             </Elements>
+          )}
+
+          {paymentView?.type === "pix" && orderId && (
+            <PixPayment
+              orderId={orderId}
+              qrCode={paymentView.qrCode}
+              qrCodeImage={paymentView.qrCodeImage}
+              expiresAt={paymentView.expiresAt}
+              total={total}
+            />
           )}
         </div>
       </div>

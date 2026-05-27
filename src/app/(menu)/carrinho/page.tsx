@@ -21,6 +21,9 @@ import {
   Bike,
   Loader2,
   X,
+  CreditCard,
+  QrCode,
+  Banknote,
 } from "lucide-react"
 import { useCart, type CartItem as CartItemType } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
@@ -76,6 +79,11 @@ function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
             style={{ color: "var(--mob-text-tertiary)" }}
           >
             {entry.options.map((o) => o.name).join(" · ")}
+          </p>
+        )}
+        {entry.extras && entry.extras.length > 0 && (
+          <p className="mt-0.5 text-[11px] leading-relaxed text-orange-400/70">
+            +{entry.extras.map((e) => `${e.qty > 1 ? `${e.qty}× ` : ""}${e.name}`).join(" · ")}
           </p>
         )}
         {entry.observations && (
@@ -412,8 +420,20 @@ export default function CarrinhoPage() {
   const orderType = useDelivery((s) => s.orderType)
   const customer = useCustomer((s) => s.customer)
   const hasAddress = useCustomer((s) => s.hasAddress())
-  const { set, setAddress, setZone, zoneId, deliveryFee, customerName, phone, address } =
-    useDelivery()
+  const {
+    set,
+    setAddress,
+    setZone,
+    zoneId,
+    deliveryFee,
+    customerName,
+    phone,
+    address,
+    paymentMethod,
+    needsChange,
+    changeFor,
+    orderNotes,
+  } = useDelivery()
   const [mounted, setMounted] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
   const [zones, setZones] = useState<DeliveryZone[]>([])
@@ -785,6 +805,137 @@ export default function CarrinhoPage() {
           ) : (
             <DeliveryForm zones={zones} onZoneDetected={(id, fee) => setZone(id, fee)} />
           )}
+          {/* Observações do pedido */}
+          <div
+            className="rounded-2xl p-4"
+            style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+          >
+            <label
+              className="mb-1.5 block text-xs font-semibold tracking-widest text-white/30 uppercase"
+              htmlFor="order-notes"
+            >
+              Observações do pedido
+            </label>
+            <textarea
+              id="order-notes"
+              rows={2}
+              maxLength={500}
+              placeholder="Ex: sem maionese em tudo, interfone 42, alergia a glúten..."
+              value={orderNotes}
+              onChange={(e) => set({ orderNotes: e.target.value })}
+              className="w-full resize-none rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+              style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
+            />
+          </div>
+
+          {/* Forma de pagamento */}
+          <div
+            className="rounded-2xl p-4"
+            style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+          >
+            <p className="mb-3 text-xs font-semibold tracking-widest text-white/30 uppercase">
+              Forma de pagamento
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { value: "CARD", label: "Cartão", Icon: CreditCard },
+                  { value: "PIX", label: "PIX", Icon: QrCode },
+                  { value: "CASH", label: "Dinheiro", Icon: Banknote },
+                ] as const
+              ).map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => set({ paymentMethod: value })}
+                  className="flex flex-col items-center gap-2 rounded-xl px-2 py-3 text-xs font-semibold transition-all"
+                  style={
+                    paymentMethod === value
+                      ? {
+                          background: "rgba(249,115,22,0.15)",
+                          border: "1px solid rgba(249,115,22,0.4)",
+                          color: "#f97316",
+                        }
+                      : {
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          color: "rgba(255,255,255,0.35)",
+                        }
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {paymentMethod === "CASH" && (
+              <div className="mt-4 space-y-3">
+                <label className="flex cursor-pointer items-center gap-3 select-none">
+                  <div className="relative shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={needsChange}
+                      onChange={(e) =>
+                        set({
+                          needsChange: e.target.checked,
+                          changeFor: e.target.checked ? changeFor : null,
+                        })
+                      }
+                      className="peer sr-only"
+                    />
+                    <div
+                      className="flex h-4 w-4 items-center justify-center rounded border transition-all duration-200"
+                      style={{
+                        background: needsChange ? "#f97316" : "transparent",
+                        borderColor: needsChange ? "#f97316" : "rgba(255,255,255,0.25)",
+                      }}
+                    >
+                      {needsChange && (
+                        <svg viewBox="0 0 12 12" fill="none" className="h-2.5 w-2.5">
+                          <path
+                            d="M2 6l3 3 5-5"
+                            stroke="#fff"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm text-white/60">Precisa de troco?</span>
+                </label>
+
+                {needsChange && (
+                  <div>
+                    <label className="mb-1.5 block text-xs text-white/40">Troco para quanto?</label>
+                    <div className="relative">
+                      <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-white/40">
+                        R$
+                      </span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step={0.01}
+                        placeholder="0,00"
+                        value={changeFor ?? ""}
+                        onChange={(e) =>
+                          set({ changeFor: e.target.value ? parseFloat(e.target.value) : null })
+                        }
+                        className="w-full rounded-xl py-2.5 pr-3 pl-9 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                        style={{
+                          background: "var(--mob-input-bg)",
+                          color: "var(--mob-text-primary)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <button
             onClick={handleGoToPayment}
             disabled={!isComplete() || !storeOpen}

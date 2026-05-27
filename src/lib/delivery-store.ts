@@ -11,6 +11,8 @@ export interface DeliveryAddress {
   state: string
 }
 
+export type PaymentMethod = "CARD" | "PIX" | "CASH"
+
 interface DeliveryStore {
   orderType: "DELIVERY" | "PICKUP"
   customerName: string
@@ -18,6 +20,10 @@ interface DeliveryStore {
   address: DeliveryAddress
   zoneId: string
   deliveryFee: number
+  paymentMethod: PaymentMethod
+  needsChange: boolean
+  changeFor: number | null
+  orderNotes: string
   set: (
     patch: Partial<Omit<DeliveryStore, "set" | "setAddress" | "setZone" | "isComplete">>,
   ) => void
@@ -45,6 +51,10 @@ export const useDelivery = create<DeliveryStore>()(
       address: emptyAddress,
       zoneId: "",
       deliveryFee: 0,
+      paymentMethod: "CARD",
+      needsChange: false,
+      changeFor: null,
+      orderNotes: "",
 
       set: (patch) => set(patch),
 

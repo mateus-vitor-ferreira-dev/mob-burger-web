@@ -6,6 +6,13 @@ export interface SelectedOption {
   additionalPrice: number
 }
 
+export interface SelectedExtra {
+  extraId: string
+  name: string
+  price: number
+  qty: number
+}
+
 export interface CartItem {
   id: string // chave única: productId (sem opções) ou productId:opt1:opt2 (com opções)
   productId: string // ID do produto no banco — usado na criação do pedido
@@ -15,6 +22,7 @@ export interface CartItem {
   img?: string
   description?: string
   options?: SelectedOption[]
+  extras?: SelectedExtra[]
   observations?: string
 }
 

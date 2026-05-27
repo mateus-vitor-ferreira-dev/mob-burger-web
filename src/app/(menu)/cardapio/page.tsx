@@ -16,7 +16,7 @@ import {
   Check,
   Heart,
 } from "lucide-react"
-import { useCart, type SelectedOption } from "@/lib/cart-store"
+import { useCart, type SelectedOption, type SelectedExtra } from "@/lib/cart-store"
 import { useMenu } from "@/lib/use-menu"
 import { useFavorites } from "@/lib/use-favorites"
 
@@ -51,6 +51,12 @@ interface MenuItem {
 interface MenuCategory {
   slug: string
   name: string
+}
+
+interface GlobalExtra {
+  id: string
+  name: string
+  price: number
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -96,14 +102,17 @@ function ProductCardSkeleton() {
 
 function OptionsModal({
   item,
+  globalExtras,
   onConfirm,
   onClose,
 }: {
   item: MenuItem
-  onConfirm: (selected: SelectedOption[], observations: string) => void
+  globalExtras: GlobalExtra[]
+  onConfirm: (selected: SelectedOption[], extras: SelectedExtra[], observations: string) => void
   onClose: () => void
 }) {
   const [selected, setSelected] = useState<Record<string, string[]>>({})
+  const [extraQtys, setExtraQtys] = useState<Record<string, number>>({})
   const [observations, setObservations] = useState("")
 
   function toggleItem(optionId: string, itemId: string, type: "RADIO" | "CHECKBOX") {
@@ -113,6 +122,17 @@ function OptionsModal({
       if (current.includes(itemId))
         return { ...prev, [optionId]: current.filter((id) => id !== itemId) }
       return { ...prev, [optionId]: [...current, itemId] }
+    })
+  }
+
+  function changeExtraQty(extraId: string, delta: number) {
+    setExtraQtys((prev) => {
+      const next = Math.max(0, (prev[extraId] ?? 0) + delta)
+      if (next === 0) {
+        const { [extraId]: _, ...rest } = prev
+        return rest
+      }
+      return { ...prev, [extraId]: next }
     })
   }
 
@@ -131,16 +151,21 @@ function OptionsModal({
         }
       }),
     )
-    onConfirm(selectedOptions, observations.trim())
+    const selectedExtras: SelectedExtra[] = globalExtras
+      .filter((e) => (extraQtys[e.id] ?? 0) > 0)
+      .map((e) => ({ extraId: e.id, name: e.name, price: e.price, qty: extraQtys[e.id] }))
+    onConfirm(selectedOptions, selectedExtras, observations.trim())
   }
 
-  const extraTotal = item.options
+  const optionsTotal = item.options
     .flatMap((opt) =>
       (selected[opt.id] ?? []).map(
         (id) => opt.items.find((i) => i.id === id)?.additionalPrice ?? 0,
       ),
     )
     .reduce((a, b) => a + b, 0)
+
+  const extrasTotal = globalExtras.reduce((sum, e) => sum + e.price * (extraQtys[e.id] ?? 0), 0)
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
@@ -169,6 +194,7 @@ function OptionsModal({
         </div>
 
         <div className="space-y-5">
+          {/* Opções específicas do produto */}
           {item.options.map((opt) => (
             <div key={opt.id}>
               <div className="mb-2 flex items-center gap-2">
@@ -219,14 +245,64 @@ function OptionsModal({
               </div>
             </div>
           ))}
+
+          {/* Adicionais globais */}
+          {globalExtras.length > 0 && (
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-sm font-semibold text-white">Adicionais</p>
+                <span className="text-[10px] text-white/30">Adicione o quanto quiser</span>
+              </div>
+              <div className="space-y-1.5">
+                {globalExtras.map((extra) => {
+                  const qty = extraQtys[extra.id] ?? 0
+                  return (
+                    <div
+                      key={extra.id}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+                      style={{
+                        background: qty > 0 ? "rgba(249,115,22,0.10)" : "rgba(255,255,255,0.04)",
+                        border: `1px solid ${qty > 0 ? "rgba(249,115,22,0.30)" : "rgba(255,255,255,0.07)"}`,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <span className="flex-1 text-sm text-white">{extra.name}</span>
+                      <span className="text-xs font-semibold text-orange-400">
+                        +{fmtPrice(extra.price)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => changeExtraQty(extra.id, -1)}
+                          disabled={qty === 0}
+                          className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 disabled:opacity-30"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-4 text-center text-sm font-bold text-white">{qty}</span>
+                        <button
+                          onClick={() => changeExtraQty(extra.id, 1)}
+                          className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Observações por item */}
         <div className="mt-4">
-          <p className="mb-1.5 text-xs font-semibold text-white/30">Observações (opcional)</p>
+          <p className="mb-1.5 text-xs font-semibold text-white/30">
+            Observações deste item (opcional)
+          </p>
           <textarea
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
-            placeholder="Ex: sem cebola, ponto da carne, alergias..."
+            placeholder="Ex: sem cebola, sem maionese, alergia..."
             rows={2}
             maxLength={200}
             className="w-full resize-none rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
@@ -240,7 +316,7 @@ function OptionsModal({
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition disabled:opacity-40"
           style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
         >
-          Adicionar à sacola · {fmtPrice(item.priceNum + extraTotal)}
+          Adicionar à sacola · {fmtPrice(item.priceNum + optionsTotal + extrasTotal)}
         </button>
       </div>
     </div>
@@ -249,46 +325,38 @@ function OptionsModal({
 
 // ─── ProductCard ─────────────────────────────────────────────────────────────
 
-function ProductCard({ item }: { item: MenuItem }) {
+function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: GlobalExtra[] }) {
   const add = useCart((s) => s.add)
-  const items = useCart((s) => s.items)
-  const increment = useCart((s) => s.increment)
-  const decrement = useCart((s) => s.decrement)
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const [showModal, setShowModal] = useState(false)
   const [imgLoaded, setImgLoaded] = useState(false)
   const fav = isFavorite(item.id)
-  // Para produtos sem opções, a entrada no carrinho usa item.id diretamente
-  const entry = items.find((i) => i.productId === item.id && !i.options?.length)
-
-  const hasOptions = item.options.length > 0
 
   function handleAdd() {
-    if (hasOptions) {
-      setShowModal(true)
-    } else {
-      add({
-        id: item.id,
-        productId: item.id,
-        name: item.name,
-        price: item.price,
-        priceNum: item.priceNum,
-        img: item.img ?? undefined,
-        description: item.description,
-      })
-    }
+    setShowModal(true)
   }
 
-  function handleModalConfirm(selectedOptions: SelectedOption[], observations: string) {
-    const extraPrice = selectedOptions.reduce((sum, o) => sum + o.additionalPrice, 0)
-    const totalNum = item.priceNum + extraPrice
+  function handleModalConfirm(
+    selectedOptions: SelectedOption[],
+    selectedExtras: SelectedExtra[],
+    observations: string,
+  ) {
+    const optionsPrice = selectedOptions.reduce((sum, o) => sum + o.additionalPrice, 0)
+    const extrasPrice = selectedExtras.reduce((sum, e) => sum + e.price * e.qty, 0)
+    const totalNum = item.priceNum + optionsPrice + extrasPrice
     const obsSlug = observations ? `:obs:${observations.slice(0, 20).replace(/\s+/g, "_")}` : ""
+    const extrasSlug = selectedExtras.length
+      ? `:x:${selectedExtras
+          .map((e) => `${e.extraId}x${e.qty}`)
+          .sort()
+          .join(":")}`
+      : ""
     const cartId = selectedOptions.length
       ? `${item.id}:${selectedOptions
           .map((o) => o.optionItemId)
           .sort()
-          .join(":")}${obsSlug}`
-      : `${item.id}${obsSlug}`
+          .join(":")}${extrasSlug}${obsSlug}`
+      : `${item.id}${extrasSlug}${obsSlug}`
     add({
       id: cartId,
       productId: item.id,
@@ -298,6 +366,7 @@ function ProductCard({ item }: { item: MenuItem }) {
       img: item.img ?? undefined,
       description: item.description,
       options: selectedOptions,
+      extras: selectedExtras.length ? selectedExtras : undefined,
       observations: observations || undefined,
     })
     setShowModal(false)
@@ -421,28 +490,6 @@ function ProductCard({ item }: { item: MenuItem }) {
               <span className="flex-1 text-right text-xs font-semibold text-white/30">
                 Indisponível
               </span>
-            ) : entry && !hasOptions ? (
-              <div
-                className="flex flex-1 items-center justify-between rounded-xl px-3 py-1.5"
-                style={{
-                  background: "rgba(249,115,22,0.15)",
-                  border: "1px solid rgba(249,115,22,0.3)",
-                }}
-              >
-                <button
-                  onClick={() => decrement(item.id)}
-                  className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="text-sm font-bold text-white">{entry.qty} na sacola</span>
-                <button
-                  onClick={() => increment(item.id)}
-                  className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-              </div>
             ) : (
               <button
                 onClick={handleAdd}
@@ -463,6 +510,7 @@ function ProductCard({ item }: { item: MenuItem }) {
       {showModal && (
         <OptionsModal
           item={item}
+          globalExtras={globalExtras}
           onConfirm={handleModalConfirm}
           onClose={() => setShowModal(false)}
         />
@@ -687,6 +735,15 @@ function CardapioContent() {
     [allItems],
   )
 
+  const [globalExtras, setGlobalExtras] = useState<GlobalExtra[]>([])
+
+  useEffect(() => {
+    fetch("/api/backend/extras")
+      .then((r) => r.json())
+      .then((j) => setGlobalExtras(j.data ?? []))
+      .catch(() => {})
+  }, [])
+
   const { isFavorite } = useFavorites()
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState(() => searchParams.get("cat") ?? "todos")
@@ -865,7 +922,7 @@ function CardapioContent() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((item) => (
-              <ProductCard key={item.id} item={item} />
+              <ProductCard key={item.id} item={item} globalExtras={globalExtras} />
             ))}
           </div>
         )}
