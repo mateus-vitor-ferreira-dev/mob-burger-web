@@ -16,6 +16,8 @@ import {
   Settings2,
   Check,
   GripVertical,
+  RefreshCw,
+  ChevronDown,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 import {
@@ -61,6 +63,150 @@ interface Product {
   imageUrl: string | null
   active: boolean
   category: { id: string; name: string }
+}
+
+// ─── Combo config ─────────────────────────────────────────────────────────────
+
+const ALLOWED_SLUGS_OPTIONS = [
+  { value: "burgers", label: "Burgers" },
+  { value: "chicken", label: "Chicken" },
+]
+
+function ComboConfigSection({ productId, token }: { productId: string; token: string }) {
+  const [open, setOpen] = useState(false)
+  const [numBurgers, setNumBurgers] = useState("2")
+  const [numDrinks, setNumDrinks] = useState("2")
+  const [drinkCostPrice, setDrinkCostPrice] = useState("5.50")
+  const [allowedSlugs, setAllowedSlugs] = useState<string[]>(["burgers", "chicken"])
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const inputCls =
+    "rounded-lg bg-white/5 px-2 py-1.5 text-xs text-white ring-1 ring-white/10 outline-none focus:ring-orange-500/50"
+
+  function toggleSlug(slug: string) {
+    setAllowedSlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    )
+  }
+
+  async function sync() {
+    if (allowedSlugs.length === 0) return
+    setSaving(true)
+    await fetch(`/api/backend/admin/products/${productId}/combo-config`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        numBurgers: parseInt(numBurgers) || 2,
+        numDrinks: parseInt(numDrinks) || 0,
+        drinkCostPrice: parseFloat(drinkCostPrice) || 5.5,
+        allowedSlugs,
+      }),
+    })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  return (
+    <div
+      className="mt-1 rounded-xl"
+      style={{ background: "rgba(249,115,22,0.05)", border: "1px solid rgba(249,115,22,0.15)" }}
+    >
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-3 py-2.5 text-left"
+      >
+        <span className="text-xs font-semibold tracking-widest text-orange-400/70 uppercase">
+          Configurar Combo
+        </span>
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-orange-400/50 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="space-y-3 px-3 pb-3">
+          <p className="text-[10px] text-white/30">
+            Ao salvar, o preço do produto é atualizado para o custo das bebidas e as opções de
+            personalização são substituídas pelos lanches disponíveis.
+          </p>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="mb-1 block text-[10px] text-white/40">Qtd. Lanches</label>
+              <input
+                className={`${inputCls} w-full`}
+                type="number"
+                min="1"
+                max="8"
+                value={numBurgers}
+                onChange={(e) => setNumBurgers(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] text-white/40">Qtd. Bebidas</label>
+              <input
+                className={`${inputCls} w-full`}
+                type="number"
+                min="0"
+                max="8"
+                value={numDrinks}
+                onChange={(e) => setNumDrinks(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[10px] text-white/40">Custo bebida (R$)</label>
+              <input
+                className={`${inputCls} w-full`}
+                type="number"
+                min="0"
+                step="0.50"
+                value={drinkCostPrice}
+                onChange={(e) => setDrinkCostPrice(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[10px] text-white/40">Categorias de lanches</label>
+            <div className="flex gap-2">
+              {ALLOWED_SLUGS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => toggleSlug(opt.value)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                  style={
+                    allowedSlugs.includes(opt.value)
+                      ? { background: "rgba(249,115,22,0.2)", color: "#f97316" }
+                      : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)" }
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={sync}
+            disabled={saving || allowedSlugs.length === 0}
+            className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold text-white transition disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+          >
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : saved ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            {saved ? "Sincronizado!" : "Salvar e sincronizar opções"}
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ─── Opções de produto ────────────────────────────────────────────────────────
@@ -146,6 +292,8 @@ function ProductOptions({ productId, token }: { productId: string; token: string
       className="mt-2 space-y-3 rounded-xl p-3"
       style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)" }}
     >
+      <ComboConfigSection productId={productId} token={token} />
+
       <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
         Opções de personalização
       </p>

@@ -17,7 +17,7 @@ import {
   Heart,
 } from "lucide-react"
 import { useCart, type SelectedOption, type SelectedExtra } from "@/lib/cart-store"
-import { useMenu } from "@/lib/use-menu"
+import { useMenu, type ComboConfig } from "@/lib/use-menu"
 import { useFavorites } from "@/lib/use-favorites"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -46,6 +46,7 @@ interface MenuItem {
   cat: string
   inStock: boolean
   options: ProductOption[]
+  comboConfig?: ComboConfig | null
 }
 
 interface MenuCategory {
@@ -386,6 +387,19 @@ function OptionsModal({
   )
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function comboMinPrice(item: MenuItem): number {
+  if (!item.comboConfig) return item.priceNum
+  const requiredMin = item.options
+    .filter((opt) => opt.required && opt.items.length > 0)
+    .reduce((sum, opt) => {
+      const min = Math.min(...opt.items.map((i) => i.additionalPrice))
+      return sum + (isFinite(min) ? min : 0)
+    }, 0)
+  return item.priceNum + requiredMin
+}
+
 // ─── ProductCard ─────────────────────────────────────────────────────────────
 
 function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: GlobalExtra[] }) {
@@ -537,17 +551,55 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
           </h3>
 
           {item.description && (
-            <p className="line-clamp-3 text-[13px] leading-relaxed font-medium text-white/70">
+            <p className="line-clamp-2 text-[13px] leading-relaxed font-medium text-white/70">
               {item.description}
             </p>
           )}
 
+          {item.comboConfig && (
+            <div className="flex flex-wrap gap-1">
+              {item.comboConfig.numBurgers > 0 && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-orange-300"
+                  style={{ background: "rgba(249,115,22,0.12)" }}
+                >
+                  🍔 {item.comboConfig.numBurgers}× lanche
+                </span>
+              )}
+              {item.comboConfig.numDrinks > 0 && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-orange-300"
+                  style={{ background: "rgba(249,115,22,0.12)" }}
+                >
+                  🥤 {item.comboConfig.numDrinks}× bebida
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="mt-auto flex items-center gap-3 pt-2">
-            <span
-              className={`shrink-0 text-base font-bold ${item.inStock ? "text-orange-400" : "text-white/30"}`}
-            >
-              {item.price}
-            </span>
+            <div className="shrink-0">
+              {item.comboConfig ? (
+                <div>
+                  <p
+                    className={`text-[10px] leading-none font-semibold ${item.inStock ? "text-white/40" : "text-white/20"}`}
+                  >
+                    a partir de
+                  </p>
+                  <span
+                    className={`text-base font-bold ${item.inStock ? "text-orange-400" : "text-white/30"}`}
+                  >
+                    {fmtPrice(comboMinPrice(item))}
+                  </span>
+                </div>
+              ) : (
+                <span
+                  className={`text-base font-bold ${item.inStock ? "text-orange-400" : "text-white/30"}`}
+                >
+                  {item.price}
+                </span>
+              )}
+            </div>
 
             {!item.inStock ? (
               <span className="flex-1 text-right text-xs font-semibold text-white/30">
@@ -780,6 +832,7 @@ function CardapioContent() {
           cat: cat.slug,
           inStock: p.inStock ?? true,
           options: (p.options ?? []) as ProductOption[],
+          comboConfig: p.comboConfig ?? null,
         })),
       ),
     [rawCats],

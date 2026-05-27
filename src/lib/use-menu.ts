@@ -12,6 +12,13 @@ export interface MenuOption {
   required: boolean
   items: MenuOptionItem[]
 }
+export interface ComboConfig {
+  numBurgers: number
+  numDrinks: number
+  drinkCostPrice: number
+  allowedSlugs: string[]
+}
+
 export interface MenuProduct {
   id: string
   name: string
@@ -20,6 +27,7 @@ export interface MenuProduct {
   imageUrl: string | null
   inStock: boolean
   options: MenuOption[]
+  comboConfig?: ComboConfig | null
 }
 export interface MenuCategory {
   id: string

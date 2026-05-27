@@ -411,7 +411,8 @@ const SUGGESTION_CATEGORIES = ["bebidas", "porcoes", "sobremesas"]
 function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
   const { categories } = useMenu()
   const add = useCart((s) => s.add)
-  const [added, setAdded] = useState<Set<string>>(new Set())
+  const cartItems = useCart((s) => s.items)
+  const inCart = new Set(cartItems.map((i) => i.productId))
 
   const suggestions = categories
     .filter((c) => SUGGESTION_CATEGORIES.includes(c.slug))
@@ -432,7 +433,6 @@ function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
       options: [],
       extras: [],
     })
-    setAdded((prev) => new Set(prev).add(p.id))
   }
 
   return (
@@ -442,7 +442,7 @@ function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
       </p>
       <div className="flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {suggestions.map((p) => {
-          const isAdded = added.has(p.id)
+          const isAdded = inCart.has(p.id)
           return (
             <div
               key={p.id}
