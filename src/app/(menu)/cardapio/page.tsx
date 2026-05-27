@@ -452,7 +452,7 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
   return (
     <>
       <div
-        className="group/card relative flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:translate-y-[-2px]"
+        className="group/card relative flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-0.5"
         style={{
           background: "var(--mob-s1)",
           border: "1px solid var(--mob-b1)",
@@ -461,7 +461,7 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
       >
         {/* Orange top accent */}
         <div
-          className="absolute top-0 right-0 left-0 z-10 h-[2px]"
+          className="absolute top-0 right-0 left-0 z-10 h-0.5"
           style={{ background: "linear-gradient(to right, #f97316, #ea580c)" }}
         />
 
@@ -902,7 +902,7 @@ function CardapioContent() {
 
         {/* Filtros */}
         <div
-          className="mob-on-dark sticky top-[64px] z-20 mb-8 space-y-4 rounded-2xl p-4"
+          className="mob-on-dark sticky top-16 z-20 mb-8 space-y-4 rounded-2xl p-4"
           style={{
             background: "rgba(12,11,9,0.85)",
             backdropFilter: "blur(20px)",
