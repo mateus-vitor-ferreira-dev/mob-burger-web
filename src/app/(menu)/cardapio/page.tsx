@@ -121,13 +121,21 @@ function OptionsModal({
   const [extraQtys, setExtraQtys] = useState<Record<string, number>>({})
   const [observations, setObservations] = useState("")
   const [cheeseType, setCheeseType] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(item.img)
 
   const { categories } = useMenu()
   const productInfoMap = useMemo(() => {
-    const map = new Map<string, { description: string | null; imageUrl: string | null }>()
+    const map = new Map<
+      string,
+      { description: string | null; imageUrl: string | null; inStock: boolean }
+    >()
     categories.forEach((c) =>
       c.products.forEach((p) =>
-        map.set(p.name, { description: p.description, imageUrl: p.imageUrl }),
+        map.set(p.name, {
+          description: p.description,
+          imageUrl: p.imageUrl,
+          inStock: p.inStock ?? true,
+        }),
       ),
     )
     return map
@@ -135,7 +143,13 @@ function OptionsModal({
 
   const showCheeseSelector = item.cat === "burgers"
 
-  function toggleItem(optionId: string, itemId: string, type: "RADIO" | "CHECKBOX") {
+  function toggleItem(
+    optionId: string,
+    itemId: string,
+    type: "RADIO" | "CHECKBOX",
+    optLabel?: string,
+    itemName?: string,
+  ) {
     setSelected((prev) => {
       const current = prev[optionId] ?? []
       if (type === "RADIO") return { ...prev, [optionId]: [itemId] }
@@ -143,6 +157,11 @@ function OptionsModal({
         return { ...prev, [optionId]: current.filter((id) => id !== itemId) }
       return { ...prev, [optionId]: [...current, itemId] }
     })
+    // Para combos: atualiza preview com imagem do lanche selecionado
+    if (item.comboConfig && optLabel?.toLowerCase().includes("lanche") && itemName) {
+      const info = productInfoMap.get(itemName)
+      if (info?.imageUrl) setPreviewImage(info.imageUrl)
+    }
   }
 
   function changeExtraQty(extraId: string, delta: number) {
@@ -206,6 +225,19 @@ function OptionsModal({
         className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl p-6"
         style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
       >
+        {/* Imagem de preview — dinâmica para combos */}
+        {previewImage && (
+          <div className="relative -mx-6 -mt-6 mb-5 h-44 w-[calc(100%+3rem)] overflow-hidden rounded-t-2xl">
+            <Image
+              src={previewImage}
+              alt={item.name}
+              fill
+              className="object-cover transition-all duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1612] via-transparent to-transparent" />
+          </div>
+        )}
+
         <div className="mb-4 flex items-start justify-between">
           <div>
             <h3
@@ -258,11 +290,17 @@ function OptionsModal({
                       ? optItem.additionalPrice - minOptPrice
                       : optItem.additionalPrice
                     const info = item.comboConfig ? productInfoMap.get(optItem.name) : null
+                    // Item esgotado: produto explicitamente fora de estoque no menu
+                    const isOos = item.comboConfig != null && info != null && !info.inStock
                     return (
                       <button
                         key={optItem.id}
-                        onClick={() => toggleItem(opt.id, optItem.id, opt.type)}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition"
+                        onClick={() =>
+                          !isOos &&
+                          toggleItem(opt.id, optItem.id, opt.type, opt.label, optItem.name)
+                        }
+                        disabled={isOos}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
                         style={{
                           background: isSelected
                             ? "rgba(249,115,22,0.12)"
@@ -308,8 +346,12 @@ function OptionsModal({
                             </p>
                           )}
                         </div>
-                        {/* Preço delta */}
-                        {displayDelta > 0 ? (
+                        {/* Preço delta / esgotado */}
+                        {isOos ? (
+                          <span className="shrink-0 text-[10px] font-semibold text-red-400/70">
+                            Esgotado
+                          </span>
+                        ) : displayDelta > 0 ? (
                           <span className="shrink-0 text-xs font-semibold text-orange-400">
                             +{fmtPrice(displayDelta)}
                           </span>

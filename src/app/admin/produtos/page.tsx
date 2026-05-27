@@ -448,6 +448,78 @@ function ProductOptions({ productId, token }: { productId: string; token: string
   )
 }
 
+// ─── Edição inline de preço ───────────────────────────────────────────────────
+
+function InlinePriceEditor({
+  productId,
+  price,
+  token,
+  onUpdate,
+}: {
+  productId: string
+  price: number
+  token: string
+  onUpdate: (id: string, price: number) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(price.toFixed(2))
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function save() {
+    const n = parseFloat(value)
+    if (isNaN(n) || n <= 0 || n === price) {
+      setEditing(false)
+      return
+    }
+    setSaving(true)
+    const res = await fetch(`/api/backend/admin/products/${productId}/price`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ price: n }),
+    })
+    setSaving(false)
+    if (res.ok) onUpdate(productId, n)
+    setEditing(false)
+  }
+
+  if (saving) return <Loader2 className="h-3.5 w-3.5 animate-spin text-orange-400" />
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        min="0.01"
+        step="0.01"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save()
+          if (e.key === "Escape") setEditing(false)
+        }}
+        className="w-20 rounded-lg bg-white/10 px-2 py-1 text-right text-sm font-bold text-orange-400 ring-1 ring-orange-500/50 outline-none"
+        autoFocus
+      />
+    )
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setValue(price.toFixed(2))
+        setEditing(true)
+      }}
+      className="group/price flex shrink-0 items-center gap-1 text-sm font-bold text-orange-400 transition hover:text-orange-300"
+      title="Clique para editar o preço"
+    >
+      {fmtPrice(price)}
+      <Pencil className="h-2.5 w-2.5 opacity-0 transition group-hover/price:opacity-60" />
+    </button>
+  )
+}
+
 // ─── Sortable product row ─────────────────────────────────────────────────────
 
 function SortableProductRow({
@@ -461,6 +533,7 @@ function SortableProductRow({
   onEdit,
   onOptions,
   onDelete,
+  onPriceUpdate,
 }: {
   p: Product
   token: string
@@ -472,6 +545,7 @@ function SortableProductRow({
   onEdit: (p: Product) => void
   onOptions: (id: string) => void
   onDelete: (id: string) => void
+  onPriceUpdate: (id: string, price: number) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: p.id,
@@ -515,7 +589,12 @@ function SortableProductRow({
           <p className="truncate text-sm font-semibold text-white">{p.name}</p>
           {p.description && <p className="truncate text-xs text-white/30">{p.description}</p>}
         </div>
-        <span className="shrink-0 text-sm font-bold text-orange-400">{fmtPrice(p.price)}</span>
+        <InlinePriceEditor
+          productId={p.id}
+          price={p.price}
+          token={token}
+          onUpdate={onPriceUpdate}
+        />
         <div className="flex items-center gap-1">
           <button
             onClick={() => onToggle(p.id)}
@@ -580,6 +659,7 @@ function SortableCategoryGroup({
   onOptions,
   onDelete,
   onReorder,
+  onPriceUpdate,
 }: {
   cat: Category
   items: Product[]
@@ -593,6 +673,7 @@ function SortableCategoryGroup({
   onOptions: (id: string) => void
   onDelete: (id: string) => void
   onReorder: (catId: string, newItems: Product[]) => void
+  onPriceUpdate: (id: string, price: number) => void
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -631,6 +712,7 @@ function SortableCategoryGroup({
                 onEdit={onEdit}
                 onOptions={onOptions}
                 onDelete={onDelete}
+                onPriceUpdate={onPriceUpdate}
               />
             ))}
           </div>
@@ -916,6 +998,10 @@ export default function ProdutosPage() {
     setProducts((prev) => [...prev.filter((p) => p.category.id !== catId), ...newItems])
   }
 
+  function handlePriceUpdate(id: string, price: number) {
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, price } : p)))
+  }
+
   const filtered = products.filter((p) => {
     if (catFilter && p.category.id !== catFilter) return false
     if (!query) return true
@@ -1027,6 +1113,7 @@ export default function ProdutosPage() {
               onOptions={(id) => setExpandedOptions(expandedOptions === id ? null : id)}
               onDelete={handleDelete}
               onReorder={handleReorder}
+              onPriceUpdate={handlePriceUpdate}
             />
           ))}
         </div>

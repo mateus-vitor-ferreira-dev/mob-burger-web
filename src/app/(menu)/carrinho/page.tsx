@@ -1,7 +1,7 @@
 "use client"
 
 import { fmtPrice } from "@/lib/utils"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
@@ -531,10 +531,22 @@ export default function CarrinhoPage() {
     changeFor,
     orderNotes,
   } = useDelivery()
+  const { categories: menuCats } = useMenu()
+  const outOfStockIds = useMemo(
+    () =>
+      new Set(
+        menuCats
+          .flatMap((c) => c.products)
+          .filter((p) => !p.inStock)
+          .map((p) => p.id),
+      ),
+    [menuCats],
+  )
   const [mounted, setMounted] = useState(false)
   const [editingAddress, setEditingAddress] = useState(false)
   const [zones, setZones] = useState<DeliveryZone[]>([])
   const [storeOpen, setStoreOpen] = useState(true)
+  const [oosWarning, setOosWarning] = useState<string[]>([])
   const [couponCode, setCouponCode] = useState("")
   const [couponApplied, setCouponApplied] = useState<{
     code: string
@@ -630,6 +642,12 @@ export default function CarrinhoPage() {
   }
 
   function handleGoToPayment() {
+    const oos = items.filter((i) => outOfStockIds.has(i.productId))
+    if (oos.length > 0) {
+      setOosWarning(oos.map((i) => i.name))
+      return
+    }
+    setOosWarning([])
     if (orderType === "DELIVERY" && token) {
       updateAddress(address)
       fetch("/api/auth/customer/me", {
@@ -702,6 +720,28 @@ export default function CarrinhoPage() {
               Não é possível finalizar pedidos agora. Volte durante o horário de funcionamento.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Banner itens esgotados */}
+      {oosWarning.length > 0 && (
+        <div
+          className="mb-6 rounded-2xl px-5 py-4"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}
+        >
+          <p className="mb-1 text-sm font-semibold text-red-400">
+            Alguns itens estão esgotados e não podem ser pedidos:
+          </p>
+          <ul className="list-disc pl-4">
+            {oosWarning.map((name) => (
+              <li key={name} className="text-xs text-white/50">
+                {name.replace(/^Mob /i, "")}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-white/40">
+            Remova os itens esgotados da sacola para continuar.
+          </p>
         </div>
       )}
 
