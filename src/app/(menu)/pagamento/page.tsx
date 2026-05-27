@@ -281,7 +281,7 @@ export default function PagamentoPage() {
   const isComplete = useDelivery((s) => s.isComplete)
   const { address, zoneId, deliveryFee, orderType } = useDelivery()
   const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
-  const { token } = useCustomer()
+  const { token, _hasHydrated } = useCustomer()
 
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
@@ -294,7 +294,7 @@ export default function PagamentoPage() {
   }, [])
 
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || !_hasHydrated) return
     if (items.length === 0) {
       router.push("/cardapio")
       return
@@ -304,7 +304,7 @@ export default function PagamentoPage() {
       return
     }
     if (!token) {
-      router.push("/login")
+      router.push("/login?returnTo=/pagamento")
       return
     }
     if (initiated.current) return
@@ -376,7 +376,7 @@ export default function PagamentoPage() {
 
     initPayment()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted])
+  }, [mounted, _hasHydrated])
 
   if (!mounted) return null
 

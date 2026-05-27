@@ -115,6 +115,12 @@ function Field({ children, delay = 0 }: { children: React.ReactNode; delay?: num
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function getReturnTo() {
+  if (typeof window === "undefined") return "/"
+  const p = new URLSearchParams(window.location.search).get("returnTo")
+  return p && p.startsWith("/") ? p : "/"
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const setCustomer = useCustomer((s) => s.setCustomer)
@@ -148,7 +154,7 @@ export default function LoginPage() {
           setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
         }
         toast.success("Login realizado com sucesso!")
-        router.push("/")
+        router.push(getReturnTo())
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Erro ao autenticar com Google")
       } finally {
@@ -181,7 +187,7 @@ export default function LoginPage() {
           setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
         }
         toast.success("Bem-vindo de volta! 🔥")
-        router.push("/")
+        router.push(getReturnTo())
         return
       }
 
