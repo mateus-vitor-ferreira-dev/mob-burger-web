@@ -22,6 +22,9 @@ const registerSchema = z
     phone: z.string().refine((v) => v.replace(/\D/g, "").length >= 10, "Telefone inválido"),
     password: z.string().min(6, "Mínimo 6 caracteres"),
     confirmPassword: z.string(),
+    lgpdConsent: z
+      .boolean()
+      .refine((v) => v === true, "Você precisa aceitar os termos para continuar"),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Senhas não coincidem",
@@ -53,11 +56,19 @@ function Divider() {
   )
 }
 
-function OrangeSubmit({ children, loading }: { children: React.ReactNode; loading?: boolean }) {
+function OrangeSubmit({
+  children,
+  loading,
+  disabled,
+}: {
+  children: React.ReactNode
+  loading?: boolean
+  disabled?: boolean
+}) {
   return (
     <button
       type="submit"
-      disabled={loading}
+      disabled={loading || disabled}
       className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
       style={{
         background: "linear-gradient(135deg, #f97316, #ea580c)",
@@ -123,10 +134,24 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const [lgpdConsent, setLgpdConsent] = useState(false)
+
   const form = useForm<RegisterData>({
     resolver: standardSchemaResolver(registerSchema),
-    defaultValues: { name: "", email: "", phone: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      lgpdConsent: false,
+    },
   })
+
+  function toggleConsent(checked: boolean) {
+    setLgpdConsent(checked)
+    form.setValue("lgpdConsent", checked, { shouldValidate: true })
+  }
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (res) => {
@@ -212,7 +237,10 @@ export default function RegisterPage() {
               </Field>
 
               <Field delay={60}>
-                <GoogleButton onClick={() => googleLogin()} disabled={isSubmitting} />
+                <GoogleButton
+                  onClick={() => googleLogin()}
+                  disabled={isSubmitting || !lgpdConsent}
+                />
               </Field>
 
               <Divider />
@@ -324,7 +352,62 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={260}>
-                  <OrangeSubmit loading={isSubmitting}>Criar conta grátis 🚀</OrangeSubmit>
+                  <label className="flex cursor-pointer items-start gap-3 select-none">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={lgpdConsent}
+                        onChange={(e) => toggleConsent(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      <div
+                        className="flex h-4 w-4 items-center justify-center rounded border transition-all duration-200"
+                        style={{
+                          background: lgpdConsent ? "#f97316" : "transparent",
+                          borderColor: lgpdConsent ? "#f97316" : "rgba(255,255,255,0.25)",
+                        }}
+                      >
+                        {lgpdConsent && (
+                          <svg viewBox="0 0 12 12" fill="none" className="h-2.5 w-2.5">
+                            <path
+                              d="M2 6l3 3 5-5"
+                              stroke="#fff"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs leading-relaxed text-white/40">
+                      Li e concordo com os{" "}
+                      <a
+                        href="/privacidade"
+                        className="text-orange-500 underline underline-offset-2 hover:text-orange-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Termos de Uso
+                      </a>{" "}
+                      e a{" "}
+                      <a
+                        href="/privacidade"
+                        className="text-orange-500 underline underline-offset-2 hover:text-orange-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Política de Privacidade
+                      </a>
+                      , e autorizo o tratamento dos meus dados conforme a{" "}
+                      <span className="text-white/60">LGPD</span>.
+                    </span>
+                  </label>
+                  <FieldError msg={form.formState.errors.lgpdConsent?.message} />
+                </Field>
+
+                <Field delay={295}>
+                  <OrangeSubmit loading={isSubmitting} disabled={!lgpdConsent}>
+                    Criar conta grátis 🚀
+                  </OrangeSubmit>
                 </Field>
 
                 <Field delay={330}>
@@ -333,26 +416,6 @@ export default function RegisterPage() {
                     <a href="/login" className="font-medium text-orange-500 hover:text-orange-600">
                       Entrar
                     </a>
-                  </p>
-                </Field>
-
-                <Field delay={350}>
-                  <p className="text-center text-xs text-white/30">
-                    Ao criar conta, você concorda com os{" "}
-                    <a
-                      href="/privacidade"
-                      className="underline underline-offset-2 hover:text-white/60"
-                    >
-                      Termos de Uso
-                    </a>{" "}
-                    e a{" "}
-                    <a
-                      href="/privacidade"
-                      className="underline underline-offset-2 hover:text-white/60"
-                    >
-                      Política de Privacidade
-                    </a>
-                    .
                   </p>
                 </Field>
               </form>
