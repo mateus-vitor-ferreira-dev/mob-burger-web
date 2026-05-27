@@ -475,6 +475,92 @@ function OptionsModal({
           />
         </div>
 
+        {/* Progress indicator — combos e seletor de queijo */}
+        {(item.comboConfig || showCheeseSelector) &&
+          (() => {
+            const requiredGroups: { id: string; label: string; filled: boolean }[] = [
+              ...item.options
+                .filter((o) => o.required)
+                .map((o) => ({
+                  id: o.id,
+                  label: o.label,
+                  filled: (selected[o.id]?.length ?? 0) > 0,
+                })),
+              ...(showCheeseSelector
+                ? [{ id: "__cheese__", label: "Queijo", filled: cheeseType !== null }]
+                : []),
+            ]
+            const filledCount = requiredGroups.filter((g) => g.filled).length
+            const allDone = filledCount === requiredGroups.length
+
+            function chipLabel(label: string) {
+              if (/^escolha o lanche/i.test(label)) return { emoji: "🍔", text: "Lanche" }
+              if (/^lanche/i.test(label))
+                return { emoji: "🍔", text: label.replace(/^escolha a?o?\s*/i, "") }
+              if (/^escolha a bebida/i.test(label)) return { emoji: "🥤", text: "Bebida" }
+              if (/^bebida/i.test(label)) return { emoji: "🥤", text: label }
+              if (/^escolha a sobremesa/i.test(label)) return { emoji: "🍰", text: "Sobremesa" }
+              if (/^sobremesa/i.test(label)) return { emoji: "🍰", text: label }
+              if (/queijo/i.test(label)) return { emoji: "🧀", text: "Queijo" }
+              return { emoji: "•", text: label }
+            }
+
+            return (
+              <div className="mt-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[11px] text-white/30">
+                    {allDone
+                      ? "Tudo selecionado!"
+                      : `${filledCount} de ${requiredGroups.length} obrigatórios`}
+                  </p>
+                  {/* Mini progress bar */}
+                  <div className="h-1 w-24 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${(filledCount / requiredGroups.length) * 100}%`,
+                        background: allDone
+                          ? "linear-gradient(90deg, #4ade80, #22c55e)"
+                          : "linear-gradient(90deg, #f97316, #ea580c)",
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {requiredGroups.map((g) => {
+                    const { emoji, text } = chipLabel(g.label)
+                    return (
+                      <div
+                        key={g.id}
+                        className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all"
+                        style={
+                          g.filled
+                            ? {
+                                background: "rgba(249,115,22,0.15)",
+                                color: "#f97316",
+                                border: "1px solid rgba(249,115,22,0.3)",
+                              }
+                            : {
+                                background: "rgba(255,255,255,0.04)",
+                                color: "rgba(255,255,255,0.25)",
+                                border: "1px solid rgba(255,255,255,0.07)",
+                              }
+                        }
+                      >
+                        {g.filled ? (
+                          <Check className="h-2.5 w-2.5 shrink-0" />
+                        ) : (
+                          <span className="h-2.5 w-2.5 shrink-0 text-center leading-none">·</span>
+                        )}
+                        {emoji} {text}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+
         <button
           onClick={handleConfirm}
           disabled={!canConfirm()}
