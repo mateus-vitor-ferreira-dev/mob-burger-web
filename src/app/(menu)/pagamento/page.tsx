@@ -9,6 +9,7 @@ import {
   Loader2,
   AlertCircle,
   MapPin,
+  Phone,
   User,
   ShoppingBag,
   Lock,
@@ -445,19 +446,108 @@ export default function PagamentoPage() {
     needsChange,
     changeFor,
     orderNotes,
+    phone: deliveryPhone,
   } = useDelivery()
   const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
-  const { token, _hasHydrated } = useCustomer()
+  const { token, _hasHydrated, customer, updatePhone } = useCustomer()
 
   const [paymentView, setPaymentView] = useState<PaymentView | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [savePhonePrompt, setSavePhonePrompt] = useState(false)
+  const [savingPhone, setSavingPhone] = useState(false)
   const initiated = useRef(false)
 
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
+
+  async function initPayment() {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const retryOrderId = params.get("retry_order_id")
+
+      let targetOrderId: string
+
+      if (retryOrderId) {
+        targetOrderId = retryOrderId
+      } else {
+        const mappedItems = items.map((item) => ({
+          productId: item.productId ?? item.id,
+          quantity: item.qty,
+          observations: item.observations || undefined,
+          options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
+          extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
+        }))
+
+        if (mappedItems.length === 0) throw new Error("Sacola vazia.")
+
+        const couponCode = params.get("coupon") || undefined
+
+        const backendMethod =
+          paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod === "PIX" ? "PIX" : "CARD"
+
+        const orderRes = await fetch("/api/backend/orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            type: orderType,
+            paymentMethod: backendMethod,
+            items: mappedItems,
+            couponCode,
+            ...(paymentMethod === "CASH" && needsChange && changeFor ? { changeFor } : {}),
+            ...(orderNotes ? { notes: orderNotes } : {}),
+            ...(orderType === "DELIVERY"
+              ? {
+                  delivery: {
+                    street: address.street,
+                    number: address.number,
+                    neighborhood: address.neighborhood,
+                    complement: address.complement || undefined,
+                    zoneId: zoneId || undefined,
+                  },
+                }
+              : {}),
+          }),
+        })
+        const orderJson = await orderRes.json()
+        if (!orderRes.ok) throw new Error(orderJson.error?.message ?? "Erro ao criar pedido.")
+        targetOrderId = orderJson.data.id
+      }
+
+      const payRes = await fetch("/api/backend/payments/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ orderId: targetOrderId }),
+      })
+      const payJson = await payRes.json()
+      if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
+
+      setOrderId(targetOrderId)
+
+      const method = payJson.data.method as string
+
+      if (method === "CASH_ON_DELIVERY" || method === "CARD_ON_DELIVERY") {
+        router.push(`/pedido/confirmado?order_id=${targetOrderId}`)
+        return
+      }
+
+      if (method === "PIX") {
+        setPaymentView({
+          type: "pix",
+          qrCode: payJson.data.qrCode ?? null,
+          qrCodeImage: payJson.data.qrCodeImage ?? null,
+          expiresAt: payJson.data.expiresAt ?? null,
+        })
+        return
+      }
+
+      setPaymentView({ type: "card", clientSecret: payJson.data.clientSecret })
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : "Erro ao iniciar checkout.")
+    }
+  }
 
   useEffect(() => {
     if (!mounted || !_hasHydrated) return
@@ -476,98 +566,35 @@ export default function PagamentoPage() {
     if (initiated.current) return
     initiated.current = true
 
-    async function initPayment() {
-      try {
-        const params = new URLSearchParams(window.location.search)
-        const retryOrderId = params.get("retry_order_id")
-
-        let targetOrderId: string
-
-        if (retryOrderId) {
-          targetOrderId = retryOrderId
-        } else {
-          const mappedItems = items.map((item) => ({
-            productId: item.productId ?? item.id,
-            quantity: item.qty,
-            observations: item.observations || undefined,
-            options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
-            extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
-          }))
-
-          if (mappedItems.length === 0) throw new Error("Sacola vazia.")
-
-          const couponCode = params.get("coupon") || undefined
-
-          // Mapeia método de pagamento do frontend para o backend
-          const backendMethod =
-            paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod === "PIX" ? "PIX" : "CARD"
-
-          const orderRes = await fetch("/api/backend/orders", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({
-              type: orderType,
-              paymentMethod: backendMethod,
-              items: mappedItems,
-              couponCode,
-              ...(paymentMethod === "CASH" && needsChange && changeFor ? { changeFor } : {}),
-              ...(orderNotes ? { notes: orderNotes } : {}),
-              ...(orderType === "DELIVERY"
-                ? {
-                    delivery: {
-                      street: address.street,
-                      number: address.number,
-                      neighborhood: address.neighborhood,
-                      complement: address.complement || undefined,
-                      zoneId: zoneId || undefined,
-                    },
-                  }
-                : {}),
-            }),
-          })
-          const orderJson = await orderRes.json()
-          if (!orderRes.ok) throw new Error(orderJson.error?.message ?? "Erro ao criar pedido.")
-          targetOrderId = orderJson.data.id
-        }
-
-        const payRes = await fetch("/api/backend/payments/intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ orderId: targetOrderId }),
-        })
-        const payJson = await payRes.json()
-        if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
-
-        setOrderId(targetOrderId)
-
-        const method = payJson.data.method as string
-
-        if (method === "CASH_ON_DELIVERY" || method === "CARD_ON_DELIVERY") {
-          // Pedido já confirmado pelo backend — vai direto para a tela de confirmação
-          router.push(`/pedido/confirmado?order_id=${targetOrderId}`)
-          return
-        }
-
-        if (method === "PIX") {
-          setPaymentView({
-            type: "pix",
-            qrCode: payJson.data.qrCode ?? null,
-            qrCodeImage: payJson.data.qrCodeImage ?? null,
-            expiresAt: payJson.data.expiresAt ?? null,
-          })
-          return
-        }
-
-        // CARD
-        setPaymentView({ type: "card", clientSecret: payJson.data.clientSecret })
-      } catch (e) {
-        setFetchError(e instanceof Error ? e.message : "Erro ao iniciar checkout.")
-      }
+    // Usuário Google sem telefone no perfil: pede para salvar o número informado no formulário
+    if (!customer?.phone && deliveryPhone.trim()) {
+      setSavePhonePrompt(true) // eslint-disable-line react-hooks/set-state-in-effect
+      return
     }
 
     initPayment()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, _hasHydrated])
+
+  async function handleSavePhone() {
+    setSavingPhone(true)
+    try {
+      const res = await fetch("/api/backend/auth/customer/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ phone: deliveryPhone }),
+      })
+      if (res.ok) updatePhone(deliveryPhone)
+    } catch {}
+    setSavingPhone(false)
+    setSavePhonePrompt(false)
+    initPayment()
+  }
+
+  function handleDismissSavePhone() {
+    setSavePhonePrompt(false)
+    router.push("/perfil")
+  }
 
   if (!mounted) return null
 
@@ -610,7 +637,7 @@ export default function PagamentoPage() {
             </div>
           )}
 
-          {!paymentView && !fetchError && (
+          {!paymentView && !fetchError && !savePhonePrompt && (
             <div className="flex flex-col items-center justify-center gap-3 py-24">
               <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
               <p className="text-xs text-white/25">Preparando checkout seguro...</p>
@@ -637,6 +664,48 @@ export default function PagamentoPage() {
           )}
         </div>
       </div>
+
+      {savePhonePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{ background: "var(--mob-s2)", border: "1px solid var(--mob-b1)" }}
+          >
+            <div className="mb-1 flex items-center gap-2">
+              <Phone className="h-4 w-4 text-orange-400" />
+              <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                Telefone
+              </p>
+            </div>
+            <p className="mt-3 text-sm font-semibold text-white">Salvar número no perfil?</p>
+            <p className="mt-1 text-sm text-white/50">
+              Deseja usar <span className="font-semibold text-white">{deliveryPhone}</span> como seu
+              telefone padrão?
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={handleSavePhone}
+                disabled={savingPhone}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(135deg, #f97316, #ea580c)",
+                  boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
+                }}
+              >
+                {savingPhone ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sim, salvar"}
+              </button>
+              <button
+                onClick={handleDismissSavePhone}
+                disabled={savingPhone}
+                className="flex flex-1 items-center justify-center rounded-xl py-3 text-sm font-semibold text-white/50 transition hover:text-white/70 disabled:opacity-50"
+                style={{ border: "1px solid var(--mob-b1)" }}
+              >
+                Ir ao perfil
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

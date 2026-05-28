@@ -28,6 +28,7 @@ interface CustomerStore {
   setCustomer: (customer: Customer, token: string) => void
   updateAddress: (address: CustomerAddress) => void
   updateAvatar: (avatarUrl: string) => void
+  updatePhone: (phone: string) => void
   logout: () => void
   isLoggedIn: () => boolean
   hasAddress: () => boolean
@@ -51,6 +52,11 @@ export const useCustomer = create<CustomerStore>()(
       updateAvatar: (avatarUrl) =>
         set((s) => ({
           customer: s.customer ? { ...s.customer, avatarUrl } : null,
+        })),
+
+      updatePhone: (phone) =>
+        set((s) => ({
+          customer: s.customer ? { ...s.customer, phone } : null,
         })),
 
       logout: () => set({ customer: null, token: null }),
