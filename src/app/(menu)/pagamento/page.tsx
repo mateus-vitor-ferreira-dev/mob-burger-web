@@ -10,6 +10,7 @@ import {
   AlertCircle,
   MapPin,
   Phone,
+  CreditCard,
   User,
   ShoppingBag,
   Lock,
@@ -17,54 +18,9 @@ import {
   Check,
   Clock,
 } from "lucide-react"
-import { loadStripe } from "@stripe/stripe-js"
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js"
 import { useCart } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
 import { useCustomer } from "@/lib/customer-store"
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
-const STRIPE_APPEARANCE = {
-  theme: "night" as const,
-  variables: {
-    colorPrimary: "#f97316",
-    colorBackground: "#110f0d",
-    colorText: "#ffffff",
-    colorTextSecondary: "var(--mob-t50)",
-    colorDanger: "#ef4444",
-    borderRadius: "12px",
-    fontFamily: "inherit",
-    spacingUnit: "4px",
-  },
-  rules: {
-    ".Input": {
-      border: "1px solid var(--mob-s3)",
-      backgroundColor: "var(--mob-s2)",
-      boxShadow: "none",
-    },
-    ".Input:focus": {
-      border: "1px solid rgba(249,115,22,0.5)",
-      boxShadow: "0 0 0 3px rgba(249,115,22,0.12)",
-    },
-    ".Label": {
-      color: "var(--mob-t40)",
-      fontSize: "11px",
-      fontWeight: "600",
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-    },
-    ".Tab": {
-      border: "1px solid var(--mob-b1)",
-      backgroundColor: "var(--mob-s1)",
-    },
-    ".Tab--selected": {
-      border: "1px solid rgba(249,115,22,0.4)",
-      backgroundColor: "rgba(249,115,22,0.08)",
-    },
-    ".Tab:hover": { backgroundColor: "var(--mob-s2)" },
-  },
-}
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 
@@ -206,37 +162,100 @@ function OrderReview() {
 
       <div className="flex items-center justify-center gap-1.5 py-1">
         <Lock className="h-3 w-3 text-white/20" />
-        <p className="text-xs text-white/20">Pagamento processado com segurança pelo Stripe</p>
+        <p className="text-xs text-white/20">Pagamento processado com segurança pelo Pagar.me</p>
       </div>
     </div>
   )
 }
 
-// ─── Cartão (Stripe Elements) ─────────────────────────────────────────────────
+// ─── Formulário de cartão (Pagar.me tokenização) ──────────────────────────────
 
-function CardPaymentForm({ orderId, total }: { orderId: string; total: number }) {
-  const stripe = useStripe()
-  const elements = useElements()
+function formatCardNumber(v: string) {
+  return v
+    .replace(/\D/g, "")
+    .slice(0, 16)
+    .replace(/(.{4})/g, "$1 ")
+    .trim()
+}
+
+function CardPaymentForm({
+  orderId,
+  total,
+  authToken,
+  onSuccess,
+  onError,
+}: {
+  orderId: string
+  total: number
+  authToken: string
+  onSuccess: () => void
+  onError: (msg: string) => void
+}) {
+  const [cardNumber, setCardNumber] = useState("")
+  const [holderName, setHolderName] = useState("")
+  const [expMonth, setExpMonth] = useState("")
+  const [expYear, setExpYear] = useState("")
+  const [cvv, setCvv] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!stripe || !elements) return
-    setLoading(true)
     setError(null)
+    setLoading(true)
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/pedido/confirmado?order_id=${orderId}`,
-      },
-    })
+    try {
+      const publicKey = process.env.NEXT_PUBLIC_PAGARME_PUBLIC_KEY
+      if (!publicKey) throw new Error("Chave pública do Pagar.me não configurada.")
 
-    if (error) {
-      setError(error.message ?? "Erro ao processar pagamento.")
+      // 1. Tokenizar o cartão
+      const tokenRes = await fetch(`https://api.pagar.me/core/v5/tokens?appId=${publicKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "card",
+          card: {
+            number: cardNumber.replace(/\s/g, ""),
+            holder_name: holderName.toUpperCase(),
+            exp_month: parseInt(expMonth, 10),
+            exp_year: parseInt(expYear, 10),
+            cvv,
+          },
+        }),
+      })
+      const tokenJson = await tokenRes.json()
+      if (!tokenRes.ok) {
+        throw new Error(tokenJson?.errors?.[0]?.message ?? "Dados do cartão inválidos.")
+      }
+
+      const cardToken: string = tokenJson.id
+
+      // 2. Criar pagamento no backend com o token
+      const payRes = await fetch("/api/backend/payments/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ orderId, cardToken }),
+      })
+      const payJson = await payRes.json()
+      if (!payRes.ok) {
+        throw new Error(payJson.error?.message ?? "Pagamento recusado.")
+      }
+
+      onSuccess()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao processar pagamento."
+      setError(msg)
+      onError(msg)
+    } finally {
       setLoading(false)
     }
+  }
+
+  const inputClass =
+    "w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition focus:ring-1 focus:ring-orange-500/50"
+  const inputStyle = {
+    background: "var(--mob-s2)",
+    border: "1px solid var(--mob-s3)",
   }
 
   return (
@@ -245,10 +264,70 @@ function CardPaymentForm({ orderId, total }: { orderId: string; total: number })
         className="rounded-2xl p-5"
         style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
-        <p className="mb-5 text-xs font-semibold tracking-widest text-white/30 uppercase">
-          Forma de pagamento
-        </p>
-        <PaymentElement options={{ layout: "tabs" }} />
+        <div className="mb-5 flex items-center gap-2">
+          <CreditCard className="h-4 w-4 text-orange-400" />
+          <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+            Dados do cartão
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Número do cartão"
+            value={cardNumber}
+            onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+            maxLength={19}
+            required
+            className={inputClass}
+            style={inputStyle}
+          />
+          <input
+            type="text"
+            placeholder="Nome no cartão"
+            value={holderName}
+            onChange={(e) => setHolderName(e.target.value)}
+            required
+            className={inputClass}
+            style={inputStyle}
+          />
+          <div className="grid grid-cols-3 gap-3">
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="MM"
+              value={expMonth}
+              onChange={(e) => setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
+              maxLength={2}
+              required
+              className={inputClass}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="AAAA"
+              value={expYear}
+              onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              maxLength={4}
+              required
+              className={inputClass}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="CVV"
+              value={cvv}
+              onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              maxLength={4}
+              required
+              className={inputClass}
+              style={inputStyle}
+            />
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -263,7 +342,7 @@ function CardPaymentForm({ orderId, total }: { orderId: string; total: number })
 
       <button
         type="submit"
-        disabled={!stripe || !elements || loading}
+        disabled={loading}
         className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
         style={{
           background: "linear-gradient(135deg, #f97316, #ea580c)",
@@ -305,7 +384,6 @@ function PixPayment({
     expiresAt ? Math.max(0, expiresAt - Math.floor(Date.now() / 1000)) : 0,
   )
 
-  // Countdown
   useEffect(() => {
     if (!expiresAt) return
     const id = setInterval(() => {
@@ -314,7 +392,6 @@ function PixPayment({
     return () => clearInterval(id)
   }, [expiresAt])
 
-  // Poll for confirmation
   useEffect(() => {
     let attempts = 0
     const id = setInterval(async () => {
@@ -354,7 +431,6 @@ function PixPayment({
           Pague via PIX
         </p>
 
-        {/* QR Code */}
         {qrCodeImage ? (
           <div className="mb-4 flex justify-center">
             <div className="rounded-2xl bg-white p-3">
@@ -368,7 +444,6 @@ function PixPayment({
           </div>
         )}
 
-        {/* Timer */}
         {expiresAt && (
           <div className="mb-4 flex items-center justify-center gap-2">
             <Clock className="h-3.5 w-3.5 text-white/30" />
@@ -380,7 +455,6 @@ function PixPayment({
           </div>
         )}
 
-        {/* Copy button */}
         {qrCode && (
           <button
             onClick={copyCode}
@@ -429,8 +503,14 @@ function PixPayment({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 type PaymentView =
-  | { type: "card"; clientSecret: string }
-  | { type: "pix"; qrCode: string | null; qrCodeImage: string | null; expiresAt: number | null }
+  | { type: "card"; orderId: string }
+  | {
+      type: "pix"
+      orderId: string
+      qrCode: string | null
+      qrCodeImage: string | null
+      expiresAt: number | null
+    }
 
 export default function PagamentoPage() {
   const router = useRouter()
@@ -452,7 +532,6 @@ export default function PagamentoPage() {
   const { token, _hasHydrated, customer, updatePhone } = useCustomer()
 
   const [paymentView, setPaymentView] = useState<PaymentView | null>(null)
-  const [orderId, setOrderId] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const [savePhonePrompt, setSavePhonePrompt] = useState(false)
@@ -463,87 +542,86 @@ export default function PagamentoPage() {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
   }, [])
 
+  async function createOrder(): Promise<string> {
+    const params = new URLSearchParams(window.location.search)
+    const retryOrderId = params.get("retry_order_id")
+    if (retryOrderId) return retryOrderId
+
+    const mappedItems = items.map((item) => ({
+      productId: item.productId ?? item.id,
+      quantity: item.qty,
+      observations: item.observations || undefined,
+      options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
+      extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
+    }))
+
+    if (mappedItems.length === 0) throw new Error("Sacola vazia.")
+
+    const couponCode = params.get("coupon") || undefined
+    const backendMethod =
+      paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod === "PIX" ? "PIX" : "CARD"
+
+    const res = await fetch("/api/backend/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        type: orderType,
+        paymentMethod: backendMethod,
+        items: mappedItems,
+        couponCode,
+        ...(paymentMethod === "CASH" && needsChange && changeFor ? { changeFor } : {}),
+        ...(orderNotes ? { notes: orderNotes } : {}),
+        ...(orderType === "DELIVERY"
+          ? {
+              delivery: {
+                street: address.street,
+                number: address.number,
+                neighborhood: address.neighborhood,
+                complement: address.complement || undefined,
+                zoneId: zoneId || undefined,
+              },
+            }
+          : {}),
+      }),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error?.message ?? "Erro ao criar pedido.")
+    return json.data.id
+  }
+
   async function initPayment() {
     try {
-      const params = new URLSearchParams(window.location.search)
-      const retryOrderId = params.get("retry_order_id")
+      const orderId = await createOrder()
 
-      let targetOrderId: string
-
-      if (retryOrderId) {
-        targetOrderId = retryOrderId
-      } else {
-        const mappedItems = items.map((item) => ({
-          productId: item.productId ?? item.id,
-          quantity: item.qty,
-          observations: item.observations || undefined,
-          options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
-          extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
-        }))
-
-        if (mappedItems.length === 0) throw new Error("Sacola vazia.")
-
-        const couponCode = params.get("coupon") || undefined
-
-        const backendMethod =
-          paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod === "PIX" ? "PIX" : "CARD"
-
-        const orderRes = await fetch("/api/backend/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({
-            type: orderType,
-            paymentMethod: backendMethod,
-            items: mappedItems,
-            couponCode,
-            ...(paymentMethod === "CASH" && needsChange && changeFor ? { changeFor } : {}),
-            ...(orderNotes ? { notes: orderNotes } : {}),
-            ...(orderType === "DELIVERY"
-              ? {
-                  delivery: {
-                    street: address.street,
-                    number: address.number,
-                    neighborhood: address.neighborhood,
-                    complement: address.complement || undefined,
-                    zoneId: zoneId || undefined,
-                  },
-                }
-              : {}),
-          }),
-        })
-        const orderJson = await orderRes.json()
-        if (!orderRes.ok) throw new Error(orderJson.error?.message ?? "Erro ao criar pedido.")
-        targetOrderId = orderJson.data.id
+      // Cartão — apenas mostra o formulário; o pagamento é feito ao submeter
+      if (paymentMethod === "CARD") {
+        setPaymentView({ type: "card", orderId })
+        return
       }
 
+      // Pagamento na entrega e PIX — chama o intent imediatamente
       const payRes = await fetch("/api/backend/payments/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ orderId: targetOrderId }),
+        body: JSON.stringify({ orderId }),
       })
       const payJson = await payRes.json()
       if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
 
-      setOrderId(targetOrderId)
-
       const method = payJson.data.method as string
 
       if (method === "CASH_ON_DELIVERY" || method === "CARD_ON_DELIVERY") {
-        router.push(`/pedido/confirmado?order_id=${targetOrderId}`)
+        router.push(`/pedido/confirmado?order_id=${orderId}`)
         return
       }
 
-      if (method === "PIX") {
-        setPaymentView({
-          type: "pix",
-          qrCode: payJson.data.qrCode ?? null,
-          qrCodeImage: payJson.data.qrCodeImage ?? null,
-          expiresAt: payJson.data.expiresAt ?? null,
-        })
-        return
-      }
-
-      setPaymentView({ type: "card", clientSecret: payJson.data.clientSecret })
+      setPaymentView({
+        type: "pix",
+        orderId,
+        qrCode: payJson.data.qrCode ?? null,
+        qrCodeImage: payJson.data.qrCodeImage ?? null,
+        expiresAt: payJson.data.expiresAt ?? null,
+      })
     } catch (e) {
       setFetchError(e instanceof Error ? e.message : "Erro ao iniciar checkout.")
     }
@@ -644,18 +722,19 @@ export default function PagamentoPage() {
             </div>
           )}
 
-          {paymentView?.type === "card" && orderId && (
-            <Elements
-              stripe={stripePromise}
-              options={{ clientSecret: paymentView.clientSecret, appearance: STRIPE_APPEARANCE }}
-            >
-              <CardPaymentForm orderId={orderId} total={total} />
-            </Elements>
+          {paymentView?.type === "card" && (
+            <CardPaymentForm
+              orderId={paymentView.orderId}
+              total={total}
+              authToken={token!}
+              onSuccess={() => router.push(`/pedido/confirmado?order_id=${paymentView.orderId}`)}
+              onError={(msg) => setFetchError(msg)}
+            />
           )}
 
-          {paymentView?.type === "pix" && orderId && (
+          {paymentView?.type === "pix" && (
             <PixPayment
-              orderId={orderId}
+              orderId={paymentView.orderId}
               qrCode={paymentView.qrCode}
               qrCodeImage={paymentView.qrCodeImage}
               expiresAt={paymentView.expiresAt}
