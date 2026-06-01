@@ -10,7 +10,6 @@ import {
   AlertCircle,
   MapPin,
   Phone,
-  CreditCard,
   User,
   ShoppingBag,
   Lock,
@@ -162,204 +161,9 @@ function OrderReview() {
 
       <div className="flex items-center justify-center gap-1.5 py-1">
         <Lock className="h-3 w-3 text-white/20" />
-        <p className="text-xs text-white/20">Pagamento processado com segurança pelo Pagar.me</p>
+        <p className="text-xs text-white/20">Pedido processado com segurança</p>
       </div>
     </div>
-  )
-}
-
-// ─── Formulário de cartão (Pagar.me tokenização) ──────────────────────────────
-
-function formatCardNumber(v: string) {
-  return v
-    .replace(/\D/g, "")
-    .slice(0, 16)
-    .replace(/(.{4})/g, "$1 ")
-    .trim()
-}
-
-function CardPaymentForm({
-  orderId,
-  total,
-  authToken,
-  onSuccess,
-  onError,
-}: {
-  orderId: string
-  total: number
-  authToken: string
-  onSuccess: () => void
-  onError: (msg: string) => void
-}) {
-  const [cardNumber, setCardNumber] = useState("")
-  const [holderName, setHolderName] = useState("")
-  const [expMonth, setExpMonth] = useState("")
-  const [expYear, setExpYear] = useState("")
-  const [cvv, setCvv] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    try {
-      const publicKey = process.env.NEXT_PUBLIC_PAGARME_PUBLIC_KEY
-      if (!publicKey) throw new Error("Chave pública do Pagar.me não configurada.")
-
-      // 1. Tokenizar o cartão
-      const tokenRes = await fetch(`https://api.pagar.me/core/v5/tokens?appId=${publicKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "card",
-          card: {
-            number: cardNumber.replace(/\s/g, ""),
-            holder_name: holderName.toUpperCase(),
-            exp_month: parseInt(expMonth, 10),
-            exp_year: parseInt(expYear, 10),
-            cvv,
-          },
-        }),
-      })
-      const tokenJson = await tokenRes.json()
-      if (!tokenRes.ok) {
-        throw new Error(tokenJson?.errors?.[0]?.message ?? "Dados do cartão inválidos.")
-      }
-
-      const cardToken: string = tokenJson.id
-
-      // 2. Criar pagamento no backend com o token
-      const payRes = await fetch("/api/backend/payments/intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ orderId, cardToken }),
-      })
-      const payJson = await payRes.json()
-      if (!payRes.ok) {
-        throw new Error(payJson.error?.message ?? "Pagamento recusado.")
-      }
-
-      onSuccess()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao processar pagamento."
-      setError(msg)
-      onError(msg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const inputClass =
-    "w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition focus:ring-1 focus:ring-orange-500/50"
-  const inputStyle = {
-    background: "var(--mob-s2)",
-    border: "1px solid var(--mob-s3)",
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div
-        className="rounded-2xl p-5"
-        style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
-      >
-        <div className="mb-5 flex items-center gap-2">
-          <CreditCard className="h-4 w-4 text-orange-400" />
-          <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
-            Dados do cartão
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <input
-            type="text"
-            inputMode="numeric"
-            placeholder="Número do cartão"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-            maxLength={19}
-            required
-            className={inputClass}
-            style={inputStyle}
-          />
-          <input
-            type="text"
-            placeholder="Nome no cartão"
-            value={holderName}
-            onChange={(e) => setHolderName(e.target.value)}
-            required
-            className={inputClass}
-            style={inputStyle}
-          />
-          <div className="grid grid-cols-3 gap-3">
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="MM"
-              value={expMonth}
-              onChange={(e) => setExpMonth(e.target.value.replace(/\D/g, "").slice(0, 2))}
-              maxLength={2}
-              required
-              className={inputClass}
-              style={inputStyle}
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="AAAA"
-              value={expYear}
-              onChange={(e) => setExpYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              maxLength={4}
-              required
-              className={inputClass}
-              style={inputStyle}
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="CVV"
-              value={cvv}
-              onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-              maxLength={4}
-              required
-              className={inputClass}
-              style={inputStyle}
-            />
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div
-          className="flex items-start gap-3 rounded-xl px-4 py-3 text-sm text-red-400"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
-        >
-          <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-base font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
-        style={{
-          background: "linear-gradient(135deg, #f97316, #ea580c)",
-          boxShadow: "0 6px 24px rgba(249,115,22,0.4)",
-        }}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" /> Processando...
-          </>
-        ) : (
-          <>
-            <Lock className="h-4 w-4" /> Pagar {fmtPrice(total)}
-          </>
-        )}
-      </button>
-    </form>
   )
 }
 
@@ -502,15 +306,13 @@ function PixPayment({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type PaymentView =
-  | { type: "card"; orderId: string }
-  | {
-      type: "pix"
-      orderId: string
-      qrCode: string | null
-      qrCodeImage: string | null
-      expiresAt: number | null
-    }
+type PaymentView = {
+  type: "pix"
+  orderId: string
+  qrCode: string | null
+  qrCodeImage: string | null
+  expiresAt: number | null
+}
 
 export default function PagamentoPage() {
   const router = useRouter()
@@ -559,7 +361,11 @@ export default function PagamentoPage() {
 
     const couponCode = params.get("coupon") || undefined
     const backendMethod =
-      paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod === "PIX" ? "PIX" : "CARD"
+      paymentMethod === "CASH"
+        ? "CASH_ON_DELIVERY"
+        : paymentMethod === "PIX"
+          ? "PIX"
+          : "CARD_ON_DELIVERY"
 
     const res = await fetch("/api/backend/orders", {
       method: "POST",
@@ -593,13 +399,7 @@ export default function PagamentoPage() {
     try {
       const orderId = await createOrder()
 
-      // Cartão — apenas mostra o formulário; o pagamento é feito ao submeter
-      if (paymentMethod === "CARD") {
-        setPaymentView({ type: "card", orderId })
-        return
-      }
-
-      // Pagamento na entrega e PIX — chama o intent imediatamente
+      // Pagamento na entrega (dinheiro/cartão) e PIX — chama o intent imediatamente
       const payRes = await fetch("/api/backend/payments/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -720,16 +520,6 @@ export default function PagamentoPage() {
               <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
               <p className="text-xs text-white/25">Preparando checkout seguro...</p>
             </div>
-          )}
-
-          {paymentView?.type === "card" && (
-            <CardPaymentForm
-              orderId={paymentView.orderId}
-              total={total}
-              authToken={token!}
-              onSuccess={() => router.push(`/pedido/confirmado?order_id=${paymentView.orderId}`)}
-              onError={(msg) => setFetchError(msg)}
-            />
           )}
 
           {paymentView?.type === "pix" && (
