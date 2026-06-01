@@ -809,7 +809,15 @@ export default function PedidosPage() {
                 {/* Total */}
                 <div className="text-right">
                   <p className="text-sm font-bold text-white">{fmtPrice(order.totalPrice)}</p>
-                  <p className="text-[10px] text-white/30">{order.paymentMethod}</p>
+                  <p className="text-[10px] text-white/30">
+                    {{
+                      CASH_ON_DELIVERY: "Dinheiro na entrega",
+                      CARD_ON_DELIVERY: "Cartão na entrega",
+                      PIX_ON_DELIVERY: "PIX na entrega",
+                      PIX: "PIX",
+                      CARD: "Cartão online",
+                    }[order.paymentMethod] ?? order.paymentMethod}
+                  </p>
                 </div>
 
                 {/* Status */}
@@ -851,7 +859,9 @@ export default function PedidosPage() {
                   >
                     <AlertTriangle className="h-3.5 w-3.5 flex-none" />
                     Reembolso manual necessário via{" "}
-                    {order.paymentMethod === "PIX" ? "PIX" : "dinheiro"}
+                    {order.paymentMethod === "PIX" || order.paymentMethod === "PIX_ON_DELIVERY"
+                      ? "PIX"
+                      : "dinheiro"}
                   </div>
                 )}
 
