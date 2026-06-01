@@ -11,7 +11,7 @@ export interface DeliveryAddress {
   state: string
 }
 
-export type PaymentMethod = "CARD" | "PIX" | "CASH"
+export type PaymentMethod = "CARD_ON_DELIVERY" | "PIX" | "CASH"
 
 interface DeliveryStore {
   orderType: "DELIVERY" | "PICKUP"
@@ -51,7 +51,7 @@ export const useDelivery = create<DeliveryStore>()(
       address: emptyAddress,
       zoneId: "",
       deliveryFee: 0,
-      paymentMethod: "CARD",
+      paymentMethod: "CASH",
       needsChange: false,
       changeFor: null,
       orderNotes: "",

@@ -979,7 +979,7 @@ export default function CarrinhoPage() {
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
-                  { value: "CARD", label: "Cartão", Icon: CreditCard },
+                  { value: "CARD_ON_DELIVERY", label: "Cartão na entrega", Icon: CreditCard },
                   { value: "PIX", label: "PIX", Icon: QrCode },
                   { value: "CASH", label: "Dinheiro", Icon: Banknote },
                 ] as const
