@@ -11,7 +11,7 @@ export interface DeliveryAddress {
   state: string
 }
 
-export type PaymentMethod = "CARD_ON_DELIVERY" | "PIX" | "CASH"
+export type PaymentMethod = "CARD_ON_DELIVERY" | "PIX_ON_DELIVERY" | "CASH"
 
 interface DeliveryStore {
   orderType: "DELIVERY" | "PICKUP"

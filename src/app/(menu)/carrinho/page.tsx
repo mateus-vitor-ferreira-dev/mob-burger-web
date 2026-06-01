@@ -980,7 +980,7 @@ export default function CarrinhoPage() {
               {(
                 [
                   { value: "CARD_ON_DELIVERY", label: "Cartão na entrega", Icon: CreditCard },
-                  { value: "PIX", label: "PIX", Icon: QrCode },
+                  { value: "PIX_ON_DELIVERY", label: "PIX na entrega", Icon: QrCode },
                   { value: "CASH", label: "Dinheiro", Icon: Banknote },
                 ] as const
               ).map(({ value, label, Icon }) => (
