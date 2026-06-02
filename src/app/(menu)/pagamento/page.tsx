@@ -255,7 +255,12 @@ export default function PagamentoPage() {
 
     const couponCode =
       useDelivery.getState().appliedCoupon?.code || params.get("coupon") || undefined
-    const backendMethod = paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod
+    const methodMap: Record<string, string> = {
+      CASH: "CASH_ON_DELIVERY",
+      PIX: "PIX_ON_DELIVERY",
+      CARD: "CARD_ON_DELIVERY",
+    }
+    const backendMethod = methodMap[paymentMethod] ?? paymentMethod
 
     const res = await fetch("/api/backend/orders", {
       method: "POST",
