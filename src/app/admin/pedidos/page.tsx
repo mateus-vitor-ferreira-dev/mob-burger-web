@@ -814,8 +814,6 @@ export default function PedidosPage() {
                       CASH_ON_DELIVERY: "Dinheiro na entrega",
                       CARD_ON_DELIVERY: "Cartão na entrega",
                       PIX_ON_DELIVERY: "PIX na entrega",
-                      PIX: "PIX",
-                      CARD: "Cartão online",
                     }[order.paymentMethod] ?? order.paymentMethod}
                   </p>
                 </div>
@@ -846,24 +844,22 @@ export default function PedidosPage() {
                 })()}
               </div>
 
-              {/* Aviso de reembolso manual (PIX / dinheiro) */}
-              {order.status === "CANCELLED" &&
-                order.paymentStatus === "REFUNDED" &&
-                order.paymentMethod !== "CARD" && (
-                  <div
-                    className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-amber-400"
-                    style={{
-                      background: "rgba(245,158,11,0.08)",
-                      border: "1px solid rgba(245,158,11,0.2)",
-                    }}
-                  >
-                    <AlertTriangle className="h-3.5 w-3.5 flex-none" />
-                    Reembolso manual necessário via{" "}
-                    {order.paymentMethod === "PIX" || order.paymentMethod === "PIX_ON_DELIVERY"
-                      ? "PIX"
-                      : "dinheiro"}
-                  </div>
-                )}
+              {/* Aviso de reembolso manual */}
+              {order.status === "CANCELLED" && order.paymentStatus === "REFUNDED" && (
+                <div
+                  className="mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-amber-400"
+                  style={{
+                    background: "rgba(245,158,11,0.08)",
+                    border: "1px solid rgba(245,158,11,0.2)",
+                  }}
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 flex-none" />
+                  Reembolso manual necessário —{" "}
+                  {order.paymentMethod === "PIX_ON_DELIVERY"
+                    ? "devolva via PIX"
+                    : "devolva o dinheiro"}
+                </div>
+              )}
 
               {/* Endereço + entregador (delivery) */}
               {order.delivery && (
