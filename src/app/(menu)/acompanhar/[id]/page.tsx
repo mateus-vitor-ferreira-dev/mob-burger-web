@@ -165,7 +165,7 @@ export default function AcompanharPage() {
             try {
               const evt = JSON.parse(line.slice(6))
               if ((evt.type === "status_update" || evt.type === "new_order") && evt.order) {
-                setOrder(evt.order)
+                setOrder((prev) => (prev ? { ...prev, ...evt.order } : evt.order))
               }
             } catch {}
           }
