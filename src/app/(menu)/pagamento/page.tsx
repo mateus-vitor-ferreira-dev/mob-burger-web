@@ -13,6 +13,7 @@ import {
   User,
   ShoppingBag,
   Lock,
+  Tag,
 } from "lucide-react"
 import { useCart } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
@@ -63,8 +64,21 @@ function Steps() {
 function OrderReview() {
   const items = useCart((s) => s.items)
   const subtotal = useCart((s) => s.total())
-  const { customerName, phone, address, deliveryFee, orderType } = useDelivery()
-  const total = subtotal + (orderType === "PICKUP" ? 0 : deliveryFee)
+  const { customerName, phone, address, deliveryFee, orderType, appliedCoupon } = useDelivery()
+
+  const effectiveDeliveryFee =
+    appliedCoupon?.type === "FREE_DELIVERY" ? 0 : orderType === "PICKUP" ? 0 : deliveryFee
+  const discount = appliedCoupon
+    ? appliedCoupon.type === "FREE_DELIVERY"
+      ? orderType === "PICKUP"
+        ? 0
+        : deliveryFee
+      : appliedCoupon.discountAmount
+    : 0
+  const total = Math.max(
+    0,
+    subtotal + effectiveDeliveryFee - (appliedCoupon?.type === "FREE_DELIVERY" ? 0 : discount),
+  )
 
   return (
     <div className="space-y-3">
@@ -93,8 +107,25 @@ function OrderReview() {
           </div>
           <div className="flex justify-between text-xs text-white/40">
             <span>{orderType === "PICKUP" ? "Retirada no local" : "Taxa de entrega"}</span>
-            <span>{orderType === "PICKUP" ? "Grátis" : fmtPrice(deliveryFee)}</span>
+            <span
+              className={
+                appliedCoupon?.type === "FREE_DELIVERY" && orderType !== "PICKUP"
+                  ? "line-through"
+                  : ""
+              }
+            >
+              {orderType === "PICKUP" ? "Grátis" : fmtPrice(deliveryFee)}
+            </span>
+            {appliedCoupon?.type === "FREE_DELIVERY" && orderType !== "PICKUP" && (
+              <span className="text-green-400">Grátis</span>
+            )}
           </div>
+          {discount > 0 && appliedCoupon?.type !== "FREE_DELIVERY" && (
+            <div className="flex justify-between text-xs text-green-400">
+              <span>Desconto</span>
+              <span>−{fmtPrice(discount)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between pt-1">
             <span className="text-sm font-bold text-white">Total</span>
             <span
@@ -110,6 +141,21 @@ function OrderReview() {
           </div>
         </div>
       </div>
+
+      {appliedCoupon && (
+        <div
+          className="flex items-center gap-3 rounded-2xl px-4 py-3"
+          style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}
+        >
+          <Tag className="h-4 w-4 flex-none text-green-400" />
+          <div>
+            <p className="text-xs font-semibold text-green-400">
+              Cupom <span className="tracking-widest">{appliedCoupon.code}</span> aplicado
+            </p>
+            <p className="text-[10px] text-white/30">{appliedCoupon.message}</p>
+          </div>
+        </div>
+      )}
 
       <div
         className="rounded-2xl p-4"
@@ -207,7 +253,8 @@ export default function PagamentoPage() {
 
     if (mappedItems.length === 0) throw new Error("Sacola vazia.")
 
-    const couponCode = params.get("coupon") || undefined
+    const couponCode =
+      useDelivery.getState().appliedCoupon?.code || params.get("coupon") || undefined
     const backendMethod = paymentMethod === "CASH" ? "CASH_ON_DELIVERY" : paymentMethod
 
     const res = await fetch("/api/backend/orders", {
@@ -238,7 +285,19 @@ export default function PagamentoPage() {
     return json.data.id
   }
 
+  function friendlyError(msg: string): string {
+    if (/internal server error/i.test(msg) || /500/i.test(msg)) {
+      return "Ops! Algo deu errado no nosso sistema. Por favor, tente novamente em instantes."
+    }
+    if (/network|fetch|failed to fetch/i.test(msg)) {
+      return "Sem conexão com a internet. Verifique sua rede e tente novamente."
+    }
+    return msg
+  }
+
   async function initPayment() {
+    setFetchError(null)
+    initiated.current = true
     try {
       const orderId = await createOrder()
       const payRes = await fetch("/api/backend/payments/intent", {
@@ -248,9 +307,14 @@ export default function PagamentoPage() {
       })
       const payJson = await payRes.json()
       if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
+      useDelivery
+        .getState()
+        .set({ appliedCoupon: null, orderNotes: "", needsChange: false, changeFor: null })
+      useCart.getState().clear()
       router.push(`/pedido/confirmado?order_id=${orderId}`)
     } catch (e) {
-      setFetchError(e instanceof Error ? e.message : "Erro ao iniciar checkout.")
+      const raw = e instanceof Error ? e.message : "Erro ao iniciar checkout."
+      setFetchError(friendlyError(raw))
     }
   }
 
@@ -332,13 +396,40 @@ export default function PagamentoPage() {
         <div>
           {fetchError && (
             <div
-              className="flex items-center gap-3 rounded-2xl px-4 py-4 text-sm text-red-400"
+              className="space-y-4 rounded-2xl px-5 py-5"
               style={{
                 background: "rgba(239,68,68,0.08)",
                 border: "1px solid rgba(239,68,68,0.2)",
               }}
             >
-              <AlertCircle className="h-4 w-4 flex-none" /> {fetchError}
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 flex-none text-red-400" />
+                <div>
+                  <p className="text-sm font-semibold text-red-400">
+                    Erro no nosso sistema — não foi você!
+                  </p>
+                  <p className="mt-1 text-sm text-white/60">
+                    Houve uma instabilidade do nosso lado. Seu pedido não foi cobrado. Tente
+                    novamente em instantes.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  initiated.current = false
+                  initPayment()
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98]"
+                style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              >
+                Tentar novamente
+              </button>
+              <Link
+                href="/carrinho"
+                className="block text-center text-xs text-white/40 transition hover:text-white/60"
+              >
+                Voltar e revisar pedido
+              </Link>
             </div>
           )}
 
