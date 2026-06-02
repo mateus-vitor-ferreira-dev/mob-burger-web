@@ -13,6 +13,13 @@ export interface DeliveryAddress {
 
 export type PaymentMethod = "CARD_ON_DELIVERY" | "PIX_ON_DELIVERY" | "CASH"
 
+export interface AppliedCoupon {
+  code: string
+  type: string
+  discountAmount: number
+  message: string
+}
+
 interface DeliveryStore {
   orderType: "DELIVERY" | "PICKUP"
   customerName: string
@@ -24,6 +31,7 @@ interface DeliveryStore {
   needsChange: boolean
   changeFor: number | null
   orderNotes: string
+  appliedCoupon: AppliedCoupon | null
   set: (
     patch: Partial<Omit<DeliveryStore, "set" | "setAddress" | "setZone" | "isComplete">>,
   ) => void
@@ -55,6 +63,7 @@ export const useDelivery = create<DeliveryStore>()(
       needsChange: false,
       changeFor: null,
       orderNotes: "",
+      appliedCoupon: null,
 
       set: (patch) => set(patch),
 
