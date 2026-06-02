@@ -7,6 +7,7 @@ import {
   ShoppingBag,
   CreditCard,
   Smartphone,
+  Banknote,
   CheckCircle,
   Calendar,
   AlertTriangle,
@@ -156,8 +157,9 @@ export default function AdminDashboard() {
       .catch(() => {})
   }, [token])
 
-  const card = stats?.byPaymentMethod.find((m) => m.method === "CARD")
-  const pix = stats?.byPaymentMethod.find((m) => m.method === "PIX")
+  const cash = stats?.byPaymentMethod.find((m) => m.method === "CASH_ON_DELIVERY")
+  const cardDelivery = stats?.byPaymentMethod.find((m) => m.method === "CARD_ON_DELIVERY")
+  const pixDelivery = stats?.byPaymentMethod.find((m) => m.method === "PIX_ON_DELIVERY")
 
   const inputCls =
     "rounded-xl px-3 py-1.5 text-xs text-white ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
@@ -314,8 +316,19 @@ export default function AdminDashboard() {
               </p>
               <div className="space-y-3">
                 {[
-                  { label: "Cartão", icon: CreditCard, data: card, color: "#3b82f6" },
-                  { label: "PIX", icon: Smartphone, data: pix, color: "#22c55e" },
+                  { label: "Dinheiro", icon: Banknote, data: cash, color: "#f97316" },
+                  {
+                    label: "Cartão na entrega",
+                    icon: CreditCard,
+                    data: cardDelivery,
+                    color: "#3b82f6",
+                  },
+                  {
+                    label: "PIX na entrega",
+                    icon: Smartphone,
+                    data: pixDelivery,
+                    color: "#22c55e",
+                  },
                 ].map(({ label, icon: Icon, data, color }) => (
                   <div key={label} className="flex items-center gap-3">
                     <div

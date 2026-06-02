@@ -74,8 +74,9 @@ export default function PrivacidadePage() {
                   seus pedidos anteriores e permitir repetição.
                 </li>
                 <li>
-                  • <strong className="text-white/80">Dados de pagamento</strong> — processados
-                  inteiramente pelo Stripe; não armazenamos dados de cartão.
+                  • <strong className="text-white/80">Dados de pagamento</strong> — os pagamentos
+                  são realizados na entrega (dinheiro, cartão ou PIX); não processamos nem
+                  armazenamos dados de pagamento online.
                 </li>
               </ul>
             </div>
@@ -103,18 +104,6 @@ export default function PrivacidadePage() {
             >
               <h3 className="mb-2 font-semibold text-white">Terceiros envolvidos</h3>
               <ul className="space-y-1.5 text-white/60">
-                <li>
-                  • <strong className="text-white/80">Stripe</strong> — processamento de pagamentos.{" "}
-                  <a
-                    href="https://stripe.com/br/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-400 hover:underline"
-                  >
-                    Política do Stripe
-                  </a>
-                  .
-                </li>
                 <li>
                   • <strong className="text-white/80">Google OAuth</strong> — autenticação opcional
                   via conta Google.{" "}
