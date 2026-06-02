@@ -282,7 +282,14 @@ export default function PagamentoPage() {
       }),
     })
     const json = await res.json()
-    if (!res.ok) throw new Error(json.error?.message ?? "Erro ao criar pedido.")
+    if (!res.ok) {
+      if (json.error?.code === "STALE_CART") {
+        useCart.getState().clear()
+        router.push("/cardapio")
+        throw new Error(json.error.message)
+      }
+      throw new Error(json.error?.message ?? "Erro ao criar pedido.")
+    }
     return json.data.id
   }
 
