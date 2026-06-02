@@ -6,3 +6,5 @@ Disallow: /carrinho
 Disallow: /pedido/
 Disallow: /acompanhar/
 Allow: /
+
+Sitemap: https://mob-burger-web.vercel.app/sitemap.xml
