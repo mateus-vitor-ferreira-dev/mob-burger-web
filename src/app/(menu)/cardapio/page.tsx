@@ -1,24 +1,24 @@
 "use client"
 
+import { useCart, type SelectedExtra, type SelectedOption } from "@/lib/cart-store"
+import { useFavorites } from "@/lib/use-favorites"
+import { useMenu, type ComboConfig } from "@/lib/use-menu"
 import { fmtPrice } from "@/lib/utils"
-import { Suspense, useEffect, useMemo, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import {
+  Check,
+  ChevronRight,
+  Heart,
+  Minus,
+  Plus,
+  Search,
+  ShoppingBag,
+  Trash2,
+  X,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import {
-  Search,
-  X,
-  ShoppingBag,
-  Plus,
-  Minus,
-  Trash2,
-  ChevronRight,
-  Check,
-  Heart,
-} from "lucide-react"
-import { useCart, type SelectedOption, type SelectedExtra } from "@/lib/cart-store"
-import { useMenu, type ComboConfig } from "@/lib/use-menu"
-import { useFavorites } from "@/lib/use-favorites"
+import { useSearchParams } from "next/navigation"
+import { Suspense, useEffect, useMemo, useState } from "react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -234,7 +234,7 @@ function OptionsModal({
               fill
               className="object-cover transition-all duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1612] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-[#1a1612] via-transparent to-transparent" />
           </div>
         )}
 
