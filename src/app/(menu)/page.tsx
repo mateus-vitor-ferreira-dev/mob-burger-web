@@ -270,12 +270,21 @@ export default function HomePage() {
   const comboCards = useMemo((): ComboCard[] => {
     const comboCat = categories.find((c) => c.slug === "combos")
     if (!comboCat) return []
-    return comboCat.products.map((p, i) => ({
-      id: p.id,
-      name: p.name.replace(/^Mob /i, ""),
-      price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
-      img: p.imageUrl ?? COMBO_FALLBACK_IMGS[i] ?? COMBO_FALLBACK_IMGS[0],
-    }))
+    return comboCat.products.map((p, i) => {
+      const requiredMin = p.options
+        .filter((opt) => opt.required && opt.items.length > 0)
+        .reduce((sum, opt) => {
+          const min = Math.min(...opt.items.map((it) => it.additionalPrice))
+          return sum + (isFinite(min) ? min : 0)
+        }, 0)
+      const minPrice = p.price + requiredMin
+      return {
+        id: p.id,
+        name: p.name.replace(/^Mob /i, ""),
+        price: minPrice > 0 ? `A partir de R$ ${minPrice.toFixed(2).replace(".", ",")}` : "",
+        img: p.imageUrl ?? COMBO_FALLBACK_IMGS[i] ?? COMBO_FALLBACK_IMGS[0],
+      }
+    })
   }, [categories])
 
   return (
