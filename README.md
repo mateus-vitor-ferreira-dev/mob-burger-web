@@ -1,46 +1,35 @@
-# Mob Burger — Web
+# M.O.B Burger — Web App
 
-Frontend do sistema de pedidos online **Mob Burger**, desenvolvido pela **Codexa**.
+Sistema de pedidos online da hamburgueria M.O.B (Lavras/MG), desenvolvido pela **Codexa**.
+
+**Produção:** `https://mob-burger-web.vercel.app`
 
 ## Sobre
 
-Aplicação Next.js que cobre dois fluxos principais:
-
-- **Loja:** cliente monta o pedido, escolhe o pagamento (Pix ou cartão via Stripe) e acompanha o status em tempo real
-- **Painel:** operador da cozinha visualiza os pedidos recebidos e atualiza o status de cada um
+- **Loja:** cliente monta o pedido, escolhe o pagamento (na entrega) e acompanha em tempo real
+- **Painel admin:** operador da cozinha visualiza pedidos recebidos via SSE e atualiza status
 
 ## Stack
 
-- Next.js 16 (App Router) + React 19 + TypeScript
-- Tailwind CSS v4 + shadcn/ui
-- Zustand (estado global) + TanStack Query (cache de dados)
-- React Hook Form + Zod (formulários e validação)
-- Stripe (Pix + Cartão)
-- Server-Sent Events (SSE) para atualizações em tempo real
+| Camada | Tecnologia |
+|---|---|
+| Framework | Next.js 16 (App Router) + React 19 |
+| Estilo | Tailwind CSS v4 + shadcn/ui |
+| Estado | Zustand + TanStack Query |
+| Formulários | React Hook Form + Zod |
+| Real-time | Server-Sent Events (SSE) |
+| Push | Web Push API + VAPID |
+| Animações | GSAP 3 + Embla Carousel |
+| Hosting | Vercel (auto-deploy) |
 
-## Rodando localmente
+## Rodar localmente
 
 ```bash
 npm install
-cp .env.example .env.local  # preencha as variáveis
-npm run dev
+cp .env.example .env.local   # preencha NEXT_PUBLIC_API_URL
+npm run dev                   # http://localhost:3000
 ```
-
-Acesse [http://localhost:3000](http://localhost:3000).
-
-## Variáveis de ambiente
-
-| Variável | Descrição |
-|----------|-----------|
-| `NEXT_PUBLIC_API_URL` | URL da mob-burger-api |
-| `NEXT_PUBLIC_STRIPE_PUBLIC_KEY` | Chave pública do Stripe |
 
 ## Deploy
 
-O frontend é implantado na **Vercel**. A API roda no Railway.
-
-Repositório da API: [mob-burger-api](https://github.com/mateus-vitor-ferreira-dev/mob-burger-api)
-
----
-
-Desenvolvido por **Codexa** — [github.com/mateus-vitor-ferreira-dev](https://github.com/mateus-vitor-ferreira-dev)
+Push para `main` → deploy automático na Vercel.
