@@ -559,6 +559,11 @@ export default function CarrinhoPage() {
 
   useEffect(() => {
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
+    const persisted = useDelivery.getState().appliedCoupon
+    if (persisted) {
+      setCouponApplied(persisted)
+      setCouponCode(persisted.code)
+    }
   }, [])
 
   const token = useCustomer((s) => s.token)
@@ -631,9 +636,12 @@ export default function CarrinhoPage() {
       if (!r.ok) {
         setCouponError(json.error?.message ?? "Cupom inválido.")
         setCouponApplied(null)
+        set({ appliedCoupon: null })
         return
       }
-      setCouponApplied({ code, ...json.data })
+      const applied = { code, ...json.data }
+      setCouponApplied(applied)
+      set({ appliedCoupon: applied })
     } catch {
       setCouponError("Erro ao validar cupom.")
     } finally {
@@ -663,6 +671,7 @@ export default function CarrinhoPage() {
 
   function removeCoupon() {
     setCouponApplied(null)
+    set({ appliedCoupon: null })
     setCouponCode("")
     setCouponError("")
   }
