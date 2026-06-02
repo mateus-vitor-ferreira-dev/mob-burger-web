@@ -9,7 +9,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const bebasNeue = Bebas_Neue({ variable: "--font-bebas", weight: "400", subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: { default: "M.O.B Burger — Burgers Pack Co.", template: "%s | M.O.B Burger" },
   description:
     "Hambúrgueres artesanais smashados na chapa. Combos exclusivos, ingredientes premium — feito na hora, sem frescura.",
@@ -37,6 +37,31 @@ export const viewport: Viewport = {
   themeColor: "#f97316",
 }
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  name: "M.O.B Burger",
+  alternateName: "Murilo Original Burger",
+  description:
+    "Hambúrgueres artesanais smashados na chapa. Combos exclusivos, ingredientes premium — feito na hora, sem frescura.",
+  url: "https://mob-burger-web.vercel.app",
+  image: "https://mob-burger-web.vercel.app/images/mob-banner.png",
+  logo: "https://mob-burger-web.vercel.app/mob-logo.png",
+  telephone: "+5535997208115",
+  email: "contato@mobburguer.com.br",
+  servesCuisine: ["Smash Burger", "Hambúrguer Artesanal"],
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Av. Evaristo Gomes Guerra, 911",
+    addressLocality: "Lavras",
+    addressRegion: "MG",
+    postalCode: "37209-214",
+    addressCountry: "BR",
+  },
+  hasMenu: "https://mob-burger-web.vercel.app/cardapio",
+  acceptsReservations: false,
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -44,6 +69,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`dark ${geistSans.variable} ${geistMono.variable} ${bebasNeue.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
         <Providers>
           {children}
