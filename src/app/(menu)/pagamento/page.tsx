@@ -228,7 +228,9 @@ export default function PagamentoPage() {
   } = useDelivery()
   const { token, _hasHydrated, customer, updatePhone } = useCustomer()
 
-  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState<{ message: string; isSystemError: boolean } | null>(
+    null,
+  )
   const [mounted, setMounted] = useState(false)
   const [savePhonePrompt, setSavePhonePrompt] = useState(false)
   const [savingPhone, setSavingPhone] = useState(false)
@@ -288,19 +290,50 @@ export default function PagamentoPage() {
         router.push("/cardapio")
         throw new Error(json.error.message)
       }
-      throw new Error(json.error?.message ?? "Erro ao criar pedido.")
+      const err = new Error(json.error?.message ?? "Erro ao criar pedido.")
+      ;(err as Error & { code?: string }).code = json.error?.code
+      throw err
     }
     return json.data.id
   }
 
-  function friendlyError(msg: string): string {
-    if (/internal server error/i.test(msg) || /500/i.test(msg)) {
-      return "Ops! Algo deu errado no nosso sistema. Por favor, tente novamente em instantes."
+  function friendlyError(msg: string, code?: string): { message: string; isSystemError: boolean } {
+    if (code === "STORE_CLOSED") {
+      return {
+        message: "A loja está fechada no momento. Tente novamente quando reabrirmos.",
+        isSystemError: false,
+      }
+    }
+    if (code === "PHONE_REQUIRED") {
+      return {
+        message:
+          "Seu perfil não tem número de telefone. Cadastre um na página de Perfil e tente novamente.",
+        isSystemError: false,
+      }
+    }
+    if (code === "PRODUCT_UNAVAILABLE") {
+      return {
+        message: "Um produto do seu carrinho ficou indisponível. Atualize seu pedido.",
+        isSystemError: false,
+      }
+    }
+    if (code === "STALE_CART") {
+      return { message: msg, isSystemError: false }
+    }
+    if (
+      /internal server error/i.test(msg) ||
+      /500/i.test(msg) ||
+      /serviço indisponível/i.test(msg)
+    ) {
+      return { message: msg, isSystemError: true }
     }
     if (/network|fetch|failed to fetch/i.test(msg)) {
-      return "Sem conexão com a internet. Verifique sua rede e tente novamente."
+      return {
+        message: "Sem conexão com a internet. Verifique sua rede e tente novamente.",
+        isSystemError: false,
+      }
     }
-    return msg
+    return { message: msg, isSystemError: false }
   }
 
   async function initPayment() {
@@ -314,7 +347,11 @@ export default function PagamentoPage() {
         body: JSON.stringify({ orderId }),
       })
       const payJson = await payRes.json()
-      if (!payRes.ok) throw new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
+      if (!payRes.ok) {
+        const err = new Error(payJson.error?.message ?? "Erro ao iniciar pagamento.")
+        ;(err as Error & { code?: string }).code = payJson.error?.code
+        throw err
+      }
       useDelivery
         .getState()
         .set({ appliedCoupon: null, orderNotes: "", needsChange: false, changeFor: null })
@@ -322,7 +359,8 @@ export default function PagamentoPage() {
       router.push(`/pedido/confirmado?order_id=${orderId}`)
     } catch (e) {
       const raw = e instanceof Error ? e.message : "Erro ao iniciar checkout."
-      setFetchError(friendlyError(raw))
+      const code = (e as Error & { code?: string }).code
+      setFetchError(friendlyError(raw, code))
     }
   }
 
@@ -414,24 +452,29 @@ export default function PagamentoPage() {
                 <AlertCircle className="mt-0.5 h-5 w-5 flex-none text-red-400" />
                 <div>
                   <p className="text-sm font-semibold text-red-400">
-                    Erro no nosso sistema — não foi você!
+                    {fetchError.isSystemError
+                      ? "Erro no nosso sistema — não foi você!"
+                      : "Não foi possível finalizar o pedido"}
                   </p>
                   <p className="mt-1 text-sm text-white/60">
-                    Houve uma instabilidade do nosso lado. Seu pedido não foi cobrado. Tente
-                    novamente em instantes.
+                    {fetchError.isSystemError
+                      ? "Houve uma instabilidade do nosso lado. Seu pedido não foi cobrado. Tente novamente em instantes."
+                      : fetchError.message}
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  initiated.current = false
-                  initPayment()
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98]"
-                style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
-              >
-                Tentar novamente
-              </button>
+              {fetchError.isSystemError && (
+                <button
+                  onClick={() => {
+                    initiated.current = false
+                    initPayment()
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98]"
+                  style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+                >
+                  Tentar novamente
+                </button>
+              )}
               <Link
                 href="/carrinho"
                 className="block text-center text-xs text-white/40 transition hover:text-white/60"
