@@ -255,13 +255,28 @@ export default function PagamentoPage() {
     const retryOrderId = params.get("retry_order_id")
     if (retryOrderId) return retryOrderId
 
-    const mappedItems = items.map((item) => ({
-      productId: item.productId ?? item.id,
-      quantity: item.qty,
-      observations: item.observations || undefined,
-      options: (item.options ?? []).map((o) => ({ optionItemId: o.optionItemId })),
-      extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
-    }))
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const mappedItems = items.map((item) => {
+      const dbOptions = (item.options ?? []).filter((o) => UUID_REGEX.test(o.optionItemId))
+      const frontendOnlyOptions = (item.options ?? []).filter(
+        (o) => !UUID_REGEX.test(o.optionItemId),
+      )
+      const frontendNotes = frontendOnlyOptions.map((o) => o.name).join(", ")
+      const obs = item.observations || ""
+      const observations = frontendNotes
+        ? obs
+          ? `${obs}, ${frontendNotes}`
+          : frontendNotes
+        : obs || undefined
+
+      return {
+        productId: item.productId ?? item.id,
+        quantity: item.qty,
+        observations,
+        options: dbOptions.map((o) => ({ optionItemId: o.optionItemId })),
+        extras: (item.extras ?? []).map((e) => ({ extraId: e.extraId, qty: e.qty })),
+      }
+    })
 
     if (mappedItems.length === 0) throw new Error("Sacola vazia.")
 
