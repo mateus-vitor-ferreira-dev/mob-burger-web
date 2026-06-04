@@ -290,6 +290,9 @@ export default function PagamentoPage() {
         router.push("/cardapio")
         throw new Error(json.error.message)
       }
+      if (json.error?.code === "INVALID_ZONE") {
+        useDelivery.getState().set({ zoneId: "", deliveryFee: 0 })
+      }
       const err = new Error(json.error?.message ?? "Erro ao criar pedido.")
       ;(err as Error & { code?: string }).code = json.error?.code
       throw err
@@ -298,6 +301,13 @@ export default function PagamentoPage() {
   }
 
   function friendlyError(msg: string, code?: string): { message: string; isSystemError: boolean } {
+    if (code === "INVALID_ZONE") {
+      return {
+        message:
+          "A zona de entrega não está mais disponível. Volte ao carrinho e selecione seu endereço novamente.",
+        isSystemError: false,
+      }
+    }
     if (code === "STORE_CLOSED") {
       return {
         message: "A loja está fechada no momento. Tente novamente quando reabrirmos.",
