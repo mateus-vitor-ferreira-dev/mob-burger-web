@@ -62,9 +62,13 @@ function Steps() {
 
 // ─── Resumo do pedido ─────────────────────────────────────────────────────────
 
-function OrderReview() {
-  const items = useCart((s) => s.items)
-  const subtotal = useCart((s) => s.total())
+function OrderReview({
+  items,
+  subtotal,
+}: {
+  items: ReturnType<typeof useCart.getState>["items"]
+  subtotal: number
+}) {
   const { customerName, phone, address, deliveryFee, orderType, appliedCoupon } = useDelivery()
 
   const effectiveDeliveryFee =
@@ -228,6 +232,11 @@ export default function PagamentoPage() {
     phone: deliveryPhone,
   } = useDelivery()
   const { token, _hasHydrated, customer, updatePhone } = useCustomer()
+
+  const [cartSnapshot] = useState(() => ({
+    items: useCart.getState().items,
+    subtotal: useCart.getState().total(),
+  }))
 
   const [fetchError, setFetchError] = useState<{ message: string; isSystemError: boolean } | null>(
     null,
@@ -394,7 +403,7 @@ export default function PagamentoPage() {
       return
     }
     if (!token) {
-      toast.info("Faça login para finalizar seu pedido.")
+      toast.info("Faça login para finalizar seu pedido.", { duration: 6000 })
       router.push("/login?returnTo=/pagamento")
       return
     }
@@ -457,7 +466,7 @@ export default function PagamentoPage() {
       <Steps />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr]">
-        <OrderReview />
+        <OrderReview items={cartSnapshot.items} subtotal={cartSnapshot.subtotal} />
 
         <div>
           {fetchError && (
