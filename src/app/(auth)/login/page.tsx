@@ -146,12 +146,17 @@ export default function LoginPage() {
           data?: {
             customer?: { id: string; name: string; email: string; phone?: string }
             accessToken?: string
+            refreshToken?: string
           }
         }
         if (!r.ok) throw new Error(json.error?.message ?? "Erro ao autenticar com Google")
-        const { customer: c, accessToken } = json.data ?? {}
+        const { customer: c, accessToken, refreshToken } = json.data ?? {}
         if (c && accessToken) {
-          setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
+          setCustomer(
+            { id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" },
+            accessToken,
+            refreshToken,
+          )
         }
         toast.success("Login realizado com sucesso!")
         router.push(getReturnTo())
@@ -174,24 +179,34 @@ export default function LoginPage() {
         body: JSON.stringify(data),
       })
       const customerJson = (await customerRes.json().catch(() => ({}))) as {
-        error?: { message?: string }
+        error?: { message?: string; code?: string }
         data?: {
           customer?: { id: string; name: string; email: string; phone?: string }
           accessToken?: string
+          refreshToken?: string
         }
       }
 
       if (customerRes.ok) {
-        const { customer: c, accessToken } = customerJson.data ?? {}
+        const { customer: c, accessToken, refreshToken } = customerJson.data ?? {}
         if (c && accessToken) {
-          setCustomer({ id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" }, accessToken)
+          setCustomer(
+            { id: c.id, name: c.name, email: c.email, phone: c.phone ?? "" },
+            accessToken,
+            refreshToken,
+          )
         }
         toast.success("Bem-vindo de volta! 🔥")
         router.push(getReturnTo())
         return
       }
 
-      // Se falhou, tenta login de staff (admin/atendente)
+      // Conta Google sem senha — não tentar staff
+      if (customerJson.error?.code === "PASSWORD_NOT_SET") {
+        throw new Error("Esta conta usa login pelo Google. Use o botão 'Entrar com Google'.")
+      }
+
+      // Se falhou por outro motivo, tenta login de staff (admin/atendente)
       const staffRes = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

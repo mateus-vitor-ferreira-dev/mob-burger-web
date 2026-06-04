@@ -23,9 +23,11 @@ export interface Customer {
 interface CustomerStore {
   customer: Customer | null
   token: string | null
+  refreshToken: string | null
   _hasHydrated: boolean
   setHasHydrated: (v: boolean) => void
-  setCustomer: (customer: Customer, token: string) => void
+  setCustomer: (customer: Customer, accessToken: string, refreshToken?: string) => void
+  setAccessToken: (accessToken: string) => void
   updateAddress: (address: CustomerAddress) => void
   updateAvatar: (avatarUrl: string) => void
   updatePhone: (phone: string) => void
@@ -39,10 +41,14 @@ export const useCustomer = create<CustomerStore>()(
     (set, get) => ({
       customer: null,
       token: null,
+      refreshToken: null,
       _hasHydrated: false,
       setHasHydrated: (v) => set({ _hasHydrated: v }),
 
-      setCustomer: (customer, token) => set({ customer, token }),
+      setCustomer: (customer, accessToken, refreshToken) =>
+        set({ customer, token: accessToken, refreshToken: refreshToken ?? null }),
+
+      setAccessToken: (accessToken) => set({ token: accessToken }),
 
       updateAddress: (address) =>
         set((s) => ({
@@ -59,7 +65,7 @@ export const useCustomer = create<CustomerStore>()(
           customer: s.customer ? { ...s.customer, phone } : null,
         })),
 
-      logout: () => set({ customer: null, token: null }),
+      logout: () => set({ customer: null, token: null, refreshToken: null }),
 
       isLoggedIn: () => !!get().token,
 

@@ -15,6 +15,7 @@ import {
   Lock,
   Tag,
 } from "lucide-react"
+import { toast } from "sonner"
 import { useCart } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
 import { useCustomer } from "@/lib/customer-store"
@@ -373,6 +374,11 @@ export default function PagamentoPage() {
     } catch (e) {
       const raw = e instanceof Error ? e.message : "Erro ao iniciar checkout."
       const code = (e as Error & { code?: string }).code
+      if (code === "TOKEN_EXPIRED" || code === "UNAUTHORIZED") {
+        toast.error("Sua sessão expirou. Faça login para continuar.")
+        router.push("/login?returnTo=/pagamento")
+        return
+      }
       setFetchError(friendlyError(raw, code))
     }
   }
@@ -388,6 +394,7 @@ export default function PagamentoPage() {
       return
     }
     if (!token) {
+      toast.info("Faça login para finalizar seu pedido.")
       router.push("/login?returnTo=/pagamento")
       return
     }
