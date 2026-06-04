@@ -287,8 +287,7 @@ export default function PagamentoPage() {
     if (!res.ok) {
       if (json.error?.code === "STALE_CART") {
         useCart.getState().clear()
-        router.push("/cardapio")
-        throw new Error(json.error.message)
+        // Não redireciona — deixa a mensagem aparecer na tela de pagamento
       }
       if (json.error?.code === "INVALID_ZONE") {
         useDelivery.getState().set({ zoneId: "", deliveryFee: 0 })
@@ -328,7 +327,11 @@ export default function PagamentoPage() {
       }
     }
     if (code === "STALE_CART") {
-      return { message: msg, isSystemError: false }
+      return {
+        message:
+          'Seu carrinho ficou desatualizado (produtos ou opções foram alterados). Clique em "Voltar e revisar pedido" para refazer o pedido.',
+        isSystemError: false,
+      }
     }
     if (
       /internal server error/i.test(msg) ||
