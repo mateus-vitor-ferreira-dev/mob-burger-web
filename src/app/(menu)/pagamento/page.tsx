@@ -255,12 +255,9 @@ export default function PagamentoPage() {
     const retryOrderId = params.get("retry_order_id")
     if (retryOrderId) return retryOrderId
 
-    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     const mappedItems = items.map((item) => {
-      const dbOptions = (item.options ?? []).filter((o) => UUID_REGEX.test(o.optionItemId))
-      const frontendOnlyOptions = (item.options ?? []).filter(
-        (o) => !UUID_REGEX.test(o.optionItemId),
-      )
+      const dbOptions = (item.options ?? []).filter((o) => !o.optionItemId.includes("-"))
+      const frontendOnlyOptions = (item.options ?? []).filter((o) => o.optionItemId.includes("-"))
       const frontendNotes = frontendOnlyOptions.map((o) => o.name).join(", ")
       const obs = item.observations || ""
       const observations = frontendNotes
