@@ -128,6 +128,9 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [forgotView, setForgotView] = useState<"hidden" | "form" | "sent">("hidden")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const returnTo = getReturnTo()
+  const registerHref =
+    returnTo !== "/" ? `/register?returnTo=${encodeURIComponent(returnTo)}` : "/register"
 
   const loginForm = useForm<LoginData>({ resolver: standardSchemaResolver(loginSchema) })
   const forgotForm = useForm<ForgotData>({ resolver: standardSchemaResolver(forgotSchema) })
@@ -425,7 +428,7 @@ export default function LoginPage() {
                     <p className="text-center text-sm text-white/50">
                       Não tem conta?{" "}
                       <a
-                        href="/register"
+                        href={registerHref}
                         className="font-medium text-orange-500 hover:text-orange-600"
                       >
                         Cadastre-se

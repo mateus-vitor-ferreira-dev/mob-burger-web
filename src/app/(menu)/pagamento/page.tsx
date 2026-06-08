@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { useCart } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
 import { useCustomer } from "@/lib/customer-store"
+import { useStaff } from "@/lib/staff-store"
 
 // ─── Steps ────────────────────────────────────────────────────────────────────
 
@@ -232,6 +233,7 @@ export default function PagamentoPage() {
     phone: deliveryPhone,
   } = useDelivery()
   const { token, _hasHydrated, customer, updatePhone } = useCustomer()
+  const staffToken = useStaff((s) => s.token)
 
   const [cartSnapshot] = useState(() => ({
     items: useCart.getState().items,
@@ -415,6 +417,14 @@ export default function PagamentoPage() {
       return
     }
     if (!token) {
+      if (staffToken) {
+        toast.info(
+          "Você está logado como administrador. Pedidos devem ser feitos com uma conta de cliente.",
+          { duration: 6000 },
+        )
+        router.push("/admin")
+        return
+      }
       toast.info("Faça login para finalizar seu pedido.", { duration: 6000 })
       router.push("/login?returnTo=/pagamento")
       return
