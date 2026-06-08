@@ -1097,6 +1097,17 @@ export default function CarrinhoPage() {
             {!storeOpen ? "Loja fechada" : "Ir para pagamento"}
             <ChevronRight className="h-4 w-4" />
           </button>
+          {storeOpen && !isComplete() && (
+            <p className="mt-2 text-center text-xs text-red-400">
+              {!customerName.trim() || !phone.trim()
+                ? "Preencha nome e telefone para continuar"
+                : orderType === "DELIVERY" && !address.cep
+                  ? "Preencha o endereço de entrega"
+                  : orderType === "DELIVERY" && !zoneId
+                    ? "Endereço fora da área de entrega"
+                    : "Preencha todos os campos obrigatórios"}
+            </p>
+          )}
         </div>
       </div>
     </main>

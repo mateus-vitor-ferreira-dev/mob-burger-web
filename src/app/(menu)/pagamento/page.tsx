@@ -391,7 +391,14 @@ export default function PagamentoPage() {
       }
       useDelivery
         .getState()
-        .set({ appliedCoupon: null, orderNotes: "", needsChange: false, changeFor: null })
+        .set({
+          appliedCoupon: null,
+          orderNotes: "",
+          needsChange: false,
+          changeFor: null,
+          zoneId: "",
+          deliveryFee: 0,
+        })
       useCart.getState().clear()
       router.push(`/pedido/confirmado?order_id=${orderId}`)
     } catch (e) {

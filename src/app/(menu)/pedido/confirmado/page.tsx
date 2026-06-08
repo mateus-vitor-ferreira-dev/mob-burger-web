@@ -21,9 +21,9 @@ function PedidoConfirmadoContent() {
   const redirectStatus = searchParams.get("redirect_status")
   const clearCart = useCart((s) => s.clear)
 
-  const [status, setStatus] = useState<"loading" | "success" | "processing" | "failed" | "error">(
-    "loading",
-  )
+  const [status, setStatus] = useState<
+    "loading" | "success" | "processing" | "failed" | "error" | "timeout"
+  >("loading")
   const [order, setOrder] = useState<OrderData | null>(null)
 
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -68,6 +68,7 @@ function PedidoConfirmadoContent() {
                 setOrder(o2)
               } else if (attempts >= MAX) {
                 clearInterval(interval)
+                setStatus("timeout")
               }
             } catch {
               if (attempts >= MAX) clearInterval(interval)
@@ -141,6 +142,49 @@ function PedidoConfirmadoContent() {
             }}
           >
             Tentar novamente <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </main>
+    )
+  }
+
+  if (status === "timeout") {
+    return (
+      <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+        <div
+          className="w-full max-w-md rounded-3xl p-10"
+          style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
+        >
+          <div className="mb-6 flex justify-center">
+            <div
+              className="flex h-20 w-20 items-center justify-center rounded-full"
+              style={{
+                background: "rgba(249,115,22,0.12)",
+                border: "2px solid rgba(249,115,22,0.3)",
+              }}
+            >
+              <Clock className="h-10 w-10 text-orange-400" />
+            </div>
+          </div>
+          <h1
+            className="mb-2 text-white"
+            style={{ fontFamily: "var(--font-bebas)", fontSize: "2.5rem", letterSpacing: "0.05em" }}
+          >
+            Pedido recebido!
+          </h1>
+          <p className="mb-8 text-sm text-white/50">
+            Seu pedido foi registrado. O pagamento será confirmado pelo nosso time assim que for
+            processado.
+          </p>
+          <Link
+            href="/perfil"
+            className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition active:scale-95"
+            style={{
+              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
+            }}
+          >
+            Ver meus pedidos <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </main>
