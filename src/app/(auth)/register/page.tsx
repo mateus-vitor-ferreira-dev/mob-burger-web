@@ -128,6 +128,12 @@ function Field({ children, delay = 0 }: { children: React.ReactNode; delay?: num
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function getReturnTo() {
+  if (typeof window === "undefined") return null
+  const p = new URLSearchParams(window.location.search).get("returnTo")
+  return p && p.startsWith("/") ? p : null
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const [showPwd, setShowPwd] = useState(false)
@@ -164,7 +170,8 @@ export default function RegisterPage() {
         })
         if (!r.ok) throw new Error("Erro ao autenticar com Google")
         toast.success("Conta criada com sucesso! 🎉")
-        router.push("/")
+        const returnTo = getReturnTo()
+        router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login")
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Erro ao autenticar com Google")
       } finally {
@@ -186,8 +193,9 @@ export default function RegisterPage() {
         const body = (await r.json().catch(() => ({}))) as { message?: string }
         throw new Error(body.message ?? "Erro ao criar conta")
       }
-      toast.success("Conta criada com sucesso! 🎉")
-      router.push("/")
+      toast.success("Conta criada com sucesso! Faça login para continuar. 🎉")
+      const returnTo = getReturnTo()
+      router.push(returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login")
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erro ao criar conta")
     } finally {
