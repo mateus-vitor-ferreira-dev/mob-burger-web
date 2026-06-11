@@ -491,7 +491,11 @@ export default function PedidosPage() {
     if (o.totalPrice > maxPrice) return false
     if (!query) return true
     const q = query.toLowerCase()
-    return o.customer.name.toLowerCase().includes(q) || String(o.orderNumber).includes(q)
+    return (
+      o.customer.name.toLowerCase().includes(q) ||
+      String(o.orderNumber).includes(q) ||
+      (o.customer.phone ?? "").replace(/\D/g, "").includes(q.replace(/\D/g, ""))
+    )
   })
 
   const inputCls =
@@ -790,6 +794,17 @@ export default function PedidosPage() {
                 {/* Cliente + itens */}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-white">{order.customer.name}</p>
+                  {order.customer.phone && (
+                    <a
+                      href={`https://wa.me/55${order.customer.phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] text-green-400/70 transition hover:text-green-400"
+                    >
+                      <Phone className="h-2.5 w-2.5" />
+                      {order.customer.phone}
+                    </a>
+                  )}
                   <div className="space-y-0.5">
                     {order.items.map((i) => (
                       <div key={i.id}>

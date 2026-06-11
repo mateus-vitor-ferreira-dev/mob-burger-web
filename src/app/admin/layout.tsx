@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Bell,
   BellOff,
+  ContactRound,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
 import { getPushState, subscribeStaffPush, unsubscribeStaffPush } from "@/lib/push"
@@ -48,6 +49,7 @@ const NAV = [
   { href: "/admin/categorias", icon: Tag, label: "Categorias" },
   { href: "/admin/adicionais", icon: Layers, label: "Adicionais" },
   { href: "/admin/zonas", icon: MapPin, label: "Zonas" },
+  { href: "/admin/clientes", icon: ContactRound, label: "Clientes" },
   { href: "/admin/entregadores", icon: Bike, label: "Entregadores" },
   { href: "/admin/cupons", icon: Ticket, label: "Cupons" },
   { href: "/admin/financeiro", icon: TrendingUp, label: "Financeiro" },
