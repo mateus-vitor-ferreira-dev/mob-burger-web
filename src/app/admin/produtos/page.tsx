@@ -755,7 +755,11 @@ function ProductModal({
     const form = new FormData()
     form.append("image", file)
     form.append("name", name || "produto")
-    const res = await fetch("/api/upload/product", { method: "POST", body: form })
+    const res = await fetch("/api/upload/product", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
     const json = await res.json()
     if (json.url) setImageUrl(json.url)
     else setError(json.error ?? "Erro no upload")

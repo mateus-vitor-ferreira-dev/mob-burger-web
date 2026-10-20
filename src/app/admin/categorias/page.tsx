@@ -253,7 +253,11 @@ export default function CategoriasPage() {
         const fd = new FormData()
         fd.append("image", imageFile)
         fd.append("slug", slug)
-        const up = await fetch("/api/upload/category", { method: "POST", body: fd })
+        const up = await fetch("/api/upload/category", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        })
         const upJson = await up.json()
         if (!up.ok) throw new Error(upJson.error ?? "Erro ao fazer upload da imagem")
       }
