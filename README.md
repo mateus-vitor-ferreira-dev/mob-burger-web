@@ -5,8 +5,8 @@
 <p><strong>Plataforma de pedidos online e operação de cozinha para uma hamburgueria artesanal</strong></p>
 
 <p>
-  <a href="https://mob-burger-web.vercel.app" target="_blank">
-    <img src="https://img.shields.io/badge/Ver_ao_vivo-mob--burger--web.vercel.app-FF4500?style=for-the-badge&logo=vercel&logoColor=white" alt="Demo ao vivo"/>
+  <a href="https://mob-burger-web.desenvolvedoracodexa.workers.dev" target="_blank">
+    <img src="https://img.shields.io/badge/Ver_ao_vivo-mob--burger--web.desenvolvedoracodexa.workers.dev-FF4500?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Demo ao vivo"/>
   </a>
 </p>
 
@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React"/>
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind"/>
-  <img src="https://img.shields.io/badge/deploy-Vercel-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel"/>
+  <img src="https://img.shields.io/badge/deploy-Cloudflare_Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white" alt="Cloudflare Workers"/>
 </p>
 
 <img src="docs/preview.webp" alt="Navegação pela home e pelo cardápio do M.O.B Burger" width="100%"/>
@@ -96,7 +96,7 @@ São dois produtos no mesmo app:
     </tr>
     <tr>
       <td><strong>Deploy</strong></td>
-      <td><img src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white"/> — auto-deploy a cada push em <code>main</code></td>
+      <td><img src="https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white"/> — via OpenNext, auto-deploy a cada push em <code>main</code> (deploy manual: <code>npm run deploy</code>)</td>
     </tr>
   </tbody>
 </table>
@@ -208,7 +208,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_WHATSAPP=
 ```
 
-> **Nunca commite `.env*`** — o `.gitignore` já cobre o padrão inteiro. As chaves de produção vivem só no Vercel.
+> **Nunca commite `.env*`** — o `.gitignore` já cobre o padrão inteiro. As chaves de produção vivem só como secrets do Worker (`npx wrangler secret put NOME`).
 
 ### Endpoints locais
 

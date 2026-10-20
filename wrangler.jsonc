@@ -11,7 +11,7 @@
   // CLOUDINARY_API_SECRET e JWT_SECRET) vão com `wrangler secret put`.
   "vars": {
     "API_URL": "https://mob-burger-api-production.up.railway.app",
-    "CLOUDINARY_CLOUD_NAME": "dfw3s1k3",
+    "CLOUDINARY_CLOUD_NAME": "dfow3sik3",
   },
   "assets": {
     "directory": ".open-next/assets",

@@ -8,8 +8,11 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] })
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] })
 const bebasNeue = Bebas_Neue({ variable: "--font-bebas", weight: "400", subsets: ["latin"] })
 
+// Endereço público do app (.env.production); usado nas metatags e nos dados estruturados.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(APP_URL),
   title: { default: "M.O.B Burger — Burgers Pack Co.", template: "%s | M.O.B Burger" },
   description:
     "Hambúrgueres artesanais smashados na chapa. Combos exclusivos, ingredientes premium — feito na hora, sem frescura.",
@@ -44,9 +47,9 @@ const jsonLd = {
   alternateName: "Murilo Original Burger",
   description:
     "Hambúrgueres artesanais smashados na chapa. Combos exclusivos, ingredientes premium — feito na hora, sem frescura.",
-  url: "https://mob-burger-web.vercel.app",
-  image: "https://mob-burger-web.vercel.app/images/mob-banner.png",
-  logo: "https://mob-burger-web.vercel.app/mob-logo.png",
+  url: APP_URL,
+  image: `${APP_URL}/images/mob-banner.png`,
+  logo: `${APP_URL}/mob-logo.png`,
   telephone: "+5535997208115",
   email: "contato@mobburguer.com.br",
   servesCuisine: ["Smash Burger", "Hambúrguer Artesanal"],
@@ -58,7 +61,7 @@ const jsonLd = {
     postalCode: "37209-214",
     addressCountry: "BR",
   },
-  hasMenu: "https://mob-burger-web.vercel.app/cardapio",
+  hasMenu: `${APP_URL}/cardapio`,
   acceptsReservations: false,
 }
 
