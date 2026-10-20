@@ -2,7 +2,7 @@
 
 Sistema de pedidos online da hamburgueria M.O.B (Lavras/MG), desenvolvido pela **Codexa**.
 
-**Produção:** `https://mob-burger-web.vercel.app`
+**Produção:** `https://mob-burger-web.desenvolvedoracodexa.workers.dev`
 
 ## Sobre
 
@@ -20,7 +20,7 @@ Sistema de pedidos online da hamburgueria M.O.B (Lavras/MG), desenvolvido pela *
 | Real-time | Server-Sent Events (SSE) |
 | Push | Web Push API + VAPID |
 | Animações | GSAP 3 + Embla Carousel |
-| Hosting | Vercel (auto-deploy) |
+| Hosting | Cloudflare Workers via OpenNext (auto-deploy) |
 
 ## Rodar localmente
 
@@ -32,4 +32,6 @@ npm run dev                   # http://localhost:3000
 
 ## Deploy
 
-Push para `main` → deploy automático na Vercel.
+Push para `main` → deploy automático no Cloudflare Workers (Workers Builds: `npx opennextjs-cloudflare build` e `npx opennextjs-cloudflare deploy`). Deploy manual: `npm run deploy`.
+
+Os segredos de servidor (`CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `JWT_SECRET`) ficam no Worker: `npx wrangler secret put NOME`.

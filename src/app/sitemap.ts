@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next"
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://mob-burger-web.vercel.app"
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://mob-burger-web.desenvolvedoracodexa.workers.dev"
 
   return [
     {
