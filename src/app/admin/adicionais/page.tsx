@@ -60,7 +60,11 @@ function ExtraCard({
     const form = new FormData()
     form.append("image", file)
     form.append("name", name || extra.name)
-    const res = await fetch("/api/upload/extra", { method: "POST", body: form })
+    const res = await fetch("/api/upload/extra", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
     const json = await res.json()
     if (json.url) setImageUrl(json.url)
     setUploading(false)
@@ -279,7 +283,11 @@ export default function AdicionaisPage() {
     const form = new FormData()
     form.append("image", file)
     form.append("name", newName || "extra")
-    const res = await fetch("/api/upload/extra", { method: "POST", body: form })
+    const res = await fetch("/api/upload/extra", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    })
     const json = await res.json()
     if (json.url) setNewImageUrl(json.url)
     setUploadingNew(false)

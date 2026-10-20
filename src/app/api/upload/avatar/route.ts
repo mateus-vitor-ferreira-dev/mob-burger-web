@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { randomUUID } from "crypto"
-import * as jose from "jose"
 import { uploadBuffer } from "@/lib/cloudinary"
+import { verifyBearer } from "@/lib/upload-auth"
 
 const MAX_SIZE = 2 * 1024 * 1024
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"]
-const JWT_SECRET = process.env.JWT_SECRET ?? ""
-
-async function verifyToken(req: NextRequest): Promise<boolean> {
-  try {
-    const auth = req.headers.get("authorization") ?? ""
-    const token = auth.replace(/^Bearer\s+/i, "")
-    if (!token) return false
-    const secret = new TextEncoder().encode(JWT_SECRET)
-    await jose.jwtVerify(token, secret)
-    return true
-  } catch {
-    return false
-  }
-}
 
 export async function POST(req: NextRequest) {
-  if (!(await verifyToken(req))) {
+  if (!(await verifyBearer(req))) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 })
   }
 

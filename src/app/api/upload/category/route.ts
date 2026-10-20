@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { uploadBuffer } from "@/lib/cloudinary"
+import { isAdmin } from "@/lib/upload-auth"
 
 const MAX_SIZE = 3 * 1024 * 1024
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"]
 
 export async function POST(req: NextRequest) {
+  if (!(await isAdmin(req))) {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 401 })
+  }
+
   try {
     const form = await req.formData()
     const file = form.get("image") as File | null
