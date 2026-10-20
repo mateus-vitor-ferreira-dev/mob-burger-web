@@ -1,0 +1,4 @@
+# Copie para .dev.vars para rodar `npm run preview` com uploads funcionando.
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+JWT_SECRET=

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 // Configuração de contato — atualizar com os dados reais
 const CONTACT_EMAIL = "contato@mobburguer.com.br"
-// Para ativar o link de WhatsApp, defina NEXT_PUBLIC_WHATSAPP no Vercel
+// Para ativar o link de WhatsApp, defina NEXT_PUBLIC_WHATSAPP no .env.production
 // Formato: código do país + DDD + número (ex: 5535991234567)
 const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP ?? ""
 
