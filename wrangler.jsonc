@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "mob-burger-web",
+  "account_id": "6a3a20e321cb543ed0b8437d502a2e7c",
+  "compatibility_date": "2026-05-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  // Valores de servidor que não são segredo. Os segredos (CLOUDINARY_API_KEY,
+  // CLOUDINARY_API_SECRET e JWT_SECRET) vão com `wrangler secret put`.
+  "vars": {
+    "API_URL": "https://mob-burger-api-production.up.railway.app",
+    "CLOUDINARY_CLOUD_NAME": "dfw3s1k3",
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "mob-burger-web",
+    },
+  ],
+  "images": {
+    "binding": "IMAGES",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}
