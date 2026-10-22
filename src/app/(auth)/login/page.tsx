@@ -192,18 +192,30 @@ export default function LoginPage() {
   const onLogin = loginForm.handleSubmit(async (data) => {
     setIsSubmitting(true)
     try {
-      // Tenta login de cliente primeiro
-      const customerRes = await fetch("/api/auth/customer/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
+      const enviar = (rota: string) =>
+        fetch(rota, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+      // Cliente e equipe ao mesmo tempo: a espera é a de uma chamada, não a soma das duas
+      const [customerRes, staffRes] = await Promise.all([
+        enviar("/api/auth/customer/login"),
+        enviar("/api/auth/login"),
+      ])
       const customerJson = (await customerRes.json().catch(() => ({}))) as {
         error?: { message?: string; code?: string }
         data?: {
           customer?: { id: string; name: string; email: string; phone?: string }
           accessToken?: string
           refreshToken?: string
+        }
+      }
+      const staffJson = (await staffRes.json().catch(() => ({}))) as {
+        error?: { message?: string; code?: string }
+        data?: {
+          user?: { id: string; email: string; role: "ADMIN" | "ATTENDANT" }
+          accessToken?: string
         }
       }
 
@@ -221,25 +233,6 @@ export default function LoginPage() {
         return
       }
 
-      // Conta Google sem senha — não tentar staff
-      if (customerJson.error?.code === "PASSWORD_NOT_SET") {
-        throw new Error("Esta conta usa login pelo Google. Use o botão 'Entrar com Google'.")
-      }
-
-      // Se falhou por outro motivo, tenta login de staff (admin/atendente)
-      const staffRes = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      })
-      const staffJson = (await staffRes.json().catch(() => ({}))) as {
-        error?: { message?: string }
-        data?: {
-          user?: { id: string; email: string; role: "ADMIN" | "ATTENDANT" }
-          accessToken?: string
-        }
-      }
-
       if (staffRes.ok) {
         const { user, accessToken } = staffJson.data ?? {}
         if (user && accessToken) {
@@ -249,6 +242,19 @@ export default function LoginPage() {
         toast.success("Bem-vindo ao painel! 🔥")
         router.push("/admin")
         return
+      }
+
+      // Muitas tentativas: mostra o aviso da API em vez de "senha inválida"
+      const limitado = [customerRes, staffRes].find((r) => r.status === 429)
+      if (limitado) {
+        const msg =
+          limitado === customerRes ? customerJson.error?.message : staffJson.error?.message
+        throw new Error(msg ?? "Muitas tentativas. Aguarde alguns minutos.")
+      }
+
+      // Conta Google sem senha
+      if (customerJson.error?.code === "PASSWORD_NOT_SET") {
+        throw new Error("Esta conta usa login pelo Google. Use o botão 'Entrar com Google'.")
       }
 
       throw new Error("E-mail ou senha inválidos")

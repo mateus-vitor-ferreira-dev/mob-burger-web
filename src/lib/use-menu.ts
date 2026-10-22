@@ -42,11 +42,18 @@ const TTL = 5 * 60 * 1000 // 5 min
 let _cache: MenuCategory[] | null = null
 let _cacheTime = 0
 const _listeners = new Set<(data: MenuCategory[]) => void>()
-let _fetching = false
+// Busca em andamento: quem chegar no meio espera a mesma, em vez de receber
+// "carregou" antes dos dados (a tela piscava vazia).
+let _pending: Promise<void> | null = null
 
-async function fetchMenu() {
-  if (_fetching) return
-  _fetching = true
+function fetchMenu(): Promise<void> {
+  _pending ??= buscarMenu().finally(() => {
+    _pending = null
+  })
+  return _pending
+}
+
+async function buscarMenu() {
   try {
     const res = await fetch("/api/backend/menu")
     if (!res.ok) return
@@ -56,8 +63,6 @@ async function fetchMenu() {
     _listeners.forEach((fn) => fn(_cache!))
   } catch {
     // silently fail — consumers keep stale data
-  } finally {
-    _fetching = false
   }
 }
 
