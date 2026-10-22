@@ -697,7 +697,9 @@ export default function CarrinhoPage() {
     if (mounted && items.length === 0) router.push("/cardapio")
   }, [mounted, items.length, router])
 
-  if (!mounted || items.length === 0) return null
+  // Até montar (o carrinho vem do navegador) ou enquanto redireciona o carrinho vazio,
+  // reserva a altura da tela: sem isso, o rodapé nascia no topo e pulava para baixo.
+  if (!mounted || items.length === 0) return <div aria-hidden className="min-h-[100dvh]" />
 
   async function applyCoupon() {
     const code = couponCode.trim().toUpperCase()
