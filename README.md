@@ -5,8 +5,8 @@
 <p><strong>Plataforma de pedidos online e operação de cozinha para uma hamburgueria artesanal</strong></p>
 
 <p>
-  <a href="https://mob-burger-web.desenvolvedoracodexa.workers.dev" target="_blank">
-    <img src="https://img.shields.io/badge/Ver_ao_vivo-mob--burger--web.desenvolvedoracodexa.workers.dev-FF4500?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Demo ao vivo"/>
+  <a href="https://pedidos.mobburger.digitalcodexa.com" target="_blank">
+    <img src="https://img.shields.io/badge/Ver_ao_vivo-pedidos.mobburger.digitalcodexa.com-FF4500?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Demo ao vivo"/>
   </a>
 </p>
 

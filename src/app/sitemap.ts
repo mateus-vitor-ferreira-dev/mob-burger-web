@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://mob-burger-web.desenvolvedoracodexa.workers.dev"
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://pedidos.mobburger.digitalcodexa.com"
 
   return [
     {
