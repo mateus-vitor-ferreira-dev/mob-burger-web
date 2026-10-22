@@ -26,7 +26,7 @@ interface Extra {
 }
 
 const inputCls =
-  "rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/30 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50 w-full"
+  "rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/45 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50 w-full"
 
 function ExtraCard({
   extra,
@@ -139,8 +139,11 @@ function ExtraCard({
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-white/50">Nome</label>
+          <label htmlFor="admin-adicionais-campo-1" className="mb-1 block text-xs text-white/50">
+            Nome
+          </label>
           <input
+            id="admin-adicionais-campo-1"
             className={inputCls}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -148,8 +151,11 @@ function ExtraCard({
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-white/50">Preço (R$)</label>
+          <label htmlFor="admin-adicionais-campo-2" className="mb-1 block text-xs text-white/50">
+            Preço (R$)
+          </label>
           <input
+            id="admin-adicionais-campo-2"
             className={inputCls}
             type="number"
             min="0"
@@ -164,14 +170,14 @@ function ExtraCard({
             onClick={save}
             disabled={saving || !name.trim()}
             className="flex flex-1 items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+            style={{ background: "var(--mob-cta-gradient)" }}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             Salvar
           </button>
           <button
             onClick={cancelEdit}
-            className="flex items-center justify-center rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5"
+            className="flex items-center justify-center rounded-xl px-3 py-2 text-sm text-white/55 transition hover:bg-white/5"
           >
             <X className="h-4 w-4" />
           </button>
@@ -234,13 +240,13 @@ function ExtraCard({
         <div className="flex gap-1">
           <button
             onClick={() => setEditing(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/5 hover:text-white"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onDelete(extra.id)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-red-500/10 hover:text-red-400"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -339,7 +345,7 @@ export default function AdicionaisPage() {
         <button
           onClick={() => setShowForm((v) => !v)}
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95"
-          style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+          style={{ background: "var(--mob-cta-gradient)" }}
         >
           <Plus className="h-4 w-4" /> Novo adicional
         </button>
@@ -385,12 +391,18 @@ export default function AdicionaisPage() {
                   onChange={(e) => e.target.files?.[0] && uploadNewImage(e.target.files[0])}
                 />
               </div>
-              <span className="text-[10px] text-white/30">Imagem</span>
+              <span className="text-xs text-white/50">Imagem</span>
             </div>
 
             <div className="min-w-36 flex-1">
-              <label className="mb-1 block text-xs text-white/50">Nome do adicional</label>
+              <label
+                htmlFor="admin-adicionais-campo-3"
+                className="mb-1 block text-xs text-white/50"
+              >
+                Nome do adicional
+              </label>
               <input
+                id="admin-adicionais-campo-3"
                 className={inputCls}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
@@ -399,8 +411,14 @@ export default function AdicionaisPage() {
               />
             </div>
             <div className="w-28">
-              <label className="mb-1 block text-xs text-white/50">Preço (R$)</label>
+              <label
+                htmlFor="admin-adicionais-campo-4"
+                className="mb-1 block text-xs text-white/50"
+              >
+                Preço (R$)
+              </label>
               <input
+                id="admin-adicionais-campo-4"
                 className={inputCls}
                 type="number"
                 min="0"
@@ -414,7 +432,7 @@ export default function AdicionaisPage() {
               onClick={handleAdd}
               disabled={adding || !newName.trim()}
               className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Adicionar
@@ -435,7 +453,7 @@ export default function AdicionaisPage() {
           ))}
         </div>
       ) : extras.length === 0 ? (
-        <div className="py-20 text-center text-sm text-white/25">
+        <div className="py-20 text-center text-sm text-white/50">
           Nenhum adicional cadastrado. Clique em &quot;Novo adicional&quot; para começar.
         </div>
       ) : (
@@ -452,7 +470,7 @@ export default function AdicionaisPage() {
         </div>
       )}
 
-      <p className="mt-6 text-xs text-white/20">
+      <p className="mt-6 text-xs text-white/50">
         Adicionais inativos não aparecem como opção para o cliente no cardápio.
       </p>
     </div>

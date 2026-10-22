@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
             <p className="text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">
               Painel Administrativo
             </p>
-            <p className="text-xs text-white/30">M.O.B — Burgers Pack Co.</p>
+            <p className="text-xs text-white/50">M.O.B — Burgers Pack Co.</p>
           </div>
         </div>
 
@@ -66,32 +66,40 @@ export default function AdminLoginPage() {
           style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
         >
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">E-mail</label>
+            <label htmlFor="admin-login-campo-1" className="mb-1.5 block text-xs text-white/55">
+              E-mail
+            </label>
             <input
+              id="admin-login-campo-1"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@mobburger.com.br"
               required
-              className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/20 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+              className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/45 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">Senha</label>
+            <label htmlFor="admin-login-campo-2" className="mb-1.5 block text-xs text-white/55">
+              Senha
+            </label>
             <div className="relative">
               <input
+                id="admin-login-campo-2"
                 type={showPwd ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full rounded-xl bg-white/5 px-3 py-2.5 pr-10 text-sm text-white placeholder-white/20 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                className="w-full rounded-xl bg-white/5 px-3 py-2.5 pr-10 text-sm text-white placeholder-white/45 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
               />
               <button
+                aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
+                aria-pressed={showPwd}
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-white/30 hover:text-white"
+                className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
               >
                 {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -107,7 +115,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-60"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               boxShadow: "0 4px 16px rgba(249,115,22,0.3)",
             }}
           >

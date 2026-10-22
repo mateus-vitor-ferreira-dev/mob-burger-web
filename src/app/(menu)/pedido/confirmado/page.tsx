@@ -87,7 +87,7 @@ function PedidoConfirmadoContent() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-orange-400" />
-        <p className="text-sm text-white/30">Confirmando seu pedido...</p>
+        <p className="text-sm text-white/50">Confirmando seu pedido...</p>
       </div>
     )
   }
@@ -105,7 +105,7 @@ function PedidoConfirmadoContent() {
 
   if (status === "failed") {
     return (
-      <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
         <div
           className="w-full max-w-md rounded-3xl p-10"
           style={{
@@ -137,20 +137,20 @@ function PedidoConfirmadoContent() {
             href={orderId ? `/pagamento?retry_order_id=${orderId}` : "/carrinho"}
             className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition active:scale-95"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
             }}
           >
             Tentar novamente <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-      </main>
+      </div>
     )
   }
 
   if (status === "timeout") {
     return (
-      <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
         <div
           className="w-full max-w-md rounded-3xl p-10"
           style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
@@ -180,21 +180,21 @@ function PedidoConfirmadoContent() {
             href="/perfil"
             className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition active:scale-95"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
             }}
           >
             Ver meus pedidos <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-      </main>
+      </div>
     )
   }
 
   const isProcessing = status === "processing"
 
   return (
-    <main className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
       <div
         className="w-full max-w-md rounded-3xl p-8"
         style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
@@ -231,7 +231,7 @@ function PedidoConfirmadoContent() {
 
         {order && (
           <>
-            <p className="mb-4 text-xs text-white/30">Pedido #{order.orderNumber}</p>
+            <p className="mb-4 text-xs text-white/50">Pedido #{order.orderNumber}</p>
 
             {/* Itens */}
             <div
@@ -266,7 +266,7 @@ function PedidoConfirmadoContent() {
               href={`/acompanhar/${orderId}`}
               className="inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition active:scale-95"
               style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
+                background: "var(--mob-cta-gradient)",
                 boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
               }}
             >
@@ -285,7 +285,7 @@ function PedidoConfirmadoContent() {
           </Link>
         </div>
       </div>
-    </main>
+    </div>
   )
 }
 

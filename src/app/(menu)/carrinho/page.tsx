@@ -24,6 +24,8 @@ import {
   CreditCard,
   QrCode,
   Banknote,
+  Lock,
+  Ticket,
 } from "lucide-react"
 import { useCart, type CartItem as CartItemType } from "@/lib/cart-store"
 import { useDelivery } from "@/lib/delivery-store"
@@ -53,12 +55,12 @@ function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
 
   return (
     <div
-      className="flex items-center gap-4 rounded-2xl p-4"
+      className="flex items-center gap-3 rounded-2xl p-3 sm:gap-4 sm:p-4"
       style={{ background: "var(--mob-card-solid)", border: "1px solid var(--mob-b1)" }}
     >
       {/* Imagem */}
-      <div className="relative h-20 w-20 flex-none overflow-hidden rounded-xl bg-black/30">
-        {entry.img && <Image src={entry.img} alt={entry.name} fill className="object-cover" />}
+      <div className="relative h-16 w-16 flex-none overflow-hidden rounded-xl bg-black/30 sm:h-20 sm:w-20">
+        {entry.img && <Image src={entry.img} alt="" fill sizes="80px" className="object-cover" />}
       </div>
 
       {/* Info */}
@@ -76,20 +78,20 @@ function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
         </p>
         {entry.options && entry.options.length > 0 && (
           <p
-            className="mt-0.5 text-[11px] leading-relaxed"
+            className="mt-0.5 text-xs leading-relaxed"
             style={{ color: "var(--mob-text-tertiary)" }}
           >
             {entry.options.map((o) => o.name).join(" · ")}
           </p>
         )}
         {entry.extras && entry.extras.length > 0 && (
-          <p className="mt-0.5 text-[11px] leading-relaxed text-orange-400/70">
+          <p className="mt-0.5 text-xs leading-relaxed text-orange-400/70">
             +{entry.extras.map((e) => `${e.qty > 1 ? `${e.qty}× ` : ""}${e.name}`).join(" · ")}
           </p>
         )}
         {entry.observations && (
           <p
-            className="mt-0.5 text-[11px] leading-relaxed italic"
+            className="mt-0.5 text-xs leading-relaxed italic"
             style={{ color: "var(--mob-text-tertiary)" }}
           >
             &quot;{entry.observations}&quot;
@@ -97,7 +99,7 @@ function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
         )}
         {entry.description && !entry.options?.length && !entry.observations && (
           <p
-            className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed"
+            className="mt-0.5 line-clamp-2 text-xs leading-relaxed"
             style={{ color: "var(--mob-text-tertiary)" }}
           >
             {entry.description}
@@ -111,25 +113,35 @@ function CartItemRow({ entry }: { entry: CartItemType & { qty: number } }) {
       {/* Qty */}
       <div className="flex items-center">
         <div
-          className="flex items-center gap-2 rounded-xl px-2 py-1"
+          className="flex items-center rounded-xl p-0.5"
           style={{ background: "rgba(249,115,22,0.10)", border: "1px solid rgba(249,115,22,0.2)" }}
         >
           <button
+            type="button"
             onClick={() => decrement(entry.id)}
-            className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
+            aria-label={
+              entry.qty === 1
+                ? `Remover ${entry.name} da sacola`
+                : `Diminuir quantidade de ${entry.name}`
+            }
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
           >
             {entry.qty === 1 ? (
-              <Trash2 className="h-3 w-3 text-red-400" />
+              <Trash2 aria-hidden className="h-4 w-4 text-red-400" />
             ) : (
-              <Minus className="h-3 w-3" />
+              <Minus aria-hidden className="h-4 w-4" />
             )}
           </button>
-          <span className="w-5 text-center text-sm font-bold text-white">{entry.qty}</span>
+          <span aria-live="polite" className="w-6 text-center text-sm font-bold text-white">
+            {entry.qty}
+          </span>
           <button
+            type="button"
             onClick={() => increment(entry.id)}
-            className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
+            aria-label={`Aumentar quantidade de ${entry.name}`}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 active:scale-90"
           >
-            <Plus className="h-3 w-3" />
+            <Plus aria-hidden className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -155,12 +167,12 @@ function AddressConfirmation({ onEdit }: { onEdit: () => void }) {
       >
         <div className="flex items-center gap-2">
           <User className="h-3.5 w-3.5 text-orange-400" />
-          <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+          <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
             Seus dados
           </p>
         </div>
         <p className="text-sm font-semibold text-white">{customerName}</p>
-        <p className="text-xs text-white/40">{phone}</p>
+        <p className="text-xs text-white/55">{phone}</p>
       </div>
 
       {/* Endereço confirmação */}
@@ -171,15 +183,17 @@ function AddressConfirmation({ onEdit }: { onEdit: () => void }) {
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="h-3.5 w-3.5 text-orange-400" />
-            <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+            <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
               Endereço de entrega
             </p>
           </div>
           <button
+            type="button"
             onClick={onEdit}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs text-white/40 transition hover:bg-white/5 hover:text-white"
+            aria-label="Alterar endereço de entrega"
+            className="-mr-2 flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-white/70 transition hover:bg-white/5 hover:text-white"
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil aria-hidden className="h-3.5 w-3.5" />
             Alterar
           </button>
         </div>
@@ -188,10 +202,10 @@ function AddressConfirmation({ onEdit }: { onEdit: () => void }) {
           {address.street}, {address.number}
           {address.complement ? ` — ${address.complement}` : ""}
         </p>
-        <p className="mt-0.5 text-xs text-white/40">
+        <p className="mt-0.5 text-xs text-white/55">
           {address.neighborhood} · {address.city}/{address.state}
         </p>
-        <p className="mt-0.5 text-xs text-white/30">CEP {address.cep}</p>
+        <p className="mt-0.5 text-xs text-white/50">CEP {address.cep}</p>
 
         <div
           className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2.5"
@@ -271,6 +285,7 @@ function DeliveryForm({
   const inputCls =
     "w-full rounded-xl px-3 py-2.5 text-sm outline-none ring-1 ring-white/10 transition focus:ring-orange-500/50"
   const inputStyle = { background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }
+  const labelCls = "mb-1 block text-xs font-medium text-white/60"
 
   return (
     <div className="space-y-4">
@@ -285,37 +300,58 @@ function DeliveryForm({
             Seus dados
           </p>
         </div>
-        <input
-          className={inputCls}
-          style={inputStyle}
-          placeholder="Nome completo"
-          value={customerName}
-          onChange={(e) => set({ customerName: e.target.value })}
-        />
-        <input
-          className={inputCls}
-          style={inputStyle}
-          placeholder="Telefone (11) 99999-9999"
-          value={phone}
-          onChange={(e) => set({ phone: maskPhone(e.target.value) })}
-          inputMode="tel"
-        />
+        <div>
+          <label htmlFor="entrega-nome" className={labelCls}>
+            Nome completo
+          </label>
+          <input
+            id="entrega-nome"
+            className={inputCls}
+            style={inputStyle}
+            autoComplete="name"
+            value={customerName}
+            onChange={(e) => set({ customerName: e.target.value })}
+          />
+        </div>
+        <div>
+          <label htmlFor="entrega-telefone" className={labelCls}>
+            Telefone (WhatsApp)
+          </label>
+          <input
+            id="entrega-telefone"
+            className={inputCls}
+            style={inputStyle}
+            placeholder="(35) 99999-9999"
+            type="tel"
+            autoComplete="tel-national"
+            value={phone}
+            onChange={(e) => set({ phone: maskPhone(e.target.value) })}
+            inputMode="tel"
+          />
+        </div>
       </div>
 
       {/* Endereço */}
       <div className="space-y-3 rounded-2xl p-4" style={cardStyle}>
         <div className="flex items-center gap-2">
           <MapPin className="h-3.5 w-3.5 text-orange-400" />
-          <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+          <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
             Endereço de entrega
           </p>
         </div>
 
+        <label htmlFor="entrega-cep" className={`${labelCls} -mb-2`}>
+          CEP
+        </label>
         <div className="flex gap-2">
           <input
+            id="entrega-cep"
             className={`${inputCls} flex-1`}
             style={inputStyle}
-            placeholder="CEP 00000-000"
+            placeholder="00000-000"
+            autoComplete="postal-code"
+            aria-describedby="entrega-cep-status"
+            aria-invalid={cepError ? true : undefined}
             value={address.cep}
             inputMode="numeric"
             onChange={(e) => {
@@ -328,76 +364,120 @@ function DeliveryForm({
             type="button"
             onClick={() => fetchCep(address.cep)}
             disabled={cepLoading}
-            className="flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-white transition disabled:opacity-50"
+            className="flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold text-white transition disabled:opacity-50"
             style={{
               background: "rgba(249,115,22,0.15)",
               border: "1px solid rgba(249,115,22,0.3)",
             }}
           >
-            <Search className="h-3.5 w-3.5 text-orange-400" />
-            {cepLoading ? "..." : "Buscar"}
+            {cepLoading ? (
+              <Loader2 aria-hidden className="h-3.5 w-3.5 animate-spin text-orange-400" />
+            ) : (
+              <Search aria-hidden className="h-3.5 w-3.5 text-orange-400" />
+            )}
+            {cepLoading ? "Buscando" : "Buscar"}
           </button>
         </div>
-        {cepError && <p className="text-xs text-red-400">{cepError}</p>}
-        {zoneNotice && (
-          <p
-            className="text-xs"
-            style={{ color: zoneNotice.includes("fora") ? "#f87171" : "#4ade80" }}
-          >
-            📍 {zoneNotice}
-          </p>
-        )}
+        <div id="entrega-cep-status" aria-live="polite" className="empty:hidden">
+          {cepError && <p className="text-xs text-red-400">{cepError}</p>}
+          {zoneNotice && (
+            <p
+              className="flex items-center gap-1.5 text-xs"
+              style={{ color: zoneNotice.includes("fora") ? "#f87171" : "#4ade80" }}
+            >
+              <MapPin aria-hidden className="h-3.5 w-3.5 flex-none" />
+              {zoneNotice}
+            </p>
+          )}
+        </div>
 
-        <input
-          className={inputCls}
-          style={inputStyle}
-          placeholder="Rua / Avenida"
-          value={address.street}
-          onChange={(e) => setAddress({ street: e.target.value })}
-        />
-
-        <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label htmlFor="entrega-rua" className={labelCls}>
+            Rua / Avenida
+          </label>
           <input
-            ref={numberRef}
+            id="entrega-rua"
             className={inputCls}
             style={inputStyle}
-            placeholder="Número"
-            value={address.number}
-            onChange={(e) => setAddress({ number: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            style={inputStyle}
-            placeholder="Complemento"
-            value={address.complement}
-            onChange={(e) => setAddress({ complement: e.target.value })}
+            autoComplete="address-line1"
+            value={address.street}
+            onChange={(e) => setAddress({ street: e.target.value })}
           />
         </div>
 
-        <input
-          className={inputCls}
-          style={inputStyle}
-          placeholder="Bairro"
-          value={address.neighborhood}
-          onChange={(e) => setAddress({ neighborhood: e.target.value })}
-        />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label htmlFor="entrega-numero" className={labelCls}>
+              Número
+            </label>
+            <input
+              id="entrega-numero"
+              ref={numberRef}
+              className={inputCls}
+              style={inputStyle}
+              inputMode="numeric"
+              value={address.number}
+              onChange={(e) => setAddress({ number: e.target.value })}
+            />
+          </div>
+          <div>
+            <label htmlFor="entrega-complemento" className={labelCls}>
+              Complemento
+            </label>
+            <input
+              id="entrega-complemento"
+              className={inputCls}
+              style={inputStyle}
+              placeholder="Apto, bloco…"
+              autoComplete="address-line2"
+              value={address.complement}
+              onChange={(e) => setAddress({ complement: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="entrega-bairro" className={labelCls}>
+            Bairro
+          </label>
+          <input
+            id="entrega-bairro"
+            className={inputCls}
+            style={inputStyle}
+            autoComplete="address-level3"
+            value={address.neighborhood}
+            onChange={(e) => setAddress({ neighborhood: e.target.value })}
+          />
+        </div>
 
         <div className="grid grid-cols-[1fr_80px] gap-2">
-          <input
-            className={inputCls}
-            style={inputStyle}
-            placeholder="Cidade"
-            value={address.city}
-            onChange={(e) => setAddress({ city: e.target.value })}
-          />
-          <input
-            className={inputCls}
-            style={inputStyle}
-            placeholder="UF"
-            value={address.state}
-            maxLength={2}
-            onChange={(e) => setAddress({ state: e.target.value.toUpperCase() })}
-          />
+          <div>
+            <label htmlFor="entrega-cidade" className={labelCls}>
+              Cidade
+            </label>
+            <input
+              id="entrega-cidade"
+              className={inputCls}
+              style={inputStyle}
+              autoComplete="address-level2"
+              value={address.city}
+              onChange={(e) => setAddress({ city: e.target.value })}
+            />
+          </div>
+          <div>
+            <label htmlFor="entrega-uf" className={labelCls}>
+              UF
+            </label>
+            <input
+              id="entrega-uf"
+              className={inputCls}
+              style={inputStyle}
+              autoComplete="address-level1"
+              value={address.state}
+              maxLength={2}
+              onChange={(e) => setAddress({ state: e.target.value.toUpperCase() })}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -437,9 +517,9 @@ function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
 
   return (
     <div className="mt-1">
-      <p className="mb-3 text-xs font-semibold tracking-widest text-white/30 uppercase">
+      <h2 className="mb-3 text-xs font-semibold tracking-widest text-white/60 uppercase">
         Também vai bem…
-      </p>
+      </h2>
       <div className="flex [scrollbar-width:none] gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {suggestions.map((p) => {
           const isAdded = inCart.has(p.id)
@@ -455,9 +535,11 @@ function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
               {/* Imagem */}
               <div className="relative h-24 w-full overflow-hidden bg-black/30">
                 {p.imageUrl ? (
-                  <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                  <Image src={p.imageUrl} alt="" fill sizes="144px" className="object-cover" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-2xl">🍔</div>
+                  <div className="flex h-full items-center justify-center">
+                    <ShoppingBag aria-hidden className="h-7 w-7 text-white/20" />
+                  </div>
                 )}
               </div>
               {/* Info + botão */}
@@ -469,24 +551,27 @@ function CartRecommendations({ cartIds }: { cartIds: Set<string> }) {
                   R$ {p.price.toFixed(2).replace(".", ",")}
                 </p>
                 <button
+                  type="button"
                   onClick={() => !isAdded && handleAdd(p)}
-                  className="mt-auto flex w-full items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs font-bold transition active:scale-95"
+                  aria-label={isAdded ? `${p.name} já está na sacola` : `Adicionar ${p.name}`}
+                  aria-disabled={isAdded}
+                  className="mt-auto flex min-h-9 w-full items-center justify-center gap-1.5 rounded-xl py-1.5 text-xs font-bold transition active:scale-95"
                   style={
                     isAdded
                       ? { background: "rgba(34,197,94,0.15)", color: "#4ade80" }
                       : {
-                          background: "linear-gradient(135deg, #f97316, #ea580c)",
+                          background: "var(--mob-cta-gradient)",
                           color: "#fff",
                         }
                   }
                 >
                   {isAdded ? (
                     <>
-                      <CheckCircle2 className="h-3 w-3" /> Adicionado
+                      <CheckCircle2 aria-hidden className="h-3.5 w-3.5" /> Adicionado
                     </>
                   ) : (
                     <>
-                      <Plus className="h-3 w-3" /> Adicionar
+                      <Plus aria-hidden className="h-3.5 w-3.5" /> Adicionar
                     </>
                   )}
                 </button>
@@ -691,13 +776,14 @@ export default function CarrinhoPage() {
   )
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-10 pb-16">
-      <div className="mb-8 flex items-center gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 sm:py-10">
+      <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
         <Link
           href="/cardapio"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/50 transition hover:bg-white/5 hover:text-white"
+          aria-label="Voltar ao cardápio"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft aria-hidden className="h-5 w-5" />
         </Link>
         <div>
           <h1
@@ -710,7 +796,7 @@ export default function CarrinhoPage() {
           >
             Sua Sacola
           </h1>
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-white/50">
             {count} {count === 1 ? "item" : "itens"}
           </p>
         </div>
@@ -719,13 +805,14 @@ export default function CarrinhoPage() {
       {/* Banner loja fechada */}
       {!storeOpen && (
         <div
+          role="status"
           className="mb-6 flex items-center gap-3 rounded-2xl px-5 py-4"
           style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}
         >
-          <span className="text-xl">🔒</span>
+          <Lock aria-hidden className="h-5 w-5 flex-none text-red-400" />
           <div>
             <p className="text-sm font-semibold text-red-400">Loja fechada no momento</p>
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-white/55">
               Não é possível finalizar pedidos agora. Volte durante o horário de funcionamento.
             </p>
           </div>
@@ -735,6 +822,7 @@ export default function CarrinhoPage() {
       {/* Banner itens esgotados */}
       {oosWarning.length > 0 && (
         <div
+          role="alert"
           className="mb-6 rounded-2xl px-5 py-4"
           style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}
         >
@@ -748,15 +836,16 @@ export default function CarrinhoPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-white/40">
+          <p className="mt-2 text-xs text-white/55">
             Remova os itens esgotados da sacola para continuar.
           </p>
         </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
+      {/* minmax(0, …): sem isso a faixa de sugestões (rolagem horizontal) alargava a página */}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         {/* Itens */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {items.map((entry) => (
             <CartItemRow key={entry.id} entry={entry} />
           ))}
@@ -769,22 +858,33 @@ export default function CarrinhoPage() {
             {couponApplied ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-green-400">
-                    🎟 Cupom <span className="tracking-widest">{couponApplied.code}</span> aplicado
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-green-400">
+                    <Ticket aria-hidden className="h-3.5 w-3.5" />
+                    Cupom <span className="tracking-widest">{couponApplied.code}</span> aplicado
                   </p>
-                  <p className="text-[10px] text-white/30">{couponApplied.message}</p>
+                  <p className="text-xs text-white/60">{couponApplied.message}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={removeCoupon}
-                  className="text-white/30 transition hover:text-red-400"
+                  aria-label={`Remover cupom ${couponApplied.code}`}
+                  className="-mr-2 flex h-10 w-10 items-center justify-center text-white/60 transition hover:text-red-400"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X aria-hidden className="h-4 w-4" />
                 </button>
               </div>
             ) : (
               <div className="flex gap-2">
+                <label htmlFor="cupom" className="sr-only">
+                  Código do cupom
+                </label>
                 <input
-                  className="flex-1 rounded-xl px-3 py-2 text-sm placeholder-white/30 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                  id="cupom"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  aria-invalid={couponError ? true : undefined}
+                  aria-describedby={couponError ? "cupom-erro" : undefined}
+                  className="min-w-0 flex-1 rounded-xl px-3 py-2.5 text-sm placeholder-white/45 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
                   style={{ background: "rgba(0,0,0,0.25)", color: "white" }}
                   placeholder="Código do cupom"
                   value={couponCode}
@@ -795,19 +895,28 @@ export default function CarrinhoPage() {
                   onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
                 />
                 <button
+                  type="button"
                   onClick={applyCoupon}
                   disabled={couponLoading || !couponCode.trim()}
-                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
+                  className="flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
                   style={{
                     background: "rgba(249,115,22,0.15)",
                     border: "1px solid rgba(249,115,22,0.3)",
                   }}
                 >
-                  {couponLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Aplicar"}
+                  {couponLoading ? (
+                    <Loader2 aria-label="Validando cupom" className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Aplicar"
+                  )}
                 </button>
               </div>
             )}
-            {couponError && <p className="mt-1.5 text-xs text-red-400">{couponError}</p>}
+            {couponError && (
+              <p id="cupom-erro" role="alert" className="mt-1.5 text-xs text-red-400">
+                {couponError}
+              </p>
+            )}
           </div>
 
           {/* Resumo de valores */}
@@ -869,17 +978,19 @@ export default function CarrinhoPage() {
 
           <Link
             href="/cardapio"
-            className="flex items-center gap-2 text-xs text-orange-400 transition hover:text-orange-300"
+            className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-orange-400 transition hover:text-orange-300"
           >
-            <ShoppingBag className="h-3.5 w-3.5" />
+            <ShoppingBag aria-hidden className="h-4 w-4" />
             Adicionar mais itens
           </Link>
         </div>
 
         {/* Dados + endereço */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {/* Toggle Entrega / Retirada */}
           <div
+            role="radiogroup"
+            aria-label="Como você quer receber"
             className="flex rounded-2xl p-1"
             style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
           >
@@ -888,21 +999,24 @@ export default function CarrinhoPage() {
               return (
                 <button
                   key={type}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
                   onClick={() => set({ orderType: type })}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all"
+                  className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all"
                   style={
                     active
-                      ? { background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff" }
-                      : { color: "rgba(255,255,255,0.4)" }
+                      ? { background: "var(--mob-cta-gradient)", color: "#fff" }
+                      : { color: "rgba(255,255,255,0.6)" }
                   }
                 >
                   {type === "DELIVERY" ? (
                     <>
-                      <Bike className="h-4 w-4" /> Entrega
+                      <Bike aria-hidden className="h-4 w-4" /> Entrega
                     </>
                   ) : (
                     <>
-                      <Store className="h-4 w-4" /> Retirada
+                      <Store aria-hidden className="h-4 w-4" /> Retirada
                     </>
                   )}
                 </button>
@@ -917,25 +1031,45 @@ export default function CarrinhoPage() {
             >
               <div className="flex items-center gap-2">
                 <User className="h-3.5 w-3.5 text-orange-400" />
-                <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
                   Seus dados
                 </p>
               </div>
-              <input
-                className="w-full rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
-                style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
-                placeholder="Nome completo"
-                value={customerName}
-                onChange={(e) => set({ customerName: e.target.value })}
-              />
-              <input
-                className="w-full rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
-                style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
-                placeholder="Telefone (11) 99999-9999"
-                inputMode="tel"
-                value={phone}
-                onChange={(e) => set({ phone: maskPhone(e.target.value) })}
-              />
+              <div>
+                <label
+                  htmlFor="retirada-nome"
+                  className="mb-1 block text-xs font-medium text-white/60"
+                >
+                  Nome completo
+                </label>
+                <input
+                  id="retirada-nome"
+                  autoComplete="name"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                  style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
+                  value={customerName}
+                  onChange={(e) => set({ customerName: e.target.value })}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="retirada-telefone"
+                  className="mb-1 block text-xs font-medium text-white/60"
+                >
+                  Telefone (WhatsApp)
+                </label>
+                <input
+                  id="retirada-telefone"
+                  type="tel"
+                  autoComplete="tel-national"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
+                  style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
+                  placeholder="(35) 99999-9999"
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => set({ phone: maskPhone(e.target.value) })}
+                />
+              </div>
               <div
                 className="mt-2 flex items-center gap-3 rounded-xl px-3 py-3"
                 style={{
@@ -960,7 +1094,7 @@ export default function CarrinhoPage() {
             style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
           >
             <label
-              className="mb-1.5 block text-xs font-semibold tracking-widest text-white/30 uppercase"
+              className="mb-1.5 block text-xs font-semibold tracking-widest text-white/50 uppercase"
               htmlFor="order-notes"
             >
               Observações do pedido
@@ -982,10 +1116,20 @@ export default function CarrinhoPage() {
             className="rounded-2xl p-4"
             style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
           >
-            <p className="mb-3 text-xs font-semibold tracking-widest text-white/30 uppercase">
+            <p
+              id="forma-pagamento"
+              className="mb-1 text-xs font-semibold tracking-widest text-white/60 uppercase"
+            >
               Forma de pagamento
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <p className="mb-3 text-xs text-white/55">
+              Você paga na entrega, direto ao entregador.
+            </p>
+            <div
+              role="radiogroup"
+              aria-labelledby="forma-pagamento"
+              className="grid grid-cols-3 gap-2"
+            >
               {(
                 [
                   { value: "CARD_ON_DELIVERY", label: "Cartão na entrega", Icon: CreditCard },
@@ -995,8 +1139,11 @@ export default function CarrinhoPage() {
               ).map(({ value, label, Icon }) => (
                 <button
                   key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={paymentMethod === value}
                   onClick={() => set({ paymentMethod: value })}
-                  className="flex flex-col items-center gap-2 rounded-xl px-2 py-3 text-xs font-semibold transition-all"
+                  className="flex min-h-16 flex-col items-center justify-center gap-2 rounded-xl px-2 py-3 text-center text-xs font-semibold transition-all"
                   style={
                     paymentMethod === value
                       ? {
@@ -1007,11 +1154,11 @@ export default function CarrinhoPage() {
                       : {
                           background: "rgba(255,255,255,0.04)",
                           border: "1px solid rgba(255,255,255,0.1)",
-                          color: "rgba(255,255,255,0.35)",
+                          color: "rgba(255,255,255,0.6)",
                         }
                   }
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon aria-hidden className="h-5 w-5" />
                   {label}
                 </button>
               ))}
@@ -1019,7 +1166,7 @@ export default function CarrinhoPage() {
 
             {paymentMethod === "CASH" && (
               <div className="mt-4 space-y-3">
-                <label className="flex cursor-pointer items-center gap-3 select-none">
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 select-none">
                   <div className="relative shrink-0">
                     <input
                       type="checkbox"
@@ -1033,10 +1180,11 @@ export default function CarrinhoPage() {
                       className="peer sr-only"
                     />
                     <div
-                      className="flex h-4 w-4 items-center justify-center rounded border transition-all duration-200"
+                      aria-hidden
+                      className="flex h-5 w-5 items-center justify-center rounded border transition-all duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-orange-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-black"
                       style={{
                         background: needsChange ? "#f97316" : "transparent",
-                        borderColor: needsChange ? "#f97316" : "rgba(255,255,255,0.25)",
+                        borderColor: needsChange ? "#f97316" : "rgba(255,255,255,0.45)",
                       }}
                     >
                       {needsChange && (
@@ -1052,17 +1200,23 @@ export default function CarrinhoPage() {
                       )}
                     </div>
                   </div>
-                  <span className="text-sm text-white/60">Precisa de troco?</span>
+                  <span className="text-sm text-white/70">Precisa de troco?</span>
                 </label>
 
                 {needsChange && (
                   <div>
-                    <label className="mb-1.5 block text-xs text-white/40">Troco para quanto?</label>
+                    <label htmlFor="troco-para" className="mb-1.5 block text-xs text-white/60">
+                      Troco para quanto?
+                    </label>
                     <div className="relative">
-                      <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-white/40">
+                      <span
+                        aria-hidden
+                        className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-white/55"
+                      >
                         R$
                       </span>
                       <input
+                        id="troco-para"
                         type="number"
                         inputMode="decimal"
                         min={0}
@@ -1085,31 +1239,40 @@ export default function CarrinhoPage() {
             )}
           </div>
 
-          <button
-            onClick={handleGoToPayment}
-            disabled={!isComplete() || !storeOpen}
-            className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-            style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-              boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
-            }}
-          >
-            {!storeOpen ? "Loja fechada" : "Ir para pagamento"}
-            <ChevronRight className="h-4 w-4" />
-          </button>
-          {storeOpen && !isComplete() && (
-            <p className="mt-2 text-center text-xs text-red-400">
-              {!customerName.trim() || !phone.trim()
-                ? "Preencha nome e telefone para continuar"
-                : orderType === "DELIVERY" && !address.cep
-                  ? "Preencha o endereço de entrega"
-                  : orderType === "DELIVERY" && !zoneId
-                    ? "Endereço fora da área de entrega"
-                    : "Preencha todos os campos obrigatórios"}
-            </p>
-          )}
+          {/* Celular: barra fixa no rodapé com o total — o botão ficava no fim de uma página longa */}
+          <div className="sticky bottom-0 z-20 -mx-4 bg-linear-to-b from-transparent to-(--mob-bg) to-35% px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:bg-none lg:p-0">
+            <button
+              type="button"
+              onClick={handleGoToPayment}
+              disabled={!isComplete() || !storeOpen}
+              aria-describedby={storeOpen && !isComplete() ? "carrinho-pendencia" : undefined}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                background: "var(--mob-cta-gradient)",
+                boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
+              }}
+            >
+              {!storeOpen ? "Loja fechada" : `Ir para pagamento · ${fmtPrice(total)}`}
+              <ChevronRight aria-hidden className="h-4 w-4" />
+            </button>
+            {storeOpen && !isComplete() && (
+              <p
+                id="carrinho-pendencia"
+                aria-live="polite"
+                className="mt-2 text-center text-xs text-red-400"
+              >
+                {!customerName.trim() || !phone.trim()
+                  ? "Preencha nome e telefone para continuar"
+                  : orderType === "DELIVERY" && !address.cep
+                    ? "Preencha o endereço de entrega"
+                    : orderType === "DELIVERY" && !zoneId
+                      ? "Endereço fora da área de entrega"
+                      : "Preencha todos os campos obrigatórios"}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

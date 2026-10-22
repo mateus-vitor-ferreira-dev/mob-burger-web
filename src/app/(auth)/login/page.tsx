@@ -34,7 +34,7 @@ const INPUT =
   "w-full rounded-xl px-4 py-3 text-sm text-white " +
   "bg-white/[0.07] border border-white/15 " +
   "focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/60 " +
-  "transition-all placeholder:text-white/25 disabled:opacity-60 disabled:cursor-not-allowed"
+  "transition-all placeholder:text-white/45 disabled:opacity-60 disabled:cursor-not-allowed"
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null
@@ -45,7 +45,7 @@ function Divider() {
   return (
     <div className="my-5 flex items-center gap-3">
       <div className="flex-1 border-t border-white/10" />
-      <span className="text-xs text-white/30">ou use seu e-mail</span>
+      <span className="text-xs text-white/50">ou use seu e-mail</span>
       <div className="flex-1 border-t border-white/10" />
     </div>
   )
@@ -58,7 +58,7 @@ function OrangeSubmit({ children, loading }: { children: React.ReactNode; loadin
       disabled={loading}
       className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
       style={{
-        background: "linear-gradient(135deg, #f97316, #ea580c)",
+        background: "var(--mob-cta-gradient)",
         boxShadow: "0 4px 16px rgba(249,115,22,0.28)",
       }}
     >
@@ -276,6 +276,8 @@ export default function LoginPage() {
         <AuthLeftPanel />
 
         <main
+          id="conteudo"
+          tabIndex={-1}
           className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
           style={{ background: "transparent" }}
         >
@@ -300,7 +302,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setForgotView("hidden")}
-                      className="mb-8 flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/70"
+                      className="mb-6 -ml-1 flex min-h-11 items-center gap-1.5 px-1 text-xs text-white/60 transition-colors hover:text-white"
                     >
                       <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
                     </button>
@@ -314,10 +316,14 @@ export default function LoginPage() {
                     </Field>
                     <form onSubmit={onForgot} className="space-y-4">
                       <Field delay={60}>
-                        <label className="mb-1.5 block text-xs font-medium text-white/60">
+                        <label
+                          htmlFor="auth-login-campo-1"
+                          className="mb-1.5 block text-xs font-medium text-white/60"
+                        >
                           E-mail
                         </label>
                         <input
+                          id="auth-login-campo-1"
                           {...forgotForm.register("email")}
                           type="email"
                           placeholder="seu@email.com"
@@ -378,8 +384,14 @@ export default function LoginPage() {
 
                 <form onSubmit={onLogin} className="space-y-4">
                   <Field delay={120}>
-                    <label className="mb-1.5 block text-xs font-medium text-white/60">E-mail</label>
+                    <label
+                      htmlFor="auth-login-campo-2"
+                      className="mb-1.5 block text-xs font-medium text-white/60"
+                    >
+                      E-mail
+                    </label>
                     <input
+                      id="auth-login-campo-2"
                       {...loginForm.register("email")}
                       type="email"
                       placeholder="seu@email.com"
@@ -391,17 +403,23 @@ export default function LoginPage() {
 
                   <Field delay={160}>
                     <div className="mb-1.5 flex items-center justify-between">
-                      <label className="text-xs font-medium text-white/60">Senha</label>
+                      <label
+                        htmlFor="auth-login-campo-3"
+                        className="text-xs font-medium text-white/60"
+                      >
+                        Senha
+                      </label>
                       <button
                         type="button"
                         onClick={() => setForgotView("form")}
-                        className="text-xs text-orange-500 hover:text-orange-600"
+                        className="-my-2 py-2 text-xs text-orange-500 hover:text-orange-600"
                       >
                         Esqueceu a senha?
                       </button>
                     </div>
                     <div className="relative">
                       <input
+                        id="auth-login-campo-3"
                         {...loginForm.register("password")}
                         type={showPwd ? "text" : "password"}
                         placeholder="••••••••"
@@ -409,10 +427,11 @@ export default function LoginPage() {
                         className={cn(INPUT, "pr-11")}
                       />
                       <button
+                        aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
+                        aria-pressed={showPwd}
                         type="button"
                         onClick={() => setShowPwd((v) => !v)}
-                        className="absolute top-3 right-3 text-white/30 hover:text-white/70"
-                        aria-label="Alternar visibilidade"
+                        className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
                       >
                         {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>

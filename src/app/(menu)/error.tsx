@@ -30,13 +30,13 @@ export default function MenuError({
         >
           Algo deu errado
         </h2>
-        <p className="text-sm text-white/40">Tente novamente ou volte para a página inicial.</p>
+        <p className="text-sm text-white/55">Tente novamente ou volte para a página inicial.</p>
       </div>
       <div className="flex gap-3">
         <button
           onClick={reset}
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition active:scale-95"
-          style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+          style={{ background: "var(--mob-cta-gradient)" }}
         >
           <RotateCcw className="h-4 w-4" /> Tentar novamente
         </button>

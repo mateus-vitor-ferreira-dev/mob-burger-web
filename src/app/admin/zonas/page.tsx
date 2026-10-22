@@ -89,7 +89,7 @@ function ZoneRow({
           placeholder="Nome do bairro"
         />
         <div className="flex items-center gap-1">
-          <span className="text-xs text-white/40">R$</span>
+          <span className="text-xs text-white/55">R$</span>
           <input
             className={`${inputCls} w-20`}
             type="number"
@@ -112,7 +112,7 @@ function ZoneRow({
             setName(zone.name)
             setFee(zone.fee.toFixed(2))
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-white/5"
         >
           <X className="h-4 w-4" />
         </button>
@@ -136,7 +136,7 @@ function ZoneRow({
       <div className="flex items-center gap-1">
         <button
           onClick={toggle}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-white/5"
           title={zone.active ? "Desativar" : "Ativar"}
         >
           {zone.active ? (
@@ -147,13 +147,13 @@ function ZoneRow({
         </button>
         <button
           onClick={() => setEditing(true)}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-white/5 hover:text-white"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => onDelete(zone.id)}
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-red-500/10 hover:text-red-400"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-red-500/10 hover:text-red-400"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -269,7 +269,7 @@ export default function ZonasPage() {
   }
 
   const inputCls =
-    "rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/30 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
+    "rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/45 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
 
   return (
     <div className="p-6">
@@ -301,7 +301,7 @@ export default function ZonasPage() {
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+            style={{ background: "var(--mob-cta-gradient)" }}
           >
             <Plus className="h-4 w-4" /> Nova zona
           </button>
@@ -323,8 +323,11 @@ export default function ZonasPage() {
           style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}
         >
           <div className="min-w-40 flex-1">
-            <label className="mb-1 block text-xs text-white/50">Bairro / Região</label>
+            <label htmlFor="admin-zonas-campo-1" className="mb-1 block text-xs text-white/50">
+              Bairro / Região
+            </label>
             <input
+              id="admin-zonas-campo-1"
               className={inputCls}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -332,8 +335,11 @@ export default function ZonasPage() {
             />
           </div>
           <div className="w-32">
-            <label className="mb-1 block text-xs text-white/50">Taxa (R$)</label>
+            <label htmlFor="admin-zonas-campo-2" className="mb-1 block text-xs text-white/50">
+              Taxa (R$)
+            </label>
             <input
+              id="admin-zonas-campo-2"
               className={inputCls}
               type="number"
               min="0"
@@ -347,7 +353,7 @@ export default function ZonasPage() {
             onClick={handleAdd}
             disabled={adding || !newName.trim() || !newFee}
             className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+            style={{ background: "var(--mob-cta-gradient)" }}
           >
             {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Adicionar
@@ -367,7 +373,7 @@ export default function ZonasPage() {
           ))}
         </div>
       ) : zones.length === 0 ? (
-        <div className="py-16 text-center text-sm text-white/25">Nenhuma zona cadastrada.</div>
+        <div className="py-16 text-center text-sm text-white/50">Nenhuma zona cadastrada.</div>
       ) : (
         <div className="space-y-2">
           {zones.map((z) => (
@@ -376,7 +382,7 @@ export default function ZonasPage() {
         </div>
       )}
 
-      <p className="mt-4 text-xs text-white/20">
+      <p className="mt-4 text-xs text-white/50">
         Zonas inativas não aparecem como opção de entrega para o cliente.
       </p>
     </div>

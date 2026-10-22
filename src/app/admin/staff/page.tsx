@@ -76,7 +76,7 @@ export default function StaffPage() {
   }
 
   const inputCls =
-    "rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/30 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
+    "rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/45 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
 
   return (
     <div className="p-6">
@@ -94,7 +94,7 @@ export default function StaffPage() {
           <button
             onClick={() => setShowForm((v) => !v)}
             className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+            style={{ background: "var(--mob-cta-gradient)" }}
           >
             <Plus className="h-4 w-4" /> Novo usuário
           </button>
@@ -142,7 +142,7 @@ export default function StaffPage() {
               onClick={handleCreate}
               disabled={saving}
               className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Criar
@@ -186,14 +186,14 @@ export default function StaffPage() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-white">{u.email}</p>
-                <p className="text-xs text-white/30">
+                <p className="text-xs text-white/50">
                   {u.role === "ADMIN" ? "Admin" : "Atendente"} · desde{" "}
                   {new Date(u.createdAt).toLocaleDateString("pt-BR")}
                 </p>
               </div>
               {u.id === me?.id && (
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-[10px] font-bold text-orange-400"
+                  className="rounded-full px-2.5 py-0.5 text-xs font-bold text-orange-400"
                   style={{ background: "rgba(249,115,22,0.15)" }}
                 >
                   Você
@@ -203,7 +203,7 @@ export default function StaffPage() {
                 <button
                   onClick={() => handleDelete(u.id)}
                   disabled={deleting === u.id}
-                  className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                 >
                   {deleting === u.id ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

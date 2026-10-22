@@ -509,7 +509,7 @@ export default function PedidosPage() {
         <div
           className="fixed top-4 right-4 z-50 flex items-center gap-3 rounded-2xl px-5 py-3.5 shadow-2xl"
           style={{
-            background: "linear-gradient(135deg, #f97316, #ea580c)",
+            background: "var(--mob-cta-gradient)",
             boxShadow: "0 8px 32px rgba(249,115,22,0.4)",
             animation: "slideIn 0.3s ease",
           }}
@@ -528,7 +528,7 @@ export default function PedidosPage() {
         </div>
       )}
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">Gestão</p>
           <h1
@@ -538,7 +538,7 @@ export default function PedidosPage() {
             Pedidos
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
           {/* Fila de impressão */}
           {queue ? (
             <div
@@ -553,11 +553,13 @@ export default function PedidosPage() {
                 Imprimindo {queue.current}/{queue.orders.length}
               </span>
               <button
+                type="button"
                 onClick={cancelQueue}
-                className="rounded-lg p-0.5 text-white/40 transition hover:text-red-400"
+                aria-label="Cancelar fila de impressão"
+                className="-m-2 flex h-9 w-9 items-center justify-center rounded-lg text-white/60 transition hover:text-red-400"
                 title="Cancelar fila"
               >
-                <X className="h-3.5 w-3.5" />
+                <X aria-hidden className="h-4 w-4" />
               </button>
             </div>
           ) : (
@@ -571,7 +573,7 @@ export default function PedidosPage() {
               Imprimir fila
               {filtered.length > 0 && (
                 <span
-                  className="rounded-full px-1.5 py-0.5 text-[10px] font-bold text-orange-400"
+                  className="rounded-full px-1.5 py-0.5 text-xs font-bold text-orange-400"
                   style={{ background: "rgba(249,115,22,0.15)" }}
                 >
                   {filtered.length}
@@ -582,9 +584,14 @@ export default function PedidosPage() {
 
           {/* Mute toggle */}
           <button
+            type="button"
             onClick={() => setSoundMuted((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-white/5"
-            style={{ color: soundMuted ? "rgba(255,255,255,0.25)" : "#f97316" }}
+            aria-label={
+              soundMuted ? "Ativar som de novos pedidos" : "Silenciar som de novos pedidos"
+            }
+            aria-pressed={!soundMuted}
+            className="flex h-10 w-10 items-center justify-center rounded-xl transition hover:bg-white/5"
+            style={{ color: soundMuted ? "rgba(255,255,255,0.55)" : "#f97316" }}
             title={
               soundMuted
                 ? "Som desativado — clique para ativar"
@@ -595,8 +602,9 @@ export default function PedidosPage() {
           </button>
 
           {/* Indicador SSE */}
-          <div className="flex items-center gap-1.5 rounded-xl px-3 py-2">
+          <div role="status" className="flex items-center gap-1.5 rounded-xl px-3 py-2">
             <Radio
+              aria-hidden
               className="h-3.5 w-3.5 flex-none"
               style={{
                 color:
@@ -649,6 +657,8 @@ export default function PedidosPage() {
         <div className="relative min-w-48 flex-1">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/60" />
           <input
+            type="search"
+            aria-label="Buscar pedido por cliente ou número"
             className={`${inputCls} w-full pl-9`}
             style={inputInlineStyle}
             placeholder="Nome do cliente ou nº do pedido..."
@@ -657,15 +667,18 @@ export default function PedidosPage() {
           />
           {query && (
             <button
+              type="button"
               onClick={() => setQuery("")}
-              className="absolute top-1/2 right-3 -translate-y-1/2 text-white/40 hover:text-white"
+              aria-label="Limpar busca"
+              className="absolute top-1/2 right-1 flex h-9 w-9 -translate-y-1/2 items-center justify-center text-white/60 hover:text-white"
             >
-              <X className="h-3.5 w-3.5" />
+              <X aria-hidden className="h-4 w-4" />
             </button>
           )}
         </div>
 
         <select
+          aria-label="Filtrar por status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className={inputCls}
@@ -679,9 +692,11 @@ export default function PedidosPage() {
         </select>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs whitespace-nowrap text-white/40">Até</span>
+          <span className="text-xs whitespace-nowrap text-white/55">Até</span>
           <input
             type="range"
+            aria-label="Valor máximo do pedido"
+            aria-valuetext={fmtPrice(maxPrice)}
             min={0}
             max={maxPriceInData}
             value={maxPrice}
@@ -694,21 +709,23 @@ export default function PedidosPage() {
         </div>
 
         {/* Filtro de data */}
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 flex-none text-white/30" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Calendar aria-hidden className="h-4 w-4 flex-none text-white/30" />
           <input
             type="date"
+            aria-label="Data inicial"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-xl px-2 py-1.5 text-xs text-white ring-1 ring-white/10 outline-none focus:ring-orange-500/50"
+            className="min-h-10 rounded-xl px-2 py-1.5 text-xs text-white ring-1 ring-white/10 outline-none focus:ring-orange-500/50"
             style={{ background: "rgba(0,0,0,0.35)" }}
           />
-          <span className="text-xs text-white/30">—</span>
+          <span className="text-xs text-white/50">—</span>
           <input
             type="date"
+            aria-label="Data final"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-xl px-2 py-1.5 text-xs text-white ring-1 ring-white/10 outline-none focus:ring-orange-500/50"
+            className="min-h-10 rounded-xl px-2 py-1.5 text-xs text-white ring-1 ring-white/10 outline-none focus:ring-orange-500/50"
             style={{ background: "rgba(0,0,0,0.35)" }}
           />
           {(dateFrom || dateTo) && (
@@ -717,9 +734,10 @@ export default function PedidosPage() {
                 setDateFrom("")
                 setDateTo("")
               }}
-              className="text-white/30 hover:text-white"
+              aria-label="Limpar filtro de data"
+              className="flex h-9 w-9 items-center justify-center text-white/60 hover:text-white"
             >
-              <X className="h-3.5 w-3.5" />
+              <X aria-hidden className="h-4 w-4" />
             </button>
           )}
         </div>
@@ -727,7 +745,7 @@ export default function PedidosPage() {
 
       {/* Contagem */}
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs text-white/25">
+        <p className="text-xs text-white/50">
           {filtered.length} de {totalOrders} {totalOrders === 1 ? "pedido" : "pedidos"}
           {totalPages > 1 && ` · página ${page}/${totalPages}`}
         </p>
@@ -765,7 +783,7 @@ export default function PedidosPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-16 text-center text-sm text-white/25">Nenhum pedido encontrado.</div>
+        <div className="py-16 text-center text-sm text-white/50">Nenhum pedido encontrado.</div>
       ) : (
         <div className="space-y-2">
           {filtered.map((order) => (
@@ -788,7 +806,7 @@ export default function PedidosPage() {
                   >
                     #{String(order.orderNumber).padStart(4, "0")}
                   </p>
-                  <p className="text-[10px] text-white/30">{fmtDate(order.createdAt)}</p>
+                  <p className="text-xs text-white/50">{fmtDate(order.createdAt)}</p>
                 </div>
 
                 {/* Cliente + itens */}
@@ -799,7 +817,7 @@ export default function PedidosPage() {
                       href={`https://wa.me/55${order.customer.phone.replace(/\D/g, "")}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] text-green-400/70 transition hover:text-green-400"
+                      className="inline-flex items-center gap-1 text-xs text-green-400/70 transition hover:text-green-400"
                     >
                       <Phone className="h-2.5 w-2.5" />
                       {order.customer.phone}
@@ -808,13 +826,11 @@ export default function PedidosPage() {
                   <div className="space-y-0.5">
                     {order.items.map((i) => (
                       <div key={i.id}>
-                        <p className="truncate text-xs text-white/40">
+                        <p className="truncate text-xs text-white/55">
                           {i.quantity}× {i.product.name.replace("MOB ", "")}
                         </p>
                         {i.observations && (
-                          <p className="truncate text-[10px] text-amber-400/70">
-                            ↳ {i.observations}
-                          </p>
+                          <p className="truncate text-xs text-amber-400/70">↳ {i.observations}</p>
                         )}
                       </div>
                     ))}
@@ -824,7 +840,7 @@ export default function PedidosPage() {
                 {/* Total */}
                 <div className="text-right">
                   <p className="text-sm font-bold text-white">{fmtPrice(order.totalPrice)}</p>
-                  <p className="text-[10px] text-white/30">
+                  <p className="text-xs text-white/50">
                     {{
                       CASH_ON_DELIVERY: "Dinheiro na entrega",
                       CARD_ON_DELIVERY: "Cartão na entrega",
@@ -847,7 +863,7 @@ export default function PedidosPage() {
                       style={
                         ps === "done"
                           ? { color: "#4ade80", background: "rgba(34,197,94,0.1)" }
-                          : { color: "rgba(255,255,255,0.4)" }
+                          : { color: "rgba(255,255,255,0.55)" }
                       }
                       title={ps === "done" ? "Enviado!" : "Imprimir pedido"}
                     >
@@ -879,7 +895,7 @@ export default function PedidosPage() {
               {/* Endereço + entregador (delivery) */}
               {order.delivery && (
                 <div className="mt-2 space-y-1">
-                  <p className="text-[11px] text-white/25">
+                  <p className="text-xs text-white/50">
                     📍 {order.delivery.street}, {order.delivery.number}
                     {order.delivery.complement ? ` — ${order.delivery.complement}` : ""}
                     {" · "}
@@ -887,12 +903,12 @@ export default function PedidosPage() {
                   </p>
                   <div className="flex items-center gap-2">
                     {order.driver && (
-                      <div className="flex items-center gap-1.5 text-[11px]">
+                      <div className="flex items-center gap-1.5 text-xs">
                         <Bike className="h-3 w-3 text-cyan-400" />
                         <span className="text-cyan-400">{order.driver.name}</span>
-                        <span className="text-white/20">·</span>
+                        <span className="text-white/50">·</span>
                         <Phone className="h-2.5 w-2.5 text-white/20" />
-                        <span className="text-white/25">{order.driver.phone}</span>
+                        <span className="text-white/50">{order.driver.phone}</span>
                       </div>
                     )}
                     {!["DELIVERED", "PICKED_UP", "CANCELLED"].includes(order.status) && (
@@ -901,7 +917,7 @@ export default function PedidosPage() {
                           onClick={() =>
                             setAssigningOrderId(assigningOrderId === order.id ? null : order.id)
                           }
-                          className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] text-white/30 transition hover:bg-white/5 hover:text-cyan-400"
+                          className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs text-white/50 transition hover:bg-white/5 hover:text-cyan-400"
                           style={{ border: "1px solid rgba(255,255,255,0.07)" }}
                         >
                           <Bike className="h-2.5 w-2.5" />
@@ -922,7 +938,7 @@ export default function PedidosPage() {
                               }}
                             >
                               {drivers.length === 0 ? (
-                                <p className="px-3 py-2 text-[10px] text-white/30">
+                                <p className="px-3 py-2 text-xs text-white/50">
                                   Nenhum entregador ativo
                                 </p>
                               ) : (
@@ -934,7 +950,7 @@ export default function PedidosPage() {
                                     className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-white/60 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
                                   >
                                     {order.driver?.id === d.id ? (
-                                      <span className="text-[10px] text-cyan-400">✓</span>
+                                      <span className="text-xs text-cyan-400">✓</span>
                                     ) : (
                                       <Bike className="h-3 w-3 text-white/20" />
                                     )}

@@ -346,22 +346,27 @@ export default function FinanceiroPage() {
         {/* Month nav + export */}
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => setMonth(prevMonth(month))}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
+            aria-label="Mês anterior"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft aria-hidden className="h-4 w-4" />
           </button>
           <span
+            aria-live="polite"
             className="min-w-36 text-center text-sm font-bold text-white"
             style={{ fontFamily: "var(--font-bebas)", fontSize: "1.1rem", letterSpacing: "0.08em" }}
           >
             {monthLabel(month)}
           </span>
           <button
+            type="button"
             onClick={() => setMonth(nextMonth(month))}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
+            aria-label="Próximo mês"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight aria-hidden className="h-4 w-4" />
           </button>
           <button
             onClick={exportCSV}
@@ -401,7 +406,7 @@ export default function FinanceiroPage() {
           style={{ background: "var(--mob-s3)", border: "1px solid var(--mob-s4)" }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+            <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
               Faturamento
             </p>
             <div
@@ -421,7 +426,7 @@ export default function FinanceiroPage() {
               fmtPrice(revenue ?? 0)
             )}
           </p>
-          <p className="mt-0.5 text-xs text-white/30">pedidos entregues / retirados</p>
+          <p className="mt-0.5 text-xs text-white/50">pedidos entregues / retirados</p>
         </div>
 
         <div
@@ -429,7 +434,7 @@ export default function FinanceiroPage() {
           style={{ background: "var(--mob-s3)", border: "1px solid var(--mob-s4)" }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+            <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
               Despesas
             </p>
             <div
@@ -449,7 +454,7 @@ export default function FinanceiroPage() {
               fmtPrice(totalExpenses)
             )}
           </p>
-          <p className="mt-0.5 text-xs text-white/30">
+          <p className="mt-0.5 text-xs text-white/50">
             fixas {fmtPrice(totalFixed)} · variáveis {fmtPrice(totalVariable)}
           </p>
         </div>
@@ -459,7 +464,7 @@ export default function FinanceiroPage() {
           style={{ background: "var(--mob-s3)", border: "1px solid var(--mob-s4)" }}
         >
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">Lucro</p>
+            <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">Lucro</p>
             <div
               className="flex h-8 w-8 items-center justify-center rounded-xl"
               style={{ background: profit >= 0 ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)" }}
@@ -485,7 +490,7 @@ export default function FinanceiroPage() {
               fmtPrice(profit)
             )}
           </p>
-          <p className="mt-0.5 text-xs text-white/30">faturamento − despesas</p>
+          <p className="mt-0.5 text-xs text-white/50">faturamento − despesas</p>
         </div>
       </div>
 
@@ -495,7 +500,7 @@ export default function FinanceiroPage() {
           className="mb-6 rounded-2xl p-5"
           style={{ background: "var(--mob-s3)", border: "1px solid var(--mob-s4)" }}
         >
-          <p className="mb-4 text-xs font-semibold tracking-widest text-white/30 uppercase">
+          <p className="mb-4 text-xs font-semibold tracking-widest text-white/50 uppercase">
             Receita por dia — {monthLabel(month)}
           </p>
           <ResponsiveContainer width="100%" height={180}>
@@ -509,13 +514,13 @@ export default function FinanceiroPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis
                 dataKey="day"
-                tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 interval={Math.floor(dailyRevenue.length / 8)}
               />
               <YAxis
-                tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 10 }}
+                tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `R$${v}`}
@@ -566,8 +571,14 @@ export default function FinanceiroPage() {
           <div className="mb-4 grid gap-4 sm:grid-cols-3">
             {/* Nome */}
             <div className="sm:col-span-2">
-              <label className="mb-1.5 block text-xs font-medium text-white/50">Nome *</label>
+              <label
+                htmlFor="admin-financeiro-campo-1"
+                className="mb-1.5 block text-xs font-medium text-white/50"
+              >
+                Nome *
+              </label>
               <input
+                id="admin-financeiro-campo-1"
                 className={inputCls}
                 style={inputStyle}
                 value={form.name}
@@ -592,7 +603,7 @@ export default function FinanceiroPage() {
                               t === "FIXED" ? "rgba(59,130,246,0.2)" : "rgba(245,158,11,0.2)",
                             color: t === "FIXED" ? "#60a5fa" : "#fbbf24",
                           }
-                        : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.35)" }
+                        : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)" }
                     }
                   >
                     {t === "FIXED" ? "Fixa" : "Variável"}
@@ -640,13 +651,13 @@ export default function FinanceiroPage() {
                     <button
                       type="button"
                       onClick={() => removeItem(i)}
-                      className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-white/30 transition hover:bg-red-500/10 hover:text-red-400"
+                      className="flex h-9 w-9 flex-none items-center justify-center rounded-xl text-white/50 transition hover:bg-red-500/10 hover:text-red-400"
                     >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
-                <p className="text-right text-xs text-white/30">
+                <p className="text-right text-xs text-white/50">
                   Total dos itens: {fmtPrice(form.items.reduce((s, it) => s + it.price, 0))}
                 </p>
               </div>
@@ -655,10 +666,14 @@ export default function FinanceiroPage() {
 
           {/* Valor total */}
           <div className="mb-4 w-48">
-            <label className="mb-1.5 block text-xs font-medium text-white/50">
+            <label
+              htmlFor="admin-financeiro-campo-3"
+              className="mb-1.5 block text-xs font-medium text-white/50"
+            >
               {form.items.length > 0 ? "Valor total (calculado)" : "Valor (R$) *"}
             </label>
             <input
+              id="admin-financeiro-campo-3"
               type="number"
               step="0.01"
               min="0"
@@ -675,7 +690,7 @@ export default function FinanceiroPage() {
               onClick={handleSave}
               disabled={saving}
               className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -790,7 +805,7 @@ function ExpenseTable({
           <Loader2 className="h-5 w-5 animate-spin text-white/30" />
         </div>
       ) : expenses.length === 0 ? (
-        <div className="py-10 text-center text-xs text-white/25">
+        <div className="py-10 text-center text-xs text-white/50">
           Nenhuma despesa {type === "FIXED" ? "fixa" : "variável"} em {"{"}mês{"}"}.
         </div>
       ) : (
@@ -803,13 +818,13 @@ function ExpenseTable({
                 <div className="flex items-center gap-3 px-5 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-white">{exp.name}</p>
-                    {hasItems && <p className="text-xs text-white/30">{exp.items!.length} itens</p>}
+                    {hasItems && <p className="text-xs text-white/50">{exp.items!.length} itens</p>}
                   </div>
                   <span className="text-sm font-bold text-white">{fmtPrice(exp.amount)}</span>
                   {hasItems && (
                     <button
                       onClick={() => onToggleExpand(exp.id)}
-                      className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white"
                     >
                       {isExpanded ? (
                         <ChevronUp className="h-3.5 w-3.5" />
@@ -820,14 +835,14 @@ function ExpenseTable({
                   )}
                   <button
                     onClick={() => onEdit(exp)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => onDelete(exp)}
                     disabled={deleting === exp.id}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-30"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-white/50 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-30"
                   >
                     {deleting === exp.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -872,7 +887,7 @@ function ExpenseTable({
         className="flex items-center justify-between px-5 py-3"
         style={{ borderTop: "1px solid var(--mob-s4)" }}
       >
-        <p className="text-xs font-semibold text-white/30 uppercase">Total</p>
+        <p className="text-xs font-semibold text-white/50 uppercase">Total</p>
         <p className="text-sm font-bold" style={{ color }}>
           {fmtPrice(total)}
         </p>

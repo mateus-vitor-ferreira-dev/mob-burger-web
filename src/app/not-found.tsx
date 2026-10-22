@@ -30,7 +30,7 @@ export default function NotFound() {
         >
           Página não encontrada
         </h1>
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-white/55">
           A página que você procura não existe ou foi removida.
         </p>
       </div>
@@ -38,7 +38,7 @@ export default function NotFound() {
         href="/"
         className="rounded-xl px-6 py-3 text-sm font-semibold text-white transition active:scale-95"
         style={{
-          background: "linear-gradient(135deg, #f97316, #ea580c)",
+          background: "var(--mob-cta-gradient)",
           boxShadow: "0 6px 20px rgba(249,115,22,0.3)",
         }}
       >

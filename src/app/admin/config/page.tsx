@@ -128,7 +128,7 @@ export default function ConfigPage() {
           style={{
             background: saved
               ? "linear-gradient(135deg,#22c55e,#16a34a)"
-              : "linear-gradient(135deg, #f97316, #ea580c)",
+              : "var(--mob-cta-gradient)",
           }}
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -148,7 +148,7 @@ export default function ConfigPage() {
               <p className="text-sm font-semibold text-white">
                 {config.isOpen ? "Loja aberta" : "Loja fechada"}
               </p>
-              <p className="text-xs text-white/30">
+              <p className="text-xs text-white/50">
                 {config.isOpen
                   ? "Clientes podem fazer pedidos agora."
                   : "Pedidos bloqueados até reabrir."}
@@ -176,10 +176,11 @@ export default function ConfigPage() {
         >
           <h2 className="mb-4 text-sm font-semibold text-white/70">WhatsApp</h2>
           <div>
-            <label className="mb-1 block text-xs text-white/50">
+            <label htmlFor="admin-config-campo-1" className="mb-1 block text-xs text-white/50">
               Número (DDI + DDD + número) — somente dígitos
             </label>
             <input
+              id="admin-config-campo-1"
               className={`${inputCls} w-full`}
               value={maskWhatsApp(config.whatsappNumber)}
               placeholder="+55 (35) 99999-9999"
@@ -202,13 +203,16 @@ export default function ConfigPage() {
             {DAYS.map(({ key, label }) => {
               const day = config.openingHours[key]
               return (
-                <div key={key} className="flex items-center gap-3">
+                <div key={key} className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <span className="w-20 text-xs font-medium text-white/60">{label}</span>
 
                   {/* Fechado toggle */}
                   <button
+                    type="button"
                     onClick={() => setDay(key, "closed", !day.closed)}
-                    className="rounded-lg px-2.5 py-1 text-xs font-semibold transition"
+                    aria-label={`${label}: ${day.closed ? "fechado" : "aberto"}. Alternar`}
+                    aria-pressed={!day.closed}
+                    className="min-h-9 rounded-lg px-3 py-1 text-xs font-semibold transition"
                     style={
                       day.closed
                         ? { background: "rgba(239,68,68,0.15)", color: "#f87171" }
@@ -222,13 +226,15 @@ export default function ConfigPage() {
                     <>
                       <input
                         type="time"
+                        aria-label={`${label}: abre às`}
                         className={`${inputCls} w-28`}
                         value={day.open}
                         onChange={(e) => setDay(key, "open", e.target.value)}
                       />
-                      <span className="text-xs text-white/30">até</span>
+                      <span className="text-xs text-white/50">até</span>
                       <input
                         type="time"
+                        aria-label={`${label}: fecha às`}
                         className={`${inputCls} w-28`}
                         value={day.close}
                         onChange={(e) => setDay(key, "close", e.target.value)}
@@ -253,7 +259,7 @@ export default function ConfigPage() {
                 <EyeOff className="h-4 w-4 text-white/40" />
                 Ocultar produtos esgotados
               </p>
-              <p className="mt-0.5 text-xs text-white/30">
+              <p className="mt-0.5 text-xs text-white/50">
                 {config.hideOutOfStock
                   ? "Produtos sem estoque ficam invisíveis no cardápio."
                   : "Produtos sem estoque aparecem com badge 'Esgotado' (padrão)."}
@@ -265,7 +271,7 @@ export default function ConfigPage() {
               style={
                 config.hideOutOfStock
                   ? { background: "rgba(249,115,22,0.15)", color: "#f97316" }
-                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)" }
+                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.55)" }
               }
             >
               {config.hideOutOfStock ? "Ocultar" : "Mostrar"}
