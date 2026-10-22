@@ -96,7 +96,7 @@ São dois produtos no mesmo app:
     </tr>
     <tr>
       <td><strong>Deploy</strong></td>
-      <td><img src="https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white"/> — via OpenNext, auto-deploy a cada push em <code>main</code> (deploy manual: <code>npm run deploy</code>)</td>
+      <td><img src="https://img.shields.io/badge/Cloudflare_Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white"/> — via OpenNext, auto-deploy pelo GitHub Actions a cada push em <code>main</code> (<code>.github/workflows/deploy.yml</code>; deploy manual: <code>npm run deploy</code>)</td>
     </tr>
   </tbody>
 </table>
