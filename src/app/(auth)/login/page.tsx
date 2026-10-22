@@ -125,6 +125,17 @@ export default function LoginPage() {
   const router = useRouter()
   const setCustomer = useCustomer((s) => s.setCustomer)
   const setStaff = useStaff((s) => s.setStaff)
+
+  /** Abre a sessão da equipe (admin ou atendente) e leva ao painel. */
+  function entrarNoPainel(
+    user: { id: string; email: string; role: "ADMIN" | "ATTENDANT" },
+    accessToken: string,
+  ) {
+    setStaff({ id: user.id, email: user.email, role: user.role }, accessToken)
+    document.cookie = `mob-admin=1; path=/; max-age=${60 * 60 * 8}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}` // eslint-disable-line react-hooks/immutability
+    toast.success("Bem-vindo ao painel! 🔥")
+    router.push("/admin")
+  }
   const [showPwd, setShowPwd] = useState(false)
   const [forgotView, setForgotView] = useState<"hidden" | "form" | "sent">("hidden")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -148,11 +159,17 @@ export default function LoginPage() {
           error?: { message?: string }
           data?: {
             customer?: { id: string; name: string; email: string; phone?: string }
+            user?: { id: string; email: string; role: "ADMIN" | "ATTENDANT" }
             accessToken?: string
             refreshToken?: string
           }
         }
         if (!r.ok) throw new Error(json.error?.message ?? "Erro ao autenticar com Google")
+        // E-mail da equipe: a API devolve "user" no lugar de "customer"
+        if (json.data?.user && json.data.accessToken) {
+          entrarNoPainel(json.data.user, json.data.accessToken)
+          return
+        }
         const { customer: c, accessToken, refreshToken } = json.data ?? {}
         if (c && accessToken) {
           setCustomer(
@@ -226,8 +243,8 @@ export default function LoginPage() {
       if (staffRes.ok) {
         const { user, accessToken } = staffJson.data ?? {}
         if (user && accessToken) {
-          setStaff({ id: user.id, email: user.email, role: user.role }, accessToken)
-          document.cookie = `mob-admin=1; path=/; max-age=${60 * 60 * 8}; SameSite=Strict${location.protocol === "https:" ? "; Secure" : ""}` // eslint-disable-line react-hooks/immutability
+          entrarNoPainel(user, accessToken)
+          return
         }
         toast.success("Bem-vindo ao painel! 🔥")
         router.push("/admin")
