@@ -39,7 +39,7 @@ const INPUT =
   "w-full rounded-xl px-4 py-3 text-sm text-white " +
   "bg-white/[0.07] border border-white/15 " +
   "focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/60 " +
-  "transition-all placeholder:text-white/25 disabled:opacity-60 disabled:cursor-not-allowed"
+  "transition-all placeholder:text-white/45 disabled:opacity-60 disabled:cursor-not-allowed"
 
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null
@@ -50,7 +50,7 @@ function Divider() {
   return (
     <div className="my-5 flex items-center gap-3">
       <div className="flex-1 border-t border-white/10" />
-      <span className="text-xs text-white/30">ou use seu e-mail</span>
+      <span className="text-xs text-white/50">ou use seu e-mail</span>
       <div className="flex-1 border-t border-white/10" />
     </div>
   )
@@ -71,7 +71,7 @@ function OrangeSubmit({
       disabled={loading || disabled}
       className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
       style={{
-        background: "linear-gradient(135deg, #f97316, #ea580c)",
+        background: "var(--mob-cta-gradient)",
         boxShadow: "0 4px 16px rgba(249,115,22,0.28)",
       }}
     >
@@ -220,6 +220,8 @@ export default function RegisterPage() {
         <AuthLeftPanel />
 
         <main
+          id="conteudo"
+          tabIndex={-1}
           className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
           style={{ background: "transparent" }}
         >
@@ -255,10 +257,14 @@ export default function RegisterPage() {
 
               <form onSubmit={onRegister} className="space-y-4">
                 <Field delay={120}>
-                  <label className="mb-1.5 block text-xs font-medium text-white/60">
+                  <label
+                    htmlFor="auth-register-campo-1"
+                    className="mb-1.5 block text-xs font-medium text-white/60"
+                  >
                     Nome completo
                   </label>
                   <input
+                    id="auth-register-campo-1"
                     {...form.register("name")}
                     placeholder="Seu nome"
                     disabled={isSubmitting}
@@ -268,8 +274,14 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={155}>
-                  <label className="mb-1.5 block text-xs font-medium text-white/60">E-mail</label>
+                  <label
+                    htmlFor="auth-register-campo-2"
+                    className="mb-1.5 block text-xs font-medium text-white/60"
+                  >
+                    E-mail
+                  </label>
                   <input
+                    id="auth-register-campo-2"
                     {...form.register("email")}
                     type="email"
                     placeholder="seu@email.com"
@@ -280,7 +292,12 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={190}>
-                  <label className="mb-1.5 block text-xs font-medium text-white/60">Telefone</label>
+                  <label
+                    htmlFor="auth-register-campo-3"
+                    className="mb-1.5 block text-xs font-medium text-white/60"
+                  >
+                    Telefone
+                  </label>
                   <div className="flex gap-2">
                     <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.07] px-3 text-sm whitespace-nowrap text-white/70">
                       🇧🇷 +55
@@ -290,6 +307,7 @@ export default function RegisterPage() {
                       control={form.control}
                       render={({ field }) => (
                         <input
+                          id="auth-register-campo-3"
                           {...field}
                           inputMode="tel"
                           placeholder="(35) 9 9999-9999"
@@ -306,11 +324,15 @@ export default function RegisterPage() {
                 <Field delay={225}>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-white/60">
+                      <label
+                        htmlFor="auth-register-campo-4"
+                        className="mb-1.5 block text-xs font-medium text-white/60"
+                      >
                         Senha
                       </label>
                       <div className="relative">
                         <input
+                          id="auth-register-campo-4"
                           {...form.register("password")}
                           type={showPwd ? "text" : "password"}
                           placeholder="••••••••"
@@ -318,10 +340,11 @@ export default function RegisterPage() {
                           className={cn(INPUT, "pr-10")}
                         />
                         <button
+                          aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
+                          aria-pressed={showPwd}
                           type="button"
                           onClick={() => setShowPwd((v) => !v)}
-                          className="absolute top-3 right-3 text-white/30 hover:text-white/70"
-                          aria-label="Alternar visibilidade"
+                          className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
                         >
                           {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -330,11 +353,15 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-white/60">
+                      <label
+                        htmlFor="auth-register-campo-5"
+                        className="mb-1.5 block text-xs font-medium text-white/60"
+                      >
                         Confirmar
                       </label>
                       <div className="relative">
                         <input
+                          id="auth-register-campo-5"
                           {...form.register("confirmPassword")}
                           type={showConfirm ? "text" : "password"}
                           placeholder="••••••••"
@@ -342,10 +369,11 @@ export default function RegisterPage() {
                           className={cn(INPUT, "pr-10")}
                         />
                         <button
+                          aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+                          aria-pressed={showConfirm}
                           type="button"
                           onClick={() => setShowConfirm((v) => !v)}
-                          className="absolute top-3 right-3 text-white/30 hover:text-white/70"
-                          aria-label="Alternar visibilidade"
+                          className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
                         >
                           {showConfirm ? (
                             <EyeOff className="h-4 w-4" />
@@ -388,7 +416,7 @@ export default function RegisterPage() {
                         )}
                       </div>
                     </div>
-                    <span className="text-xs leading-relaxed text-white/40">
+                    <span className="text-xs leading-relaxed text-white/55">
                       Li e concordo com os{" "}
                       <a
                         href="/privacidade"
@@ -419,7 +447,7 @@ export default function RegisterPage() {
                 </Field>
 
                 <Field delay={330}>
-                  <p className="text-center text-xs text-white/40">
+                  <p className="text-center text-xs text-white/55">
                     Já tem conta?{" "}
                     <a href="/login" className="font-medium text-orange-500 hover:text-orange-600">
                       Entrar

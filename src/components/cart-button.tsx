@@ -3,23 +3,28 @@
 import Link from "next/link"
 import { ShoppingBag } from "lucide-react"
 import { useCart } from "@/lib/cart-store"
+import { useHydrated } from "@/lib/use-hydrated"
 
 export function CartButton() {
-  const count = useCart((s) => s.count())
+  const hydrated = useHydrated()
+  const storedCount = useCart((s) => s.count())
+  const count = hydrated ? storedCount : 0
 
   return (
     <Link
       href="/carrinho"
-      className="relative flex items-center justify-center rounded-xl p-2.5 text-white transition-all active:scale-95"
+      aria-label={count > 0 ? `Sacola, ${count} ${count === 1 ? "item" : "itens"}` : "Sacola vazia"}
+      className="relative flex h-11 w-11 items-center justify-center rounded-xl text-white transition-all active:scale-95"
       style={{
-        background: "linear-gradient(135deg, #f97316, #ea580c)",
+        background: "var(--mob-cta-gradient)",
         boxShadow: "0 4px 12px rgba(249,115,22,0.25)",
       }}
     >
-      <ShoppingBag className="h-5 w-5" />
+      <ShoppingBag aria-hidden className="h-5 w-5" />
       {count > 0 && (
         <span
-          className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+          aria-hidden
+          className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold text-white"
           style={{
             background: "#dc0000",
             border: "2px solid #fff",

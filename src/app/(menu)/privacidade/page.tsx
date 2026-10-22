@@ -8,13 +8,14 @@ export const metadata: Metadata = {
 
 export default function PrivacidadePage() {
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10 pb-16">
+    <div className="mx-auto max-w-3xl px-6 py-10 pb-16">
       <div className="mb-8 flex items-center gap-4">
         <Link
           href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/50 transition hover:bg-white/5 hover:text-white"
+          aria-label="Voltar ao início"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft aria-hidden className="h-5 w-5" />
         </Link>
         <div>
           <p className="text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">
@@ -92,7 +93,7 @@ export default function PrivacidadePage() {
                 <li>• Manter histórico para facilitar pedidos futuros.</li>
                 <li>• Melhorar a experiência do aplicativo.</li>
               </ul>
-              <p className="mt-3 text-white/40">
+              <p className="mt-3 text-white/55">
                 Não vendemos, alugamos nem compartilhamos seus dados pessoais com terceiros para
                 fins de marketing.
               </p>
@@ -138,7 +139,7 @@ export default function PrivacidadePage() {
                 <li>• Revogar o consentimento a qualquer momento.</li>
                 <li>• Portabilidade dos dados, quando aplicável.</li>
               </ul>
-              <p className="mt-3 text-white/40">
+              <p className="mt-3 text-white/55">
                 Para exercer seus direitos, entre em contato pelo WhatsApp ou e-mail listados no
                 rodapé.
               </p>
@@ -230,6 +231,6 @@ export default function PrivacidadePage() {
           </p>
         </section>
       </div>
-    </main>
+    </div>
   )
 }

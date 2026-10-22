@@ -101,7 +101,7 @@ function SortableCategoryRow({
       {/* Drag handle */}
       <button
         {...listeners}
-        className="flex-none cursor-grab text-white/20 hover:text-white/50 active:cursor-grabbing"
+        className="flex-none cursor-grab text-white/50 hover:text-white/80 active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4" />
       </button>
@@ -120,7 +120,7 @@ function SortableCategoryRow({
           />
         ) : null}
       </div>
-      <span className="w-6 text-center text-xs font-bold text-white/30">#{cat.position}</span>
+      <span className="w-6 text-center text-xs font-bold text-white/50">#{cat.position}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <Link
@@ -130,27 +130,27 @@ function SortableCategoryRow({
             {cat.name}
           </Link>
           {!cat.active && (
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/40">
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/55">
               inativa
             </span>
           )}
         </div>
-        <p className="text-xs text-white/30">/{cat.slug}</p>
+        <p className="text-xs text-white/50">/{cat.slug}</p>
       </div>
-      <span className="min-w-[3.5rem] text-right text-xs text-white/30">
+      <span className="min-w-[3.5rem] text-right text-xs text-white/50">
         {cat._count?.products ?? 0} prod.
       </span>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onEdit(cat)}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/5 hover:text-white"
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={() => onDelete(cat)}
           disabled={deleting === cat.id || (cat._count?.products ?? 0) > 0}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30"
           title={(cat._count?.products ?? 0) > 0 ? "Remova os produtos primeiro" : "Excluir"}
         >
           {deleting === cat.id ? (
@@ -351,7 +351,7 @@ export default function CategoriasPage() {
             onClick={startCreate}
             className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition active:scale-95"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               boxShadow: "0 4px 12px rgba(249,115,22,0.3)",
             }}
           >
@@ -426,10 +426,10 @@ export default function CategoriasPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-white/30">
+                  <div className="flex flex-col items-center gap-2 text-white/50">
                     <ImageIcon className="h-8 w-8" />
                     <span className="text-xs">Clique para selecionar</span>
-                    <span className="text-[10px]">JPG, PNG ou WebP · máx 3MB</span>
+                    <span className="text-xs">JPG, PNG ou WebP · máx 3MB</span>
                   </div>
                 )}
               </button>
@@ -445,8 +445,14 @@ export default function CategoriasPage() {
             {/* Campos */}
             <div className="space-y-3">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-white/50">Nome *</label>
+                <label
+                  htmlFor="admin-categorias-campo-1"
+                  className="mb-1.5 block text-xs font-medium text-white/50"
+                >
+                  Nome *
+                </label>
                 <input
+                  id="admin-categorias-campo-1"
                   className={inputCls}
                   style={inputStyle}
                   value={form.name}
@@ -461,8 +467,14 @@ export default function CategoriasPage() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-white/50">Slug (URL)</label>
+                <label
+                  htmlFor="admin-categorias-campo-2"
+                  className="mb-1.5 block text-xs font-medium text-white/50"
+                >
+                  Slug (URL)
+                </label>
                 <input
+                  id="admin-categorias-campo-2"
                   className={inputCls}
                   style={inputStyle}
                   value={form.slug}
@@ -472,8 +484,14 @@ export default function CategoriasPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-white/50">Posição</label>
+                  <label
+                    htmlFor="admin-categorias-campo-3"
+                    className="mb-1.5 block text-xs font-medium text-white/50"
+                  >
+                    Posição
+                  </label>
                   <input
+                    id="admin-categorias-campo-3"
                     type="number"
                     min={0}
                     className={inputCls}
@@ -502,7 +520,7 @@ export default function CategoriasPage() {
               onClick={handleSave}
               disabled={saving}
               className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -533,7 +551,7 @@ export default function CategoriasPage() {
           ))}
         </div>
       ) : categories.length === 0 ? (
-        <div className="py-16 text-center text-sm text-white/25">Nenhuma categoria cadastrada.</div>
+        <div className="py-16 text-center text-sm text-white/50">Nenhuma categoria cadastrada.</div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext

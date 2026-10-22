@@ -7,9 +7,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* Antes era var(--font-sans) apontando para si mesmo: a variável ficava inválida
+     e o app inteiro caía na fonte serifada padrão do navegador */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -70,15 +72,19 @@
   --mob-t60: rgba(255, 255, 255, 0.6);
   --mob-t70: rgba(255, 255, 255, 0.7);
   --mob-t80: rgba(255, 255, 255, 0.8);
+  /* Fundo de botão/CTA com texto branco: #d93b00 → #c43a00 fica entre 4,6:1 e 5,3:1 (AA).
+     O gradiente antigo (#f97316 → #ea580c) dava 2,8–3,6:1. Mesmo laranja de botão da landing */
+  --mob-cta-gradient: linear-gradient(135deg, #d93b00, #c43a00);
   /* Admin sidebar */
   --mob-admin-sidebar: rgba(12, 11, 9, 0.6);
   --mob-admin-mobile-header: rgba(10, 9, 8, 0.95);
   --mob-admin-sidebar-solid: #0f0e0c;
-  --mob-sidebar-inactive: rgba(255, 255, 255, 0.45);
+  --mob-sidebar-inactive: rgba(255, 255, 255, 0.6);
   /* Text & surface tokens */
   --mob-text-primary: rgba(255, 255, 255, 0.92);
   --mob-text-secondary: rgba(255, 255, 255, 0.55);
-  --mob-text-tertiary: rgba(255, 255, 255, 0.3);
+  /* 0.5: menor opacidade que ainda passa no AA (4,5:1) sobre o fundo e os cards */
+  --mob-text-tertiary: rgba(255, 255, 255, 0.5);
   --mob-card-solid: rgba(255, 255, 255, 0.05);
   --mob-pill-inactive-bg: rgba(255, 255, 255, 0.06);
   --mob-pill-inactive-text: rgba(255, 255, 255, 0.55);
@@ -131,6 +137,65 @@
   }
   html {
     @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Foco visível só para teclado; o anel do shadcn (outline-ring/50) some no fundo escuro */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* Âncoras não ficam escondidas atrás do header sticky */
+  [id] {
+    scroll-margin-top: calc(var(--app-header-h, 4rem) + 1rem);
+  }
+}
+
+/* iOS dá zoom ao focar campo com fonte < 16px; no celular todos os campos usam 16px */
+@media (max-width: 640px) {
+  input:not([type="checkbox"], [type="radio"], [type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Link "pular para o conteúdo" — aparece só ao receber foco do teclado */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  border-radius: 9999px;
+  background: #c2410c;
+  color: #fff;
+  font-weight: 600;
+  transform: translateY(-200%);
+  transition: transform 0.2s;
+}
+.skip-link:focus-visible {
+  transform: none;
+}
+
+/* Some com o scroll horizontal de listas de chips sem esconder o conteúdo */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

@@ -228,7 +228,7 @@ export default function CuponsPage() {
     }
   }
 
-  const labelCls = "mb-1 block text-xs text-white/40"
+  const labelCls = "mb-1 block text-xs text-white/55"
 
   return (
     <div className="p-6">
@@ -249,7 +249,7 @@ export default function CuponsPage() {
             onClick={startCreate}
             className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition active:scale-95"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               boxShadow: "0 4px 12px rgba(249,115,22,0.3)",
             }}
           >
@@ -288,8 +288,11 @@ export default function CuponsPage() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {/* Código */}
             <div>
-              <label className={labelCls}>Código</label>
+              <label htmlFor="admin-cupons-campo-1" className={labelCls}>
+                Código
+              </label>
               <input
+                id="admin-cupons-campo-1"
                 className={inputCls}
                 style={inputStyle}
                 placeholder="Ex: BEMVINDO10"
@@ -300,8 +303,11 @@ export default function CuponsPage() {
 
             {/* Tipo */}
             <div>
-              <label className={labelCls}>Tipo</label>
+              <label htmlFor="admin-cupons-campo-2" className={labelCls}>
+                Tipo
+              </label>
               <select
+                id="admin-cupons-campo-2"
                 className={inputCls}
                 style={{ ...inputStyle, appearance: "none" }}
                 value={form.type}
@@ -318,10 +324,11 @@ export default function CuponsPage() {
             {/* Valor (hidden for FREE_DELIVERY) */}
             {form.type !== "FREE_DELIVERY" && (
               <div>
-                <label className={labelCls}>
+                <label htmlFor="admin-cupons-campo-3" className={labelCls}>
                   {form.type === "PERCENTAGE" ? "Desconto (%)" : "Desconto (R$)"}
                 </label>
                 <input
+                  id="admin-cupons-campo-3"
                   className={inputCls}
                   style={inputStyle}
                   type="number"
@@ -336,8 +343,11 @@ export default function CuponsPage() {
 
             {/* Pedido mínimo */}
             <div>
-              <label className={labelCls}>Pedido mínimo (R$) — opcional</label>
+              <label htmlFor="admin-cupons-campo-4" className={labelCls}>
+                Pedido mínimo (R$) — opcional
+              </label>
               <input
+                id="admin-cupons-campo-4"
                 className={inputCls}
                 style={inputStyle}
                 type="number"
@@ -350,8 +360,11 @@ export default function CuponsPage() {
 
             {/* Limite total */}
             <div>
-              <label className={labelCls}>Usos totais máx. — opcional</label>
+              <label htmlFor="admin-cupons-campo-5" className={labelCls}>
+                Usos totais máx. — opcional
+              </label>
               <input
+                id="admin-cupons-campo-5"
                 className={inputCls}
                 style={inputStyle}
                 type="number"
@@ -364,8 +377,11 @@ export default function CuponsPage() {
 
             {/* Limite por dia */}
             <div>
-              <label className={labelCls}>Usos por dia máx. — opcional</label>
+              <label htmlFor="admin-cupons-campo-6" className={labelCls}>
+                Usos por dia máx. — opcional
+              </label>
               <input
+                id="admin-cupons-campo-6"
                 className={inputCls}
                 style={inputStyle}
                 type="number"
@@ -378,8 +394,11 @@ export default function CuponsPage() {
 
             {/* Limite por usuário */}
             <div>
-              <label className={labelCls}>Usos por cliente máx. — opcional</label>
+              <label htmlFor="admin-cupons-campo-7" className={labelCls}>
+                Usos por cliente máx. — opcional
+              </label>
               <input
+                id="admin-cupons-campo-7"
                 className={inputCls}
                 style={inputStyle}
                 type="number"
@@ -392,8 +411,11 @@ export default function CuponsPage() {
 
             {/* Válido de */}
             <div>
-              <label className={labelCls}>Válido a partir de — opcional</label>
+              <label htmlFor="admin-cupons-campo-8" className={labelCls}>
+                Válido a partir de — opcional
+              </label>
               <input
+                id="admin-cupons-campo-8"
                 className={inputCls}
                 style={inputStyle}
                 type="date"
@@ -404,8 +426,11 @@ export default function CuponsPage() {
 
             {/* Válido até */}
             <div>
-              <label className={labelCls}>Válido até — opcional</label>
+              <label htmlFor="admin-cupons-campo-9" className={labelCls}>
+                Válido até — opcional
+              </label>
               <input
+                id="admin-cupons-campo-9"
                 className={inputCls}
                 style={inputStyle}
                 type="date"
@@ -421,7 +446,7 @@ export default function CuponsPage() {
               type="button"
               onClick={() => setField("active", !form.active)}
               className="flex items-center gap-2 text-sm transition"
-              style={{ color: form.active ? "#4ade80" : "rgba(255,255,255,0.3)" }}
+              style={{ color: form.active ? "#4ade80" : "rgba(255,255,255,0.55)" }}
             >
               {form.active ? (
                 <ToggleRight className="h-5 w-5" />
@@ -437,7 +462,7 @@ export default function CuponsPage() {
               onClick={handleSave}
               disabled={saving}
               className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {saving ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -458,7 +483,7 @@ export default function CuponsPage() {
 
       {/* Lista */}
       {loading ? (
-        <div className="flex items-center gap-2 py-12 text-white/30">
+        <div className="flex items-center gap-2 py-12 text-white/50">
           <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
         </div>
       ) : coupons.length === 0 ? (
@@ -467,7 +492,7 @@ export default function CuponsPage() {
           style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
           <Ticket className="h-8 w-8 text-white/15" />
-          <p className="text-sm text-white/30">Nenhum cupom cadastrado</p>
+          <p className="text-sm text-white/50">Nenhum cupom cadastrado</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -494,7 +519,7 @@ export default function CuponsPage() {
                   <Ticket
                     className="h-4.5 w-4.5"
                     style={{
-                      color: coupon.active ? TYPE_COLOR[coupon.type] : "rgba(255,255,255,0.25)",
+                      color: coupon.active ? TYPE_COLOR[coupon.type] : "rgba(255,255,255,0.5)",
                     }}
                   />
                 </div>
@@ -509,7 +534,7 @@ export default function CuponsPage() {
                   >
                     {coupon.code}
                   </p>
-                  <p className="text-xs text-white/40">{fmtDiscount(coupon)}</p>
+                  <p className="text-xs text-white/55">{fmtDiscount(coupon)}</p>
                 </div>
               </div>
 
@@ -517,7 +542,7 @@ export default function CuponsPage() {
               <div className="flex flex-wrap gap-2">
                 {coupon.maxUsesTotal !== null && (
                   <span
-                    className="rounded-lg px-2 py-0.5 text-[10px] text-white/40"
+                    className="rounded-lg px-2 py-0.5 text-xs text-white/55"
                     style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.08)",
@@ -528,7 +553,7 @@ export default function CuponsPage() {
                 )}
                 {coupon.maxUsesPerDay !== null && (
                   <span
-                    className="rounded-lg px-2 py-0.5 text-[10px] text-white/40"
+                    className="rounded-lg px-2 py-0.5 text-xs text-white/55"
                     style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.08)",
@@ -539,7 +564,7 @@ export default function CuponsPage() {
                 )}
                 {coupon.maxUsesPerUser !== null && (
                   <span
-                    className="rounded-lg px-2 py-0.5 text-[10px] text-white/40"
+                    className="rounded-lg px-2 py-0.5 text-xs text-white/55"
                     style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.08)",
@@ -550,7 +575,7 @@ export default function CuponsPage() {
                 )}
                 {coupon.minOrderValue > 0 && (
                   <span
-                    className="rounded-lg px-2 py-0.5 text-[10px] text-white/40"
+                    className="rounded-lg px-2 py-0.5 text-xs text-white/55"
                     style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.08)",
@@ -561,7 +586,7 @@ export default function CuponsPage() {
                 )}
                 {coupon.expiresAt && (
                   <span
-                    className="rounded-lg px-2 py-0.5 text-[10px] text-white/40"
+                    className="rounded-lg px-2 py-0.5 text-xs text-white/55"
                     style={{
                       background: "rgba(255,255,255,0.05)",
                       border: "1px solid rgba(255,255,255,0.08)",
@@ -574,7 +599,7 @@ export default function CuponsPage() {
 
               {/* Uso total (sem limite) */}
               {coupon.maxUsesTotal === null && (
-                <span className="text-xs text-white/25">
+                <span className="text-xs text-white/50">
                   {coupon.usageCount} uso{coupon.usageCount !== 1 ? "s" : ""}
                 </span>
               )}
@@ -584,7 +609,7 @@ export default function CuponsPage() {
                 <button
                   onClick={() => handleToggle(coupon)}
                   title={coupon.active ? "Desativar" : "Ativar"}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white"
                 >
                   {coupon.active ? (
                     <ToggleRight className="h-4 w-4 text-green-400" />
@@ -594,14 +619,14 @@ export default function CuponsPage() {
                 </button>
                 <button
                   onClick={() => startEdit(coupon)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => handleDelete(coupon)}
                   disabled={deleting === coupon.id}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
                 >
                   {deleting === coupon.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -205,7 +205,7 @@ function IngredientRow({
             </button>
             <button
               onClick={() => setEditing(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/5 hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>
@@ -257,14 +257,14 @@ function IngredientRow({
             </button>
             <button
               onClick={() => setEditing(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-white/5 hover:text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-white/5 hover:text-white"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/55 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
             >
               {deleting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -279,7 +279,7 @@ function IngredientRow({
         <tr style={{ borderBottom: "1px solid var(--mob-b1)", background: "rgba(34,197,94,0.04)" }}>
           <td colSpan={5} className="px-4 py-2.5">
             <div className="flex items-center gap-3">
-              <span className="text-xs text-white/40">
+              <span className="text-xs text-white/55">
                 Atual: <span className="font-semibold text-white">{ingredient.quantity}</span>{" "}
                 {ingredient.unit} → adicionar:
               </span>
@@ -304,7 +304,7 @@ function IngredientRow({
                   } as React.CSSProperties
                 }
               />
-              <span className="text-xs text-white/40">{ingredient.unit}</span>
+              <span className="text-xs text-white/55">{ingredient.unit}</span>
               {addQty && parseFloat(addQty) > 0 && (
                 <span className="text-xs text-green-400">
                   = {ingredient.quantity + parseFloat(addQty)} total
@@ -325,7 +325,7 @@ function IngredientRow({
               </button>
               <button
                 onClick={() => setReplenishing(false)}
-                className="text-xs text-white/30 transition hover:text-white"
+                className="text-xs text-white/50 transition hover:text-white"
               >
                 Cancelar
               </button>
@@ -383,8 +383,11 @@ function AddIngredientForm({
       <p className="mb-4 text-sm font-semibold text-white">Novo ingrediente</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
-          <label className="mb-1 block text-[11px] text-white/40">Nome *</label>
+          <label htmlFor="admin-estoque-campo-1" className="mb-1 block text-xs text-white/55">
+            Nome *
+          </label>
           <input
+            id="admin-estoque-campo-1"
             className={inputCls}
             style={inputStyle}
             placeholder="Ex: Carne bovina"
@@ -394,8 +397,11 @@ function AddIngredientForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] text-white/40">Unidade</label>
+          <label htmlFor="admin-estoque-campo-2" className="mb-1 block text-xs text-white/55">
+            Unidade
+          </label>
           <input
+            id="admin-estoque-campo-2"
             className={inputCls}
             style={inputStyle}
             placeholder="unidades"
@@ -404,8 +410,11 @@ function AddIngredientForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] text-white/40">Qtd. atual</label>
+          <label htmlFor="admin-estoque-campo-3" className="mb-1 block text-xs text-white/55">
+            Qtd. atual
+          </label>
           <input
+            id="admin-estoque-campo-3"
             type="number"
             min="0"
             step="0.01"
@@ -416,8 +425,11 @@ function AddIngredientForm({
           />
         </div>
         <div>
-          <label className="mb-1 block text-[11px] text-white/40">Qtd. mínima</label>
+          <label htmlFor="admin-estoque-campo-4" className="mb-1 block text-xs text-white/55">
+            Qtd. mínima
+          </label>
           <input
+            id="admin-estoque-campo-4"
             type="number"
             min="0"
             step="0.01"
@@ -438,7 +450,7 @@ function AddIngredientForm({
           type="submit"
           disabled={saving || !form.name.trim()}
           className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-40"
-          style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+          style={{ background: "var(--mob-cta-gradient)" }}
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           Salvar
@@ -446,7 +458,7 @@ function AddIngredientForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl px-4 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"
+          className="rounded-xl px-4 py-2 text-sm text-white/55 transition hover:bg-white/5 hover:text-white"
         >
           Cancelar
         </button>
@@ -491,7 +503,7 @@ function AdminSelect({
         style={{
           background: "rgba(0,0,0,0.35)",
           border: "1px solid rgba(255,255,255,0.12)",
-          color: selected ? "white" : "rgba(255,255,255,0.35)",
+          color: selected ? "white" : "rgba(255,255,255,0.6)",
         }}
       >
         <span className="truncate">{selected?.label ?? placeholder}</span>
@@ -515,7 +527,7 @@ function AdminSelect({
               onChange("")
               setOpen(false)
             }}
-            className="w-full px-3 py-2 text-left text-sm text-white/30 transition hover:bg-white/5"
+            className="w-full px-3 py-2 text-left text-sm text-white/50 transition hover:bg-white/5"
           >
             {placeholder}
           </button>
@@ -656,7 +668,7 @@ function FichaTecnica({
           </div>
 
           {draft.length === 0 && !loading && (
-            <p className="mb-4 text-xs text-white/30">
+            <p className="mb-4 text-xs text-white/50">
               Nenhum ingrediente vinculado. Produtos sem ficha técnica são sempre considerados em
               estoque.
             </p>
@@ -701,7 +713,7 @@ function FichaTecnica({
                 />
                 <button
                   onClick={() => removeLine(idx)}
-                  className="flex h-8 w-8 flex-none items-center justify-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400"
+                  className="flex h-8 w-8 flex-none items-center justify-center rounded-lg text-white/50 transition hover:bg-red-500/10 hover:text-red-400"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -721,7 +733,7 @@ function FichaTecnica({
               onClick={handleSave}
               disabled={saving}
               className="ml-auto flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-40"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -819,7 +831,7 @@ export default function EstoquePage() {
         >
           Controle de Estoque
         </h1>
-        <p className="text-sm text-white/40">
+        <p className="text-sm text-white/55">
           Gerencie ingredientes e fichas técnicas dos produtos
         </p>
       </div>
@@ -887,7 +899,7 @@ export default function EstoquePage() {
             <button
               onClick={() => setShowAddForm(true)}
               className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               <Plus className="h-4 w-4" /> Novo ingrediente
             </button>
@@ -912,7 +924,7 @@ export default function EstoquePage() {
             ) : ingredients.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-16 text-center">
                 <PackageSearch className="h-10 w-10 text-white/10" />
-                <p className="text-sm text-white/30">Nenhum ingrediente cadastrado</p>
+                <p className="text-sm text-white/50">Nenhum ingrediente cadastrado</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -924,16 +936,16 @@ export default function EstoquePage() {
                         background: "rgba(0,0,0,0.2)",
                       }}
                     >
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                         Nome
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                         Unidade
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                         Qtd. atual
                       </th>
-                      <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                         Qtd. mínima
                       </th>
                       <th className="w-20 px-4 py-3" />
@@ -978,7 +990,7 @@ export default function EstoquePage() {
           ) : movements.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-16 text-center">
               <History className="h-10 w-10 text-white/10" />
-              <p className="text-sm text-white/30">Nenhuma movimentação registrada</p>
+              <p className="text-sm text-white/50">Nenhuma movimentação registrada</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -990,19 +1002,19 @@ export default function EstoquePage() {
                       background: "rgba(0,0,0,0.2)",
                     }}
                   >
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                       Ingrediente
                     </th>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                       Tipo
                     </th>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                       Quantidade
                     </th>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                       Motivo
                     </th>
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold tracking-wider text-white/40 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-white/55 uppercase">
                       Data
                     </th>
                   </tr>
@@ -1029,7 +1041,7 @@ export default function EstoquePage() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            className="rounded-full px-2 py-0.5 text-xs font-semibold"
                             style={typeColor}
                           >
                             {typeLabel}
@@ -1043,7 +1055,7 @@ export default function EstoquePage() {
                           {m.delta} {m.ingredient.unit}
                         </td>
                         <td className="px-4 py-3 text-sm text-white/50">{m.reason ?? "—"}</td>
-                        <td className="px-4 py-3 text-sm text-white/40">
+                        <td className="px-4 py-3 text-sm text-white/55">
                           {new Date(m.createdAt).toLocaleString("pt-BR", {
                             day: "2-digit",
                             month: "2-digit",

@@ -1,7 +1,9 @@
 "use client"
 
 import { fmtPrice } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { Portal } from "@/components/portal"
+import { useDialog } from "@/lib/use-dialog"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import {
@@ -76,6 +78,8 @@ export default function AcompanharPage() {
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState("")
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const cancelDialogRef = useRef<HTMLDivElement>(null)
+  useDialog(showCancelConfirm, () => setShowCancelConfirm(false), cancelDialogRef)
   const [pushState, setPushState] = useState<
     "prompt" | "subscribed" | "denied" | "unsupported" | "loading"
   >("loading")
@@ -201,7 +205,7 @@ export default function AcompanharPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
         <XCircle className="h-12 w-12 text-red-400/50" />
-        <p className="text-sm text-white/40">Pedido não encontrado.</p>
+        <p className="text-sm text-white/55">Pedido não encontrado.</p>
         <Link href="/cardapio" className="text-sm text-orange-400 hover:underline">
           Ir para o cardápio
         </Link>
@@ -219,14 +223,15 @@ export default function AcompanharPage() {
   })
 
   return (
-    <main className="mx-auto max-w-lg px-6 py-10 pb-16">
+    <div className="mx-auto max-w-lg px-6 py-10 pb-16">
       {/* Header */}
       <div className="mb-8 flex items-center gap-3">
         <Link
           href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/50 transition hover:bg-white/5 hover:text-white"
+          aria-label="Voltar ao início"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft aria-hidden className="h-5 w-5" />
         </Link>
         <div>
           <p className="text-xs font-semibold tracking-[0.25em] text-orange-400 uppercase">
@@ -289,7 +294,7 @@ export default function AcompanharPage() {
           <Bell className="h-4 w-4 flex-none text-orange-400" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-orange-400">Ativar notificações</p>
-            <p className="text-xs text-white/40">Avise quando o pedido estiver pronto ou saindo.</p>
+            <p className="text-xs text-white/55">Avise quando o pedido estiver pronto ou saindo.</p>
           </div>
         </button>
       )}
@@ -304,7 +309,7 @@ export default function AcompanharPage() {
             <XCircle className="h-8 w-8 flex-none text-red-400" />
             <div>
               <p className="font-semibold text-red-400">Pedido cancelado</p>
-              <p className="text-xs text-white/30">Entre em contato caso tenha dúvidas.</p>
+              <p className="text-xs text-white/50">Entre em contato caso tenha dúvidas.</p>
             </div>
           </div>
         ) : (
@@ -328,7 +333,7 @@ export default function AcompanharPage() {
                     >
                       <step.icon
                         className="h-4 w-4"
-                        style={{ color: done || active ? "#f97316" : "rgba(255,255,255,0.2)" }}
+                        style={{ color: done || active ? "#f97316" : "rgba(255,255,255,0.45)" }}
                       />
                     </div>
                     {idx < visibleSteps.length - 1 && (
@@ -347,13 +352,13 @@ export default function AcompanharPage() {
                           ? "#f97316"
                           : done
                             ? "rgba(255,255,255,0.7)"
-                            : "rgba(255,255,255,0.2)",
+                            : "rgba(255,255,255,0.5)",
                       }}
                     >
                       {step.label}
                     </p>
                     {active && (
-                      <p className="flex items-center gap-1 text-xs text-white/30">
+                      <p className="flex items-center gap-1 text-xs text-white/50">
                         <Clock className="h-3 w-3" /> Atualizando em tempo real...
                       </p>
                     )}
@@ -370,7 +375,7 @@ export default function AcompanharPage() {
         className="mb-4 space-y-2 rounded-2xl p-5"
         style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
       >
-        <p className="mb-3 text-xs font-semibold tracking-widest text-white/30 uppercase">
+        <p className="mb-3 text-xs font-semibold tracking-widest text-white/50 uppercase">
           Itens do pedido
         </p>
         {order.items.map((item) => (
@@ -398,7 +403,7 @@ export default function AcompanharPage() {
       {/* Endereço */}
       {order.delivery && (
         <div
-          className="rounded-2xl p-4 text-sm text-white/40"
+          className="rounded-2xl p-4 text-sm text-white/55"
           style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
         >
           📍 {order.delivery.street}, {order.delivery.number} — {order.delivery.neighborhood}
@@ -407,58 +412,66 @@ export default function AcompanharPage() {
 
       {/* Modal confirmação de cancelamento */}
       {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowCancelConfirm(false)}
-          />
-          <div
-            className="relative w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            <div className="mb-4 flex justify-center">
-              <div
-                className="flex h-14 w-14 items-center justify-center rounded-full"
+        <Portal>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setShowCancelConfirm(false)}
+            />
+            <div
+              ref={cancelDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Cancelar pedido"
+              tabIndex={-1}
+              className="relative w-full max-w-sm rounded-2xl p-6 outline-none"
+              style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <div className="mb-4 flex justify-center">
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-full"
+                  style={{
+                    background: "rgba(239,68,68,0.12)",
+                    border: "2px solid rgba(239,68,68,0.3)",
+                  }}
+                >
+                  <XCircle className="h-7 w-7 text-red-400" />
+                </div>
+              </div>
+              <h3
+                className="mb-2 text-center text-white"
                 style={{
-                  background: "rgba(239,68,68,0.12)",
-                  border: "2px solid rgba(239,68,68,0.3)",
+                  fontFamily: "var(--font-bebas)",
+                  fontSize: "1.6rem",
+                  letterSpacing: "0.05em",
                 }}
               >
-                <XCircle className="h-7 w-7 text-red-400" />
+                Cancelar pedido?
+              </h3>
+              <p className="mb-6 text-center text-sm text-white/55">
+                Esta ação não pode ser desfeita. O pedido será cancelado imediatamente.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCancelConfirm(false)}
+                  className="flex-1 rounded-xl py-3 text-sm font-semibold text-white/50 transition hover:bg-white/5"
+                  style={{ border: "1px solid var(--mob-b1)" }}
+                >
+                  Voltar
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.97]"
+                  style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}
+                >
+                  Sim, cancelar
+                </button>
               </div>
             </div>
-            <h3
-              className="mb-2 text-center text-white"
-              style={{
-                fontFamily: "var(--font-bebas)",
-                fontSize: "1.6rem",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Cancelar pedido?
-            </h3>
-            <p className="mb-6 text-center text-sm text-white/40">
-              Esta ação não pode ser desfeita. O pedido será cancelado imediatamente.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowCancelConfirm(false)}
-                className="flex-1 rounded-xl py-3 text-sm font-semibold text-white/50 transition hover:bg-white/5"
-                style={{ border: "1px solid var(--mob-b1)" }}
-              >
-                Voltar
-              </button>
-              <button
-                onClick={handleCancel}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.97]"
-                style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}
-              >
-                Sim, cancelar
-              </button>
-            </div>
           </div>
-        </div>
+        </Portal>
       )}
-    </main>
+    </div>
   )
 }

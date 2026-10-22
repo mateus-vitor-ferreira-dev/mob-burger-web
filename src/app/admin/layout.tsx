@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -26,6 +26,7 @@ import {
   ContactRound,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
+import { useDialog } from "@/lib/use-dialog"
 import { getPushState, subscribeStaffPush, unsubscribeStaffPush } from "@/lib/push"
 
 const SVG_SHAPE =
@@ -64,6 +65,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { staff, token, logout, _hasHydrated } = useStaff()
   const [mounted, setMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const mobileMenuRef = useRef<HTMLElement>(null)
+  // Menu mobile: Esc fecha, foco fica no menu e volta ao botão ao fechar
+  useDialog(sidebarOpen, () => setSidebarOpen(false), mobileMenuRef)
   const [pushState, setPushState] = useState<"unsupported" | "denied" | "subscribed" | "prompt">(
     "prompt",
   )
@@ -160,7 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           />
           <div>
             <p className="text-xs font-bold tracking-widest text-white">M.O.B</p>
-            <p className="text-[10px] text-white/30">Admin</p>
+            <p className="text-xs text-white/50">Admin</p>
           </div>
         </div>
 
@@ -173,6 +177,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
                 style={
                   active
@@ -180,7 +185,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     : { color: "var(--mob-sidebar-inactive)" }
                 }
               >
-                <item.icon className="h-4 w-4 flex-none" />
+                <item.icon aria-hidden className="h-4 w-4 flex-none" />
                 {item.label}
               </Link>
             )
@@ -191,11 +196,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="space-y-1 p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="mb-2 px-3">
             <p className="truncate text-xs font-medium text-white/70">{staff?.email}</p>
-            <p className="text-[10px] text-white/30">{staff?.role}</p>
+            <p className="text-xs text-white/50">{staff?.role}</p>
           </div>
           <Link
             href="/"
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/55 transition hover:bg-white/5 hover:text-white"
           >
             <ExternalLink className="h-4 w-4" /> Ver site
           </Link>
@@ -211,7 +216,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     : "Ativar notificações push"
               }
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition hover:bg-white/5 disabled:opacity-40"
-              style={{ color: pushState === "subscribed" ? "#f97316" : "rgba(255,255,255,0.4)" }}
+              style={{ color: pushState === "subscribed" ? "#f97316" : "rgba(255,255,255,0.6)" }}
             >
               {pushState === "subscribed" ? (
                 <Bell className="h-4 w-4" />
@@ -223,7 +228,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           )}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/55 transition hover:bg-white/5 hover:text-white"
           >
             <LogOut className="h-4 w-4" /> Sair
           </button>
@@ -250,19 +255,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span className="text-sm font-bold text-white">Admin</span>
         </div>
         <button
+          type="button"
           onClick={() => setSidebarOpen((v) => !v)}
-          className="text-white/60 hover:text-white"
+          aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={sidebarOpen}
+          aria-controls="admin-menu-mobile"
+          className="-mr-2 flex h-11 w-11 items-center justify-center rounded-lg text-white/70 hover:text-white"
         >
-          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {sidebarOpen ? (
+            <X aria-hidden className="h-5 w-5" />
+          ) : (
+            <Menu aria-hidden className="h-5 w-5" />
+          )}
         </button>
       </div>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-20 lg:hidden" onClick={() => setSidebarOpen(false)}>
-          <div className="absolute inset-0 bg-black/60" />
+          <div aria-hidden className="absolute inset-0 bg-black/60" />
           <aside
-            className="mob-on-dark absolute top-14 bottom-0 left-0 flex w-56 flex-col border-r"
+            ref={mobileMenuRef}
+            id="admin-menu-mobile"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu do painel"
+            className="mob-on-dark absolute top-14 bottom-0 left-0 flex w-64 max-w-[85vw] flex-col overflow-y-auto border-r"
             style={{
               background: "var(--mob-admin-sidebar-solid)",
               borderColor: "rgba(255,255,255,0.08)",
@@ -278,14 +296,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     key={item.href}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
+                    aria-current={active ? "page" : undefined}
+                    className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
                     style={
                       active
                         ? { background: "rgba(249,115,22,0.15)", color: "#f97316" }
                         : { color: "var(--mob-sidebar-inactive)" }
                     }
                   >
-                    <item.icon className="h-4 w-4 flex-none" />
+                    <item.icon aria-hidden className="h-4 w-4 flex-none" />
                     {item.label}
                   </Link>
                 )
@@ -294,7 +313,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/40 transition hover:bg-white/5 hover:text-white"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/55 transition hover:bg-white/5 hover:text-white"
               >
                 <LogOut className="h-4 w-4" /> Sair
               </button>
@@ -304,7 +323,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Main content */}
-      <main className="relative z-10 flex-1 overflow-auto pt-14 lg:pt-0">{children}</main>
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="relative z-10 flex-1 overflow-auto pt-14 lg:pt-0"
+      >
+        {children}
+      </main>
     </div>
   )
 }
