@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Utensils, ShoppingBag, MapPin } from "lucide-react"
 import Image from "next/image"
 import { useMenu } from "@/lib/use-menu"
@@ -42,8 +42,7 @@ const PLACEHOLDER_BG: Record<string, string> = {
   chicken: "radial-gradient(ellipse at 30% 80%, rgba(200,150,0,0.48) 0%, transparent 60%), #0f0d06",
 }
 
-function getItemBg(item: PanelItem): string {
-  if (item.img) return `url("${item.img}") center/cover no-repeat`
+function getPlaceholderBg(item: PanelItem): string {
   return PLACEHOLDER_BG[item.cat] ?? "#0a0a0a"
 }
 
@@ -80,7 +79,7 @@ function FerrisWheel({
         if (Math.abs(d) > 2) return null
         const slot = SLOTS.find((s) => s.offset === d)!
         const isActive = d === 0
-        const top = WHEEL_H / 2 + d * ITEM_H - ITEM_H / 2
+        const y = d * ITEM_H
 
         return (
           <button
@@ -89,26 +88,26 @@ function FerrisWheel({
             onClick={() => !isActive && onSelect(i)}
             className="absolute right-0 left-0 flex items-center gap-3.5"
             style={{
-              top,
-              transform: `scale(${slot.scale})`,
+              // Só transform e opacity animam: a placa de vídeo faz sem recalcular o layout
+              top: WHEEL_H / 2 - ITEM_H / 2,
+              transform: `translateY(${y}px) scale(${slot.scale})`,
               opacity: slot.opacity,
               zIndex: isActive ? 5 : 4 - Math.abs(d),
               transition:
-                "transform 0.55s cubic-bezier(.4,0,.2,1), opacity 0.55s cubic-bezier(.4,0,.2,1), top 0.55s cubic-bezier(.4,0,.2,1)",
-              padding: isActive ? "10px 18px" : "8px 14px",
+                "transform 0.55s cubic-bezier(.4,0,.2,1), opacity 0.55s cubic-bezier(.4,0,.2,1)",
+              willChange: "transform, opacity",
+              padding: "10px 18px",
               background: isActive ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.12)",
               border: `1.5px solid ${isActive ? "rgba(255,255,255,0.35)" : "transparent"}`,
               borderRadius: "12px",
-              backdropFilter: isActive ? "blur(4px)" : "none",
               cursor: isActive ? "default" : "pointer",
               transformOrigin: "center center",
             }}
           >
             <span
               style={{
-                fontSize: isActive ? "28px" : "20px",
+                fontSize: "28px",
                 lineHeight: 1,
-                transition: "font-size 0.4s ease",
                 flexShrink: 0,
               }}
             >
@@ -117,10 +116,9 @@ function FerrisWheel({
             <div className="flex flex-col gap-0.5">
               <span
                 style={{
-                  fontSize: isActive ? "1rem" : "0.875rem",
+                  fontSize: "1rem",
                   fontWeight: isActive ? 700 : 500,
                   color: "#fff",
-                  transition: "font-size 0.4s ease",
                   textShadow: "0 1px 6px rgba(0,0,0,0.45)",
                 }}
               >
@@ -145,26 +143,46 @@ function FerrisWheel({
   )
 }
 
+// ─── Camada de fundo ──────────────────────────────────────────────────────────
+
+function CamadaFundo({ item, visivel }: { item: PanelItem | null; visivel: boolean }) {
+  return (
+    <div
+      className="absolute inset-0 z-0 transition-opacity duration-[900ms] ease-in-out"
+      style={{
+        background: item ? getPlaceholderBg(item) : "#0a0a0a",
+        opacity: visivel ? 1 : 0,
+      }}
+    >
+      {item?.img && (
+        <Image src={item.img} alt="" fill sizes="55vw" quality={60} className="object-cover" />
+      )}
+    </div>
+  )
+}
+
 // ─── Left Panel ───────────────────────────────────────────────────────────────
 
 export function AuthLeftPanel() {
   const { categories } = useMenu()
 
-  // Todos os produtos exceto combos, como painel de itens da roda
-  const panelItems: PanelItem[] = categories
-    .filter((c) => c.slug !== "combos")
-    .flatMap((c) =>
-      c.products.map((p) => ({
-        id: p.id,
-        name: p.name.replace(/^Mob /i, ""),
-        img: p.imageUrl,
-        cat: c.slug,
-        price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
-      })),
-    )
-    .slice(0, 20) // máximo 20 itens na roda
-
-  const items = panelItems.length > 0 ? panelItems : FALLBACK_ITEMS
+  // Todos os produtos exceto combos, como painel de itens da roda (no máximo 20).
+  // Memorizado: antes era recriado a cada renderização e disparava os efeitos à toa.
+  const items = useMemo(() => {
+    const panelItems: PanelItem[] = categories
+      .filter((c) => c.slug !== "combos")
+      .flatMap((c) =>
+        c.products.map((p) => ({
+          id: p.id,
+          name: p.name.replace(/^Mob /i, ""),
+          img: p.imageUrl,
+          cat: c.slug,
+          price: `R$ ${p.price.toFixed(2).replace(".", ",")}`,
+        })),
+      )
+      .slice(0, 20)
+    return panelItems.length > 0 ? panelItems : FALLBACK_ITEMS
+  }, [categories])
 
   const comboCount = categories.find((c) => c.slug === "combos")?.products.length ?? 0
   const sobremesaCount = categories.find((c) => c.slug === "sobremesas")?.products.length ?? 0
@@ -179,25 +197,30 @@ export function AuthLeftPanel() {
   ]
 
   const [activeIdx, setActiveIdx] = useState(0)
-  const [layers, setLayers] = useState<{ a: string | null; b: string | null; front: "a" | "b" }>({
-    a: getItemBg(items[0]),
-    b: null,
-    front: "a",
-  })
-  const prevIdxRef = useRef(-1)
+  // Duas camadas de fundo que se alternam: a da frente aparece, a de trás some
+  const [layers, setLayers] = useState<{
+    a: PanelItem | null
+    b: PanelItem | null
+    front: "a" | "b"
+  }>({ a: items[0] ?? null, b: null, front: "a" })
 
   useEffect(() => {
+    // Quem pede menos movimento no sistema não vê a roda girar sozinha
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
     const t = setInterval(() => setActiveIdx((i) => (i + 1) % items.length), WHEEL_INTERVAL)
     return () => clearInterval(t)
   }, [items.length])
 
   useEffect(() => {
-    if (prevIdxRef.current === activeIdx) return
-    prevIdxRef.current = activeIdx
-    const bg = getItemBg(items[activeIdx] ?? items[0])
-    setLayers((prev) =>
-      prev.front === "a" ? { a: prev.a, b: bg, front: "b" } : { a: bg, b: prev.b, front: "a" },
-    )
+    const item = items[activeIdx] ?? items[0]
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLayers((prev) => {
+      const atual = prev.front === "a" ? prev.a : prev.b
+      if (atual?.id === item?.id) return prev
+      return prev.front === "a"
+        ? { a: prev.a, b: item, front: "b" }
+        : { a: item, b: prev.b, front: "a" }
+    })
   }, [activeIdx, items])
 
   return (
@@ -205,15 +228,9 @@ export function AuthLeftPanel() {
       className="mob-on-dark relative hidden flex-col justify-between overflow-hidden p-12 lg:flex lg:w-[55%]"
       style={{ background: "#0a0a0a" }}
     >
-      {/* Background crossfade */}
-      <div
-        className="absolute inset-0 z-0 transition-opacity duration-[900ms] ease-in-out"
-        style={{ background: layers.a ?? "#0a0a0a", opacity: layers.front === "a" ? 1 : 0 }}
-      />
-      <div
-        className="absolute inset-0 z-0 transition-opacity duration-[900ms] ease-in-out"
-        style={{ background: layers.b ?? "#0a0a0a", opacity: layers.front === "b" ? 1 : 0 }}
-      />
+      {/* Background crossfade: imagem otimizada pelo Next, no tamanho do painel */}
+      <CamadaFundo item={layers.a} visivel={layers.front === "a"} />
+      <CamadaFundo item={layers.b} visivel={layers.front === "b"} />
       <div
         className="absolute inset-0 z-[1]"
         style={{
@@ -266,7 +283,7 @@ export function AuthLeftPanel() {
             <div
               key={label}
               className="flex-1 rounded-xl border border-white/[0.18] p-3"
-              style={{ background: "rgba(255,255,255,0.10)", backdropFilter: "blur(6px)" }}
+              style={{ background: "rgba(0,0,0,0.38)" }}
             >
               <p className="mb-0.5 text-xl leading-none font-bold text-white">{value}</p>
               <p className="text-xs leading-snug text-white/65">{label}</p>
