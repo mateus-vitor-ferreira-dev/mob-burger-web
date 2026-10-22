@@ -10,7 +10,7 @@
   // Valores de servidor que não são segredo. Os segredos (CLOUDINARY_API_KEY,
   // CLOUDINARY_API_SECRET e JWT_SECRET) vão com `wrangler secret put`.
   "vars": {
-    "API_URL": "https://mob-burger-api-production.up.railway.app",
+    "API_URL": "https://api-mobburger.digitalcodexa.com",
     "CLOUDINARY_CLOUD_NAME": "dfow3sik3",
   },
   "assets": {
