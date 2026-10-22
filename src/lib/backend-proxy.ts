@@ -61,3 +61,29 @@ export async function proxyToBackend(request: NextRequest, segments: string[]) {
   }
   return resposta
 }
+
+/**
+ * Cardápio para a página do servidor: usa a mesma entrada do cache da borda que o
+ * proxy de /api/backend/menu. Se a API demorar ou falhar, devolve null e a tela
+ * busca sozinha no navegador, como antes.
+ */
+export async function menuDoServidor<T>(): Promise<T[] | null> {
+  const endpoint = `${API_URL}/api/menu`
+  const cache = cacheDaBorda()
+  const chave = new Request(endpoint)
+
+  try {
+    let res = cache ? await cache.match(chave).catch(() => undefined) : undefined
+    if (!res) {
+      const api = await fetch(endpoint, { signal: AbortSignal.timeout(2500) })
+      if (!api.ok) return null
+      res = NextResponse.json(await api.json())
+      res.headers.set("Cache-Control", `public, max-age=${CACHE_PUBLICO_SEGUNDOS.menu}`)
+      await cache?.put(chave, res.clone()).catch(() => undefined)
+    }
+    const json = (await res.json()) as { data?: T[] }
+    return json.data ?? null
+  } catch {
+    return null
+  }
+}
