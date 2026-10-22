@@ -5,6 +5,7 @@ import { CartButton } from "@/components/cart-button"
 import { UserMenu } from "@/components/user-menu"
 import { NavLinks } from "@/components/nav-links"
 import { StoreStatusBanner } from "@/components/store-status-banner"
+import { HeaderHeight } from "@/components/header-height"
 
 export const metadata: Metadata = {
   title: { default: "M.O.B Burger", template: "%s | M.O.B Burger" },
@@ -58,6 +59,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
 
       {/* ── Header sticky ── */}
       <header
+        id="app-header"
         className="sticky top-0 z-50 border-b border-white/[0.07]"
         style={{
           background: "var(--mob-header-bg)",
@@ -65,11 +67,11 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
           WebkitBackdropFilter: "blur(20px)",
         }}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-6">
-          <Link href="/" className="flex shrink-0 items-center">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-4 sm:gap-4 sm:px-6">
+          <Link href="/" aria-label="M.O.B Burger — início" className="flex shrink-0 items-center">
             <Image
               src="/mob-logo.png"
-              alt="M.O.B"
+              alt=""
               width={36}
               height={36}
               className="rounded-lg object-cover"
@@ -86,14 +88,17 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
 
         {/* Banner de loja fechada — aparece dentro do header sticky */}
         <StoreStatusBanner />
+        <HeaderHeight targetId="app-header" />
       </header>
 
       {/* ── Conteúdo ── */}
-      <div className="relative z-10">{children}</div>
+      <main id="conteudo" tabIndex={-1} className="relative z-10 outline-none">
+        {children}
+      </main>
 
       {/* ── Footer ── */}
       <footer className="relative z-10 border-t border-white/5 px-6 py-8 text-center">
-        <p className="text-xs text-white/20">
+        <p className="text-xs text-white/50">
           © {new Date().getFullYear()} M.O.B — Burgers Pack Co. Todos os direitos reservados.
         </p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
@@ -103,7 +108,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
                 href={`https://wa.me/${WHATSAPP}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs transition hover:text-white/50"
+                className="inline-block py-2 text-xs transition hover:text-white/80"
                 style={{ color: "var(--mob-text-tertiary)" }}
               >
                 WhatsApp
@@ -113,7 +118,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
           )}
           <a
             href={`mailto:${CONTACT_EMAIL}`}
-            className="text-xs transition hover:text-white/50"
+            className="inline-block py-2 text-xs transition hover:text-white/80"
             style={{ color: "var(--mob-text-tertiary)" }}
           >
             {CONTACT_EMAIL}
@@ -121,7 +126,7 @@ export default function MenuLayout({ children }: { children: React.ReactNode }) 
           <span className="text-white/10">·</span>
           <Link
             href="/privacidade"
-            className="text-xs transition hover:text-white/40"
+            className="inline-block py-2 text-xs transition hover:text-white/80"
             style={{ color: "var(--mob-text-tertiary)" }}
           >
             Privacidade & Termos

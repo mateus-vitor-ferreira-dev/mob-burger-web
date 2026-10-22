@@ -10,7 +10,7 @@ const INPUT =
   "w-full rounded-xl px-4 py-3 text-sm text-white " +
   "bg-white/[0.07] border border-white/15 " +
   "focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/60 " +
-  "transition-all placeholder:text-white/25 disabled:opacity-60 pr-11"
+  "transition-all placeholder:text-white/45 disabled:opacity-60 pr-11"
 
 function RedefinirSenhaContent() {
   const searchParams = useSearchParams()
@@ -30,7 +30,10 @@ function RedefinirSenhaContent() {
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="text-center">
           <p className="mb-4 text-sm text-white/50">Link inválido ou expirado.</p>
-          <Link href="/login" className="text-sm font-medium text-orange-500 hover:text-orange-400">
+          <Link
+            href="/login"
+            className="inline-block py-3 text-sm font-medium text-orange-500 hover:text-orange-400"
+          >
             Voltar para o login
           </Link>
         </div>
@@ -88,11 +91,15 @@ function RedefinirSenhaContent() {
     <div className="flex min-h-screen">
       <AuthLeftPanel />
 
-      <main className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12">
+      <main
+        id="conteudo"
+        tabIndex={-1}
+        className="flex flex-1 items-center justify-center overflow-y-auto p-6 lg:p-12"
+      >
         <div className="w-full max-w-[400px] py-8">
           <Link
             href="/login"
-            className="mb-8 flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/70"
+            className="mb-6 -ml-1 flex min-h-11 items-center gap-1.5 px-1 text-xs text-white/60 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar para o login
           </Link>
@@ -128,9 +135,15 @@ function RedefinirSenhaContent() {
               },
             ].map(({ label, value, set, show, toggle }) => (
               <div key={label}>
-                <label className="mb-1.5 block text-xs font-medium text-white/60">{label}</label>
+                <label
+                  htmlFor={`auth-redefinir-senha-campo-1-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                  className="mb-1.5 block text-xs font-medium text-white/60"
+                >
+                  {label}
+                </label>
                 <div className="relative">
                   <input
+                    id={`auth-redefinir-senha-campo-1-${label.toLowerCase().replace(/\s+/g, "-")}`}
                     type={show ? "text" : "password"}
                     className={INPUT}
                     value={value}
@@ -139,10 +152,11 @@ function RedefinirSenhaContent() {
                     disabled={loading}
                   />
                   <button
+                    aria-label={show ? "Ocultar senha" : "Mostrar senha"}
+                    aria-pressed={show}
                     type="button"
                     onClick={toggle}
-                    className="absolute top-3 right-3 text-white/30 hover:text-white/70"
-                    aria-label="Alternar visibilidade"
+                    className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
                   >
                     {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -167,7 +181,7 @@ function RedefinirSenhaContent() {
               disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-70"
               style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
+                background: "var(--mob-cta-gradient)",
                 boxShadow: "0 4px 16px rgba(249,115,22,0.28)",
               }}
             >

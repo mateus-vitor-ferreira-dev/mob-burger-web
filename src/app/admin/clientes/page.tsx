@@ -73,7 +73,9 @@ export default function ClientesPage() {
       <div className="relative mb-5 max-w-md">
         <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/40" />
         <input
-          className="w-full rounded-xl py-2.5 pr-9 pl-9 text-sm text-white placeholder-white/30 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/60"
+          type="search"
+          aria-label="Buscar cliente por nome, telefone ou e-mail"
+          className="w-full rounded-xl py-2.5 pr-9 pl-9 text-sm text-white placeholder-white/45 ring-1 ring-white/10 transition outline-none focus:ring-orange-500/60"
           style={{ background: "rgba(0,0,0,0.35)" }}
           placeholder="Buscar por nome, telefone ou e-mail..."
           value={query}
@@ -82,17 +84,19 @@ export default function ClientesPage() {
         />
         {query && (
           <button
+            type="button"
             onClick={() => setQuery("")}
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-white/30 hover:text-white"
+            aria-label="Limpar busca"
+            className="absolute top-1/2 right-1 flex h-9 w-9 -translate-y-1/2 items-center justify-center text-white/60 hover:text-white"
           >
-            <X className="h-3.5 w-3.5" />
+            <X aria-hidden className="h-4 w-4" />
           </button>
         )}
       </div>
 
       {/* Contagem */}
       {!loading && customers.length > 0 && (
-        <p className="mb-3 text-xs text-white/25">
+        <p className="mb-3 text-xs text-white/50">
           {customers.length} {customers.length === 1 ? "cliente" : "clientes"} encontrado
           {customers.length !== 1 ? "s" : ""}
         </p>
@@ -110,7 +114,7 @@ export default function ClientesPage() {
           ))}
         </div>
       ) : customers.length === 0 ? (
-        <div className="py-16 text-center text-sm text-white/25">
+        <div className="py-16 text-center text-sm text-white/50">
           {debouncedQuery ? "Nenhum cliente encontrado." : "Digite para buscar clientes."}
         </div>
       ) : (
@@ -142,7 +146,7 @@ export default function ClientesPage() {
                   <div className="flex flex-wrap gap-x-4 gap-y-1">
                     <a
                       href={`mailto:${c.email}`}
-                      className="inline-flex items-center gap-1 text-[11px] text-white/40 transition hover:text-white"
+                      className="inline-flex items-center gap-1 text-xs text-white/55 transition hover:text-white"
                     >
                       <Mail className="h-3 w-3" />
                       {c.email}
@@ -153,13 +157,13 @@ export default function ClientesPage() {
                         href={`https://wa.me/55${c.phone.replace(/\D/g, "")}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] text-green-400/80 transition hover:text-green-400"
+                        className="inline-flex items-center gap-1 text-xs text-green-400/80 transition hover:text-green-400"
                       >
                         <Phone className="h-3 w-3" />
                         {c.phone}
                       </a>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-white/20">
+                      <span className="inline-flex items-center gap-1 text-xs text-white/50">
                         <Phone className="h-3 w-3" />
                         Sem telefone
                       </span>
@@ -167,7 +171,7 @@ export default function ClientesPage() {
                   </div>
 
                   {c.defaultAddress && (
-                    <p className="text-[11px] text-white/25">
+                    <p className="text-xs text-white/50">
                       📍{" "}
                       {[
                         c.defaultAddress.street,
@@ -184,21 +188,21 @@ export default function ClientesPage() {
                 {/* Badges */}
                 <div className="flex flex-col items-end gap-1.5">
                   <div
-                    className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                    className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                     style={{ background: "rgba(249,115,22,0.12)", color: "#f97316" }}
                   >
                     <ShoppingBag className="h-3 w-3" />
                     {c._count.orders} {c._count.orders === 1 ? "pedido" : "pedidos"}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[10px] text-white/20">
+                  <div className="flex items-center gap-1 text-xs text-white/50">
                     <Calendar className="h-3 w-3" />
                     desde {fmtDate(c.createdAt)}
                   </div>
 
                   {c.googleId && (
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-medium text-white/30"
+                      className="rounded-full px-2 py-0.5 text-xs font-medium text-white/50"
                       style={{ background: "rgba(255,255,255,0.05)" }}
                     >
                       Google

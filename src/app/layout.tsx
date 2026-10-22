@@ -79,6 +79,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
+        <a href="#conteudo" className="skip-link">
+          Pular para o conteúdo
+        </a>
         <Providers>
           {children}
           <Toaster richColors position="top-right" />

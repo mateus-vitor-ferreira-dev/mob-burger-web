@@ -47,7 +47,7 @@ function maskCep(v: string) {
 }
 
 const inputCls =
-  "w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none ring-1 ring-white/10 transition focus:ring-orange-500/50"
+  "w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/45 outline-none ring-1 ring-white/10 transition focus:ring-orange-500/50"
 
 type FeedbackState = { type: "success" | "error"; message: string } | null
 
@@ -111,15 +111,18 @@ function ProfileCard() {
     >
       <div className="flex items-center gap-2">
         <User className="h-4 w-4 text-orange-400" />
-        <h2 className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+        <h2 className="text-sm font-semibold tracking-widest text-white/55 uppercase">
           Dados pessoais
         </h2>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="mb-1.5 block text-xs text-white/40">Nome completo</label>
+          <label htmlFor="menu-perfil-campo-1" className="mb-1.5 block text-xs text-white/55">
+            Nome completo
+          </label>
           <input
+            id="menu-perfil-campo-1"
             className={inputCls}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -127,18 +130,24 @@ function ProfileCard() {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs text-white/40">E-mail</label>
+          <label htmlFor="menu-perfil-campo-2" className="mb-1.5 block text-xs text-white/55">
+            E-mail
+          </label>
           <input
+            id="menu-perfil-campo-2"
             className={`${inputCls} cursor-not-allowed opacity-40`}
             value={customer?.email ?? ""}
             readOnly
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs text-white/40">Telefone</label>
+          <label htmlFor="menu-perfil-campo-3" className="mb-1.5 block text-xs text-white/55">
+            Telefone
+          </label>
           <div className="relative">
             <Phone className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-white/20" />
             <input
+              id="menu-perfil-campo-3"
               className={`${inputCls} pl-9`}
               value={phone}
               inputMode="tel"
@@ -156,7 +165,7 @@ function ProfileCard() {
         disabled={saving}
         className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
         style={{
-          background: "linear-gradient(135deg, #f97316, #ea580c)",
+          background: "var(--mob-cta-gradient)",
           boxShadow: "0 4px 16px rgba(249,115,22,0.3)",
         }}
       >
@@ -240,7 +249,7 @@ function AddressCard() {
     >
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-orange-400" />
-        <h2 className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+        <h2 className="text-sm font-semibold tracking-widest text-white/55 uppercase">
           Endereço de entrega padrão
         </h2>
       </div>
@@ -248,8 +257,11 @@ function AddressCard() {
       <div className="space-y-3">
         <div className="flex gap-2">
           <div className="flex-1">
-            <label className="mb-1.5 block text-xs text-white/40">CEP</label>
+            <label htmlFor="menu-perfil-campo-4" className="mb-1.5 block text-xs text-white/55">
+              CEP
+            </label>
             <input
+              id="menu-perfil-campo-4"
               className={inputCls}
               value={cep}
               inputMode="numeric"
@@ -280,8 +292,11 @@ function AddressCard() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs text-white/40">Rua / Avenida</label>
+          <label htmlFor="menu-perfil-campo-5" className="mb-1.5 block text-xs text-white/55">
+            Rua / Avenida
+          </label>
           <input
+            id="menu-perfil-campo-5"
             className={inputCls}
             value={street}
             onChange={(e) => setStreet(e.target.value)}
@@ -291,8 +306,11 @@ function AddressCard() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">Número</label>
+            <label htmlFor="menu-perfil-campo-6" className="mb-1.5 block text-xs text-white/55">
+              Número
+            </label>
             <input
+              id="menu-perfil-campo-6"
               ref={numberRef}
               className={inputCls}
               value={number}
@@ -301,8 +319,11 @@ function AddressCard() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">Complemento</label>
+            <label htmlFor="menu-perfil-campo-7" className="mb-1.5 block text-xs text-white/55">
+              Complemento
+            </label>
             <input
+              id="menu-perfil-campo-7"
               className={inputCls}
               value={complement}
               onChange={(e) => setComplement(e.target.value)}
@@ -312,8 +333,11 @@ function AddressCard() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs text-white/40">Bairro</label>
+          <label htmlFor="menu-perfil-campo-8" className="mb-1.5 block text-xs text-white/55">
+            Bairro
+          </label>
           <input
+            id="menu-perfil-campo-8"
             className={inputCls}
             value={neighborhood}
             onChange={(e) => setNeighborhood(e.target.value)}
@@ -323,8 +347,11 @@ function AddressCard() {
 
         <div className="grid grid-cols-[1fr_80px] gap-3">
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">Cidade</label>
+            <label htmlFor="menu-perfil-campo-9" className="mb-1.5 block text-xs text-white/55">
+              Cidade
+            </label>
             <input
+              id="menu-perfil-campo-9"
               className={inputCls}
               value={city}
               onChange={(e) => setCity(e.target.value)}
@@ -332,8 +359,11 @@ function AddressCard() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">UF</label>
+            <label htmlFor="menu-perfil-campo-10" className="mb-1.5 block text-xs text-white/55">
+              UF
+            </label>
             <input
+              id="menu-perfil-campo-10"
               className={inputCls}
               value={state}
               maxLength={2}
@@ -351,7 +381,7 @@ function AddressCard() {
         disabled={saving}
         className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
         style={{
-          background: "linear-gradient(135deg, #f97316, #ea580c)",
+          background: "var(--mob-cta-gradient)",
           boxShadow: "0 4px 16px rgba(249,115,22,0.3)",
         }}
       >
@@ -395,9 +425,9 @@ function PasswordCard() {
       >
         <div className="mb-3 flex items-center gap-2">
           <Lock className="h-4 w-4 text-orange-400" />
-          <h2 className="text-sm font-semibold tracking-widest text-white/40 uppercase">Senha</h2>
+          <h2 className="text-sm font-semibold tracking-widest text-white/55 uppercase">Senha</h2>
         </div>
-        <p className="text-sm text-white/30">
+        <p className="text-sm text-white/50">
           Sua conta está vinculada ao Google. A senha é gerenciada pelo Google.
         </p>
       </div>
@@ -471,20 +501,23 @@ function PasswordCard() {
     >
       <div className="flex items-center gap-2">
         <Lock className="h-4 w-4 text-orange-400" />
-        <h2 className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+        <h2 className="text-sm font-semibold tracking-widest text-white/55 uppercase">
           Alterar senha
         </h2>
       </div>
 
       {step === "verify" ? (
         <div className="space-y-3">
-          <p className="text-xs text-white/30">
+          <p className="text-xs text-white/50">
             Para sua segurança, confirme sua senha atual antes de criar uma nova.
           </p>
           <div>
-            <label className="mb-1.5 block text-xs text-white/40">Senha atual</label>
+            <label htmlFor="menu-perfil-campo-11" className="mb-1.5 block text-xs text-white/55">
+              Senha atual
+            </label>
             <div className="relative">
               <input
+                id="menu-perfil-campo-11"
                 type={showCurrent ? "text" : "password"}
                 className={`${inputCls} pr-10`}
                 value={current}
@@ -493,9 +526,11 @@ function PasswordCard() {
                 onKeyDown={(e) => e.key === "Enter" && handleVerify()}
               />
               <button
+                aria-label={showCurrent ? "Ocultar senha" : "Mostrar senha"}
+                aria-pressed={showCurrent}
                 type="button"
                 onClick={() => setShowCurrent((v) => !v)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-white/30 hover:text-white"
+                className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
               >
                 {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -537,9 +572,15 @@ function PasswordCard() {
             },
           ].map(({ label, value, set, show, toggle }) => (
             <div key={label}>
-              <label className="mb-1.5 block text-xs text-white/40">{label}</label>
+              <label
+                htmlFor={`menu-perfil-campo-12-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                className="mb-1.5 block text-xs text-white/55"
+              >
+                {label}
+              </label>
               <div className="relative">
                 <input
+                  id={`menu-perfil-campo-12-${label.toLowerCase().replace(/\s+/g, "-")}`}
                   type={show ? "text" : "password"}
                   className={`${inputCls} pr-10`}
                   value={value}
@@ -547,9 +588,11 @@ function PasswordCard() {
                   placeholder="••••••••"
                 />
                 <button
+                  aria-label={show ? "Ocultar senha" : "Mostrar senha"}
+                  aria-pressed={show}
                   type="button"
                   onClick={toggle}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-white/30 hover:text-white"
+                  className="absolute top-1/2 right-1 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-white/60 hover:text-white"
                 >
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -563,7 +606,7 @@ function PasswordCard() {
                 setStep("verify")
                 setFeedback(null)
               }}
-              className="rounded-xl px-4 py-3 text-sm text-white/40 transition hover:bg-white/5"
+              className="rounded-xl px-4 py-3 text-sm text-white/55 transition hover:bg-white/5"
             >
               Cancelar
             </button>
@@ -571,7 +614,7 @@ function PasswordCard() {
               onClick={handleChange}
               disabled={loading || !newPwd || !confirm}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white transition active:scale-[0.98] disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -673,7 +716,7 @@ function OrderHistoryCard() {
     >
       <div className="flex items-center gap-2">
         <ShoppingBag className="h-4 w-4 text-orange-400" />
-        <h2 className="text-sm font-semibold tracking-widest text-white/40 uppercase">
+        <h2 className="text-sm font-semibold tracking-widest text-white/55 uppercase">
           Meus pedidos
         </h2>
       </div>
@@ -683,7 +726,7 @@ function OrderHistoryCard() {
           <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
         </div>
       ) : orders.length === 0 ? (
-        <p className="py-4 text-center text-sm text-white/25">Nenhum pedido ainda.</p>
+        <p className="py-4 text-center text-sm text-white/50">Nenhum pedido ainda.</p>
       ) : (
         <div className="space-y-2">
           {orders.map((order) => (
@@ -734,14 +777,14 @@ function OrderHistoryCard() {
                         <span>
                           {item.quantity}× {item.product.name.replace(/^Mob /i, "")}
                         </span>
-                        <span className="text-white/30">
+                        <span className="text-white/50">
                           R$ {(item.unitPrice * item.quantity).toFixed(2).replace(".", ",")}
                         </span>
                       </div>
                     ))}
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <p className="text-[10px] text-white/20">
+                    <p className="text-xs text-white/50">
                       {new Date(order.createdAt).toLocaleString("pt-BR", {
                         day: "2-digit",
                         month: "2-digit",
@@ -761,7 +804,7 @@ function OrderHistoryCard() {
                       )}
                       <button
                         onClick={() => reorder(order)}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/40 transition hover:bg-white/5 hover:text-white active:scale-95"
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:bg-white/5 hover:text-white active:scale-95"
                       >
                         <RotateCcw className="h-3 w-3" /> Refazer
                       </button>
@@ -819,7 +862,7 @@ function AvatarUpload() {
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl transition active:scale-95"
-        style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+        style={{ background: "var(--mob-cta-gradient)" }}
       >
         {customer?.avatarUrl ? (
           <Image src={customer.avatarUrl} alt="Avatar" fill className="object-cover" />
@@ -835,7 +878,7 @@ function AvatarUpload() {
           )}
         </div>
       </button>
-      <p className="text-xs text-white/25">Clique para alterar · JPG, PNG ou WebP · máx 2 MB</p>
+      <p className="text-xs text-white/50">Clique para alterar · JPG, PNG ou WebP · máx 2 MB</p>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <input
         ref={inputRef}
@@ -885,7 +928,7 @@ function PushNotificationCard() {
             <Bell className="h-4 w-4 text-orange-400" />
             <p className="text-sm font-semibold text-white">Notificações de pedido</p>
           </div>
-          <p className="mt-1 text-xs text-white/40">
+          <p className="mt-1 text-xs text-white/55">
             {state === "denied"
               ? "Notificações bloqueadas. Habilite nas configurações do navegador."
               : state === "subscribed"
@@ -971,14 +1014,15 @@ export default function PerfilPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 pb-16">
+    <div className="mx-auto max-w-5xl px-6 py-10 pb-16">
       {/* Header */}
       <div className="mb-8 flex items-center gap-4">
         <Link
           href="/"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/50 transition hover:bg-white/5 hover:text-white"
+          aria-label="Voltar ao início"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft aria-hidden className="h-5 w-5" />
         </Link>
         <h1
           className="leading-none text-white"
@@ -1001,11 +1045,11 @@ export default function PerfilPage() {
           <AvatarUpload />
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-semibold text-white">{customer.name}</p>
-            <p className="truncate text-sm text-white/40">{customer.email}</p>
+            <p className="truncate text-sm text-white/55">{customer.email}</p>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs text-white/30 transition hover:bg-white/5 hover:text-white"
+            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs text-white/50 transition hover:bg-white/5 hover:text-white"
           >
             <LogOut className="h-3.5 w-3.5" />
             Sair
@@ -1027,6 +1071,6 @@ export default function PerfilPage() {
           <OrderHistoryCard />
         </div>
       </div>
-    </main>
+    </div>
   )
 }

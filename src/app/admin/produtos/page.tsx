@@ -20,6 +20,8 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { useStaff } from "@/lib/staff-store"
+import { Portal } from "@/components/portal"
+import { useDialog } from "@/lib/use-dialog"
 import {
   DndContext,
   closestCenter,
@@ -133,7 +135,7 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
 
       {open && (
         <div className="space-y-3 px-3 pb-3">
-          <p className="text-[10px] text-white/30">
+          <p className="text-xs text-white/50">
             Ao salvar, o preço do produto é zerado e as opções de personalização são recriadas com
             lanches, bebidas e sobremesas disponíveis. O valor total é calculado pela soma dos itens
             escolhidos.
@@ -141,8 +143,11 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
 
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="mb-1 block text-[10px] text-white/40">Qtd. Lanches</label>
+              <label htmlFor="admin-produtos-campo-1" className="mb-1 block text-xs text-white/55">
+                Qtd. Lanches
+              </label>
               <input
+                id="admin-produtos-campo-1"
                 className={`${inputCls} w-full`}
                 type="number"
                 min="1"
@@ -152,8 +157,11 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
               />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] text-white/40">Qtd. Bebidas</label>
+              <label htmlFor="admin-produtos-campo-2" className="mb-1 block text-xs text-white/55">
+                Qtd. Bebidas
+              </label>
               <input
+                id="admin-produtos-campo-2"
                 className={`${inputCls} w-full`}
                 type="number"
                 min="0"
@@ -163,8 +171,11 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
               />
             </div>
             <div>
-              <label className="mb-1 block text-[10px] text-white/40">Qtd. Sobremesas</label>
+              <label htmlFor="admin-produtos-campo-3" className="mb-1 block text-xs text-white/55">
+                Qtd. Sobremesas
+              </label>
               <input
+                id="admin-produtos-campo-3"
                 className={`${inputCls} w-full`}
                 type="number"
                 min="0"
@@ -176,7 +187,7 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
           </div>
 
           <div className="flex gap-3">
-            <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/40">
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-white/55">
               <input
                 type="checkbox"
                 checked={includeDrinks}
@@ -184,7 +195,7 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
               />
               Cliente escolhe bebida
             </label>
-            <label className="flex cursor-pointer items-center gap-1.5 text-[10px] text-white/40">
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-white/55">
               <input
                 type="checkbox"
                 checked={includeDesserts}
@@ -195,7 +206,7 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[10px] text-white/40">Categorias de lanches</label>
+            <label className="mb-1.5 block text-xs text-white/55">Categorias de lanches</label>
             <div className="flex gap-2">
               {ALLOWED_SLUGS_OPTIONS.map((opt) => (
                 <button
@@ -205,7 +216,7 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
                   style={
                     allowedSlugs.includes(opt.value)
                       ? { background: "rgba(249,115,22,0.2)", color: "#f97316" }
-                      : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)" }
+                      : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.55)" }
                   }
                 >
                   {opt.label}
@@ -218,7 +229,7 @@ function ComboConfigSection({ productId, token }: { productId: string; token: st
             onClick={sync}
             disabled={saving || allowedSlugs.length === 0}
             className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold text-white transition disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+            style={{ background: "var(--mob-cta-gradient)" }}
           >
             {saving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -320,7 +331,7 @@ function ProductOptions({ productId, token }: { productId: string; token: string
     >
       <ComboConfigSection productId={productId} token={token} />
 
-      <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+      <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
         Opções de personalização
       </p>
 
@@ -336,7 +347,7 @@ function ProductOptions({ productId, token }: { productId: string; token: string
           <div className="flex items-center gap-2">
             <span className="flex-1 text-xs font-semibold text-white">{opt.label}</span>
             <span
-              className="rounded-full px-2 py-0.5 text-[10px]"
+              className="rounded-full px-2 py-0.5 text-xs"
               style={{ background: "rgba(249,115,22,0.15)", color: "#f97316" }}
             >
               {opt.type === "RADIO" ? "Único" : "Múltiplo"}
@@ -344,7 +355,7 @@ function ProductOptions({ productId, token }: { productId: string; token: string
             </span>
             <button
               onClick={() => deleteOption(opt.id)}
-              className="text-white/20 transition hover:text-red-400"
+              className="text-white/50 transition hover:text-red-400"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -355,13 +366,11 @@ function ProductOptions({ productId, token }: { productId: string; token: string
               <div key={item.id} className="flex items-center gap-2">
                 <span className="flex-1 text-xs text-white/60">{item.name}</span>
                 {item.additionalPrice > 0 && (
-                  <span className="text-[10px] text-orange-400">
-                    +{fmtPrice(item.additionalPrice)}
-                  </span>
+                  <span className="text-xs text-orange-400">+{fmtPrice(item.additionalPrice)}</span>
                 )}
                 <button
                   onClick={() => deleteItem(opt.id, item.id)}
-                  className="text-white/20 transition hover:text-red-400"
+                  className="text-white/50 transition hover:text-red-400"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -570,7 +579,7 @@ function SortableProductRow({
           <button
             {...attributes}
             {...listeners}
-            className="flex-none cursor-grab touch-none text-white/20 hover:text-white/50 active:cursor-grabbing"
+            className="flex-none cursor-grab touch-none text-white/50 hover:text-white/80 active:cursor-grabbing"
             tabIndex={-1}
           >
             <GripVertical className="h-4 w-4" />
@@ -587,7 +596,7 @@ function SortableProductRow({
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-white">{p.name}</p>
-          {p.description && <p className="truncate text-xs text-white/30">{p.description}</p>}
+          {p.description && <p className="truncate text-xs text-white/50">{p.description}</p>}
         </div>
         <InlinePriceEditor
           productId={p.id}
@@ -599,7 +608,7 @@ function SortableProductRow({
           <button
             onClick={() => onToggle(p.id)}
             disabled={toggling === p.id}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-white/5 hover:text-white disabled:opacity-50"
             title={p.active ? "Desativar" : "Ativar"}
           >
             {toggling === p.id ? (
@@ -612,7 +621,7 @@ function SortableProductRow({
           </button>
           <button
             onClick={() => onEdit(p)}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-white/5 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-white/5 hover:text-white"
             title="Editar"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -628,7 +637,7 @@ function SortableProductRow({
           <button
             onClick={() => onDelete(p.id)}
             disabled={deleting === p.id}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/40 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-white/55 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
             title="Remover"
           >
             {deleting === p.id ? (
@@ -738,6 +747,8 @@ function ProductModal({
   onClose: () => void
 }) {
   const isEdit = !!product
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useDialog(true, onClose, dialogRef)
   const [name, setName] = useState(product?.name ?? "")
   const [description, setDescription] = useState(product?.description ?? "")
   const [price, setPrice] = useState(product?.price.toFixed(2) ?? "")
@@ -799,145 +810,177 @@ function ProductModal({
   }
 
   const inputCls =
-    "w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/30 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
+    "w-full rounded-xl bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/45 ring-1 ring-white/10 outline-none transition focus:ring-orange-500/50"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className="relative w-full max-w-lg rounded-2xl p-6"
-        style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
-      >
-        <h2
-          className="mb-5 leading-none text-white"
-          style={{ fontFamily: "var(--font-bebas)", fontSize: "1.8rem", letterSpacing: "0.06em" }}
+    <Portal>
+      <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={isEdit ? "Editar produto" : "Novo produto"}
+          tabIndex={-1}
+          className="relative max-h-[92dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-3xl p-6 outline-none sm:max-h-[90dvh] sm:rounded-2xl"
+          style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
         >
-          {isEdit ? "Editar Produto" : "Novo Produto"}
-        </h2>
+          <h2
+            className="mb-5 leading-none text-white"
+            style={{ fontFamily: "var(--font-bebas)", fontSize: "1.8rem", letterSpacing: "0.06em" }}
+          >
+            {isEdit ? "Editar Produto" : "Novo Produto"}
+          </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nome */}
-          <div>
-            <label className="mb-1 block text-xs text-white/50">Nome *</label>
-            <input
-              className={inputCls}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Mob Classic"
-              required
-            />
-          </div>
-
-          {/* Descrição */}
-          <div>
-            <label className="mb-1 block text-xs text-white/50">Descrição</label>
-            <textarea
-              className={`${inputCls} resize-none`}
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ingredientes ou descrição do produto"
-            />
-          </div>
-
-          {/* Categoria + Preço */}
-          <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nome */}
             <div>
-              <label className="mb-1 block text-xs text-white/50">Categoria *</label>
-              <select
-                className={inputCls}
-                style={{ background: "rgba(255,255,255,0.05)" }}
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                required
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id} style={{ background: "#1a1612" }}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs text-white/50">Preço (R$) *</label>
+              <label htmlFor="admin-produtos-campo-4" className="mb-1 block text-xs text-white/50">
+                Nome *
+              </label>
               <input
+                id="admin-produtos-campo-4"
                 className={inputCls}
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0,00"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Mob Classic"
                 required
               />
             </div>
-          </div>
 
-          {/* Imagem */}
-          <div>
-            <label className="mb-1 block text-xs text-white/50">Imagem</label>
-            <div className="flex gap-2">
-              <input
-                className={`${inputCls} flex-1`}
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="/burgers/nome-do-produto.png"
+            {/* Descrição */}
+            <div>
+              <label htmlFor="admin-produtos-campo-5" className="mb-1 block text-xs text-white/50">
+                Descrição
+              </label>
+              <textarea
+                id="admin-produtos-campo-5"
+                className={`${inputCls} resize-none`}
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Ingredientes ou descrição do produto"
               />
+            </div>
+
+            {/* Categoria + Preço */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="admin-produtos-campo-6"
+                  className="mb-1 block text-xs text-white/50"
+                >
+                  Categoria *
+                </label>
+                <select
+                  id="admin-produtos-campo-6"
+                  className={inputCls}
+                  style={{ background: "rgba(255,255,255,0.05)" }}
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  required
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id} style={{ background: "#1a1612" }}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="admin-produtos-campo-7"
+                  className="mb-1 block text-xs text-white/50"
+                >
+                  Preço (R$) *
+                </label>
+                <input
+                  id="admin-produtos-campo-7"
+                  className={inputCls}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="0,00"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Imagem */}
+            <div>
+              <label htmlFor="admin-produtos-campo-8" className="mb-1 block text-xs text-white/50">
+                Imagem
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="admin-produtos-campo-8"
+                  className={`${inputCls} flex-1`}
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="/burgers/nome-do-produto.png"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/60 transition hover:bg-white/10 disabled:opacity-50"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3.5 w-3.5" />
+                  )}
+                  Upload
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleUpload}
+                />
+              </div>
+
+              {imageUrl && (
+                <div className="relative mt-2 h-24 w-24 overflow-hidden rounded-xl bg-black/30">
+                  <Image src={imageUrl} alt="preview" fill className="object-cover" unoptimized />
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/60 transition hover:bg-white/10 disabled:opacity-50"
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                onClick={onClose}
+                className="rounded-xl px-4 py-2 text-sm text-white/50 transition hover:bg-white/5"
               >
-                {uploading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Upload className="h-3.5 w-3.5" />
-                )}
-                Upload
+                Cancelar
               </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleUpload}
-              />
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold text-white transition disabled:opacity-50"
+                style={{ background: "var(--mob-cta-gradient)" }}
+              >
+                {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {isEdit ? "Salvar alterações" : "Criar produto"}
+              </button>
             </div>
-
-            {imageUrl && (
-              <div className="relative mt-2 h-24 w-24 overflow-hidden rounded-xl bg-black/30">
-                <Image src={imageUrl} alt="preview" fill className="object-cover" unoptimized />
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</p>
-          )}
-
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl px-4 py-2 text-sm text-white/50 transition hover:bg-white/5"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold text-white transition disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
-            >
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-              {isEdit ? "Salvar alterações" : "Criar produto"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </Portal>
   )
 }
 
@@ -1039,7 +1082,7 @@ export default function ProdutosPage() {
         <button
           onClick={() => setModalProduct("new")}
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition active:scale-95"
-          style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+          style={{ background: "var(--mob-cta-gradient)" }}
         >
           <Plus className="h-4 w-4" /> Novo produto
         </button>
@@ -1050,6 +1093,8 @@ export default function ProdutosPage() {
         <div className="relative min-w-48 flex-1">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/40" />
           <input
+            type="search"
+            aria-label="Buscar produto"
             className={`${inputCls} w-full pl-9`}
             style={{ background: "rgba(0,0,0,0.35)" }}
             placeholder="Buscar produto..."
@@ -1058,15 +1103,18 @@ export default function ProdutosPage() {
           />
           {query && (
             <button
+              type="button"
               onClick={() => setQuery("")}
-              className="absolute top-1/2 right-3 -translate-y-1/2 text-white/40 hover:text-white"
+              aria-label="Limpar busca"
+              className="absolute top-1/2 right-1 flex h-9 w-9 -translate-y-1/2 items-center justify-center text-white/60 hover:text-white"
             >
-              <X className="h-3.5 w-3.5" />
+              <X aria-hidden className="h-4 w-4" />
             </button>
           )}
         </div>
 
         <select
+          aria-label="Filtrar por categoria"
           className={inputCls}
           style={{ background: "rgba(0,0,0,0.35)", color: "white" }}
           value={catFilter}
@@ -1083,7 +1131,7 @@ export default function ProdutosPage() {
         </select>
       </div>
 
-      <p className="mb-4 text-xs text-white/25">
+      <p className="mb-4 text-xs text-white/50">
         {filtered.length} {filtered.length === 1 ? "produto" : "produtos"}
       </p>
 
@@ -1099,7 +1147,7 @@ export default function ProdutosPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-16 text-center text-sm text-white/25">Nenhum produto encontrado.</div>
+        <div className="py-16 text-center text-sm text-white/50">Nenhum produto encontrado.</div>
       ) : (
         <div className="space-y-8">
           {grouped.map(({ cat, items }) => (

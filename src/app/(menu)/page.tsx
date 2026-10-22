@@ -119,7 +119,7 @@ function MenuCard({ img, label, sublabel, href, priority = false }: MenuCardProp
         >
           {label}
         </p>
-        <p className="mt-0.5 text-[10px] tracking-widest text-white/40 uppercase">{sublabel}</p>
+        <p className="mt-0.5 text-xs tracking-widest text-white/55 uppercase">{sublabel}</p>
       </div>
 
       {/* Orange glow on hover */}
@@ -288,7 +288,7 @@ export default function HomePage() {
   }, [categories])
 
   return (
-    <main>
+    <div>
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <section className="mob-on-dark relative h-130 w-full overflow-hidden lg:h-145">
         <Image
@@ -331,7 +331,7 @@ export default function HomePage() {
               href="/cardapio"
               className="inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white transition-all active:scale-95"
               style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
+                background: "var(--mob-cta-gradient)",
                 boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
               }}
             >
@@ -379,6 +379,6 @@ export default function HomePage() {
           </section>
         )}
       </div>
-    </main>
+    </div>
   )
 }

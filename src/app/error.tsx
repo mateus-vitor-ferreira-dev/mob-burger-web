@@ -36,7 +36,7 @@ export default function GlobalError({
             >
               Algo deu errado
             </h1>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.875rem" }}>
+            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.875rem" }}>
               Um erro inesperado aconteceu. Tente novamente.
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function GlobalError({
               display: "flex",
               alignItems: "center",
               gap: 8,
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               color: "white",
               border: "none",
               borderRadius: 12,

@@ -4,21 +4,29 @@ import { useCart, type SelectedExtra, type SelectedOption } from "@/lib/cart-sto
 import { useFavorites } from "@/lib/use-favorites"
 import { useMenu, type ComboConfig } from "@/lib/use-menu"
 import { fmtPrice } from "@/lib/utils"
+import { useDialog } from "@/lib/use-dialog"
+import { useHydrated } from "@/lib/use-hydrated"
+import { Portal } from "@/components/portal"
 import {
+  CakeSlice,
   Check,
   ChevronRight,
+  CupSoda,
+  Hamburger,
   Heart,
   Minus,
   Plus,
   Search,
+  SearchX,
   ShoppingBag,
   Trash2,
   X,
+  type LucideIcon,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { Suspense, useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useId, useMemo, useRef, useState } from "react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,11 +73,15 @@ interface GlobalExtra {
 function ProductCardSkeleton() {
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-2xl"
+      aria-hidden
+      className="flex flex-row overflow-hidden rounded-2xl sm:flex-col"
       style={{ background: "var(--mob-s1)", border: "1px solid var(--mob-b1)" }}
     >
-      <div className="h-48 w-full animate-pulse" style={{ background: "var(--mob-s2)" }} />
-      <div className="flex flex-col gap-3 p-4">
+      <div
+        className="min-h-36 w-32 flex-none animate-pulse sm:h-48 sm:min-h-0 sm:w-full"
+        style={{ background: "var(--mob-s2)" }}
+      />
+      <div className="flex flex-1 flex-col gap-3 p-4">
         <div
           className="h-5 w-3/4 animate-pulse rounded-lg"
           style={{ background: "var(--mob-s2)" }}
@@ -122,6 +134,10 @@ function OptionsModal({
   const [observations, setObservations] = useState("")
   const [cheeseType, setCheeseType] = useState<string | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(item.img)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+  const obsId = useId()
+  useDialog(true, onClose, panelRef)
 
   const { categories } = useMenu()
   const productInfoMap = useMemo(() => {
@@ -219,358 +235,429 @@ function OptionsModal({
   const extrasTotal = globalExtras.reduce((sum, e) => sum + e.price * (extraQtys[e.id] ?? 0), 0)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl p-6"
-        style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
-      >
-        {/* Imagem de preview — dinâmica para combos */}
-        {previewImage && (
-          <div className="relative -mx-6 -mt-6 mb-5 h-44 w-[calc(100%+3rem)] overflow-hidden rounded-t-2xl">
-            <Image
-              src={previewImage}
-              alt={item.name}
-              fill
-              className="object-cover transition-all duration-500"
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-[#1a1612] via-transparent to-transparent" />
-          </div>
-        )}
+    // Celular: bottom sheet colado na base; a partir de 640px: modal centralizado
+    <Portal>
+      <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl outline-none sm:max-h-[85dvh] sm:rounded-2xl"
+          style={{ background: "#1a1612", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
+          <div className="flex-1 overflow-y-auto overscroll-contain p-6 pb-4">
+            {/* Imagem de preview — dinâmica para combos */}
+            {previewImage && (
+              <div className="relative -mx-6 -mt-6 mb-5 h-44 w-[calc(100%+3rem)] overflow-hidden sm:h-52">
+                <Image
+                  src={previewImage}
+                  alt=""
+                  fill
+                  sizes="448px"
+                  className="object-cover transition-all duration-500"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-[#1a1612] via-transparent to-transparent" />
+              </div>
+            )}
 
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h3
-              className="text-lg font-bold text-white"
-              style={{
-                fontFamily: "var(--font-bebas)",
-                letterSpacing: "0.05em",
-                fontSize: "1.5rem",
-              }}
-            >
-              {item.name.replace(/^Mob /i, "")}
-            </h3>
-            <p className="text-xs text-white/40">{item.description}</p>
-          </div>
-          <button onClick={onClose} className="ml-3 text-white/30 hover:text-white">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h2
+                  id={titleId}
+                  className="text-lg font-bold text-white"
+                  style={{
+                    fontFamily: "var(--font-bebas)",
+                    letterSpacing: "0.05em",
+                    fontSize: "1.5rem",
+                  }}
+                >
+                  {item.name.replace(/^Mob /i, "")}
+                </h2>
+                <p className="text-sm leading-relaxed text-white/60">{item.description}</p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Fechar"
+                className="-mt-1 -mr-2 ml-3 flex h-11 w-11 flex-none items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+              >
+                <X aria-hidden className="h-5 w-5" />
+              </button>
+            </div>
 
-        <div className="space-y-5">
-          {/* Opções específicas do produto */}
-          {item.options.map((opt) => {
-            // Para combos: ordenar por preço crescente (incluído primeiro) e mostrar delta
-            const sortedItems = item.comboConfig
-              ? [...opt.items].sort((a, b) => a.additionalPrice - b.additionalPrice)
-              : opt.items
-            const minOptPrice = item.comboConfig
-              ? Math.min(...opt.items.map((i) => i.additionalPrice))
-              : 0
-            return (
-              <div key={opt.id}>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-sm font-semibold text-white">{opt.label}</p>
-                  {opt.required && (
+            <div className="space-y-5">
+              {/* Opções específicas do produto */}
+              {item.options.map((opt) => {
+                // Para combos: ordenar por preço crescente (incluído primeiro) e mostrar delta
+                const sortedItems = item.comboConfig
+                  ? [...opt.items].sort((a, b) => a.additionalPrice - b.additionalPrice)
+                  : opt.items
+                const minOptPrice = item.comboConfig
+                  ? Math.min(...opt.items.map((i) => i.additionalPrice))
+                  : 0
+                return (
+                  <div
+                    key={opt.id}
+                    role={opt.type === "RADIO" ? "radiogroup" : "group"}
+                    aria-labelledby={`${titleId}-${opt.id}`}
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <p id={`${titleId}-${opt.id}`} className="text-sm font-semibold text-white">
+                        {opt.label}
+                      </p>
+                      {opt.required && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-xs font-bold text-orange-400"
+                          style={{ background: "rgba(249,115,22,0.15)" }}
+                        >
+                          Obrigatório
+                        </span>
+                      )}
+                      <span className="text-xs text-white/50">
+                        {opt.type === "RADIO" ? "Escolha 1" : "Escolha quantos quiser"}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {sortedItems.map((optItem) => {
+                        const isSelected = (selected[opt.id] ?? []).includes(optItem.id)
+                        const displayDelta = item.comboConfig
+                          ? optItem.additionalPrice - minOptPrice
+                          : optItem.additionalPrice
+                        const info = item.comboConfig ? productInfoMap.get(optItem.name) : null
+                        // Item esgotado: produto explicitamente fora de estoque no menu
+                        const isOos = item.comboConfig != null && info != null && !info.inStock
+                        return (
+                          <button
+                            key={optItem.id}
+                            type="button"
+                            role={opt.type === "RADIO" ? "radio" : "checkbox"}
+                            aria-checked={isSelected}
+                            onClick={() =>
+                              !isOos &&
+                              toggleItem(opt.id, optItem.id, opt.type, opt.label, optItem.name)
+                            }
+                            disabled={isOos}
+                            className="flex min-h-12 w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
+                            style={{
+                              background: isSelected
+                                ? "rgba(249,115,22,0.12)"
+                                : "rgba(255,255,255,0.04)",
+                              border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
+                            }}
+                          >
+                            {/* Thumbnail */}
+                            {info && (
+                              <div className="relative h-10 w-10 flex-none overflow-hidden rounded-lg bg-black/40">
+                                {info.imageUrl ? (
+                                  <Image
+                                    src={info.imageUrl}
+                                    alt=""
+                                    fill
+                                    sizes="40px"
+                                    className="object-cover"
+                                  />
+                                ) : (
+                                  <span className="flex h-full w-full items-center justify-center">
+                                    <Hamburger aria-hidden className="h-5 w-5 text-orange-400/70" />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {/* Radio */}
+                            <div
+                              aria-hidden
+                              className={`flex h-5 w-5 flex-none items-center justify-center ${opt.type === "RADIO" ? "rounded-full" : "rounded-md"}`}
+                              style={{
+                                background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
+                                border: isSelected ? "none" : "1px solid rgba(255,255,255,0.3)",
+                              }}
+                            >
+                              {isSelected && <Check className="h-3 w-3 text-white" />}
+                            </div>
+                            {/* Nome + descrição */}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm leading-tight font-semibold text-white">
+                                {optItem.name.replace(/^Mob /i, "")}
+                              </p>
+                              {info?.description && (
+                                <p className="mt-0.5 line-clamp-1 text-xs leading-tight text-white/55">
+                                  {info.description}
+                                </p>
+                              )}
+                            </div>
+                            {/* Preço delta / esgotado */}
+                            {isOos ? (
+                              <span className="shrink-0 text-xs font-semibold text-red-400/70">
+                                Esgotado
+                              </span>
+                            ) : displayDelta > 0 ? (
+                              <span className="shrink-0 text-xs font-semibold text-orange-400">
+                                +{fmtPrice(displayDelta)}
+                              </span>
+                            ) : item.comboConfig ? (
+                              <span className="shrink-0 text-xs font-semibold text-white/50">
+                                incluído
+                              </span>
+                            ) : null}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* Tipo de queijo */}
+              {showCheeseSelector && (
+                <div role="radiogroup" aria-labelledby={`${titleId}-queijo`}>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <p id={`${titleId}-queijo`} className="text-sm font-semibold text-white">
+                      Tipo de queijo
+                    </p>
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-400"
+                      className="rounded-full px-2 py-0.5 text-xs font-bold text-orange-400"
                       style={{ background: "rgba(249,115,22,0.15)" }}
                     >
                       Obrigatório
                     </span>
-                  )}
-                  <span className="text-[10px] text-white/30">
-                    {opt.type === "RADIO" ? "Escolha 1" : "Escolha quantos quiser"}
-                  </span>
-                </div>
-                <div className="space-y-1.5">
-                  {sortedItems.map((optItem) => {
-                    const isSelected = (selected[opt.id] ?? []).includes(optItem.id)
-                    const displayDelta = item.comboConfig
-                      ? optItem.additionalPrice - minOptPrice
-                      : optItem.additionalPrice
-                    const info = item.comboConfig ? productInfoMap.get(optItem.name) : null
-                    // Item esgotado: produto explicitamente fora de estoque no menu
-                    const isOos = item.comboConfig != null && info != null && !info.inStock
-                    return (
-                      <button
-                        key={optItem.id}
-                        onClick={() =>
-                          !isOos &&
-                          toggleItem(opt.id, optItem.id, opt.type, opt.label, optItem.name)
-                        }
-                        disabled={isOos}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-40"
-                        style={{
-                          background: isSelected
-                            ? "rgba(249,115,22,0.12)"
-                            : "rgba(255,255,255,0.04)",
-                          border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
-                        }}
-                      >
-                        {/* Thumbnail */}
-                        {info && (
-                          <div className="relative h-10 w-10 flex-none overflow-hidden rounded-lg bg-black/40">
-                            {info.imageUrl ? (
-                              <Image
-                                src={info.imageUrl}
-                                alt={optItem.name}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <span className="flex h-full w-full items-center justify-center text-lg">
-                                🍔
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {/* Radio */}
-                        <div
-                          className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+                    <span className="text-xs text-white/50">Escolha 1</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {CHEESE_OPTIONS.map((cheese) => {
+                      const isSelected = cheeseType === cheese.id
+                      return (
+                        <button
+                          key={cheese.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          onClick={() => setCheeseType(cheese.id)}
+                          className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition"
                           style={{
-                            background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
-                            border: isSelected ? "none" : "1px solid rgba(255,255,255,0.15)",
+                            background: isSelected
+                              ? "rgba(249,115,22,0.12)"
+                              : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
                           }}
                         >
-                          {isSelected && <Check className="h-3 w-3 text-white" />}
-                        </div>
-                        {/* Nome + descrição */}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm leading-tight font-semibold text-white">
-                            {optItem.name.replace(/^Mob /i, "")}
-                          </p>
-                          {info?.description && (
-                            <p className="mt-0.5 line-clamp-1 text-[11px] leading-tight text-white/40">
-                              {info.description}
-                            </p>
-                          )}
-                        </div>
-                        {/* Preço delta / esgotado */}
-                        {isOos ? (
-                          <span className="shrink-0 text-[10px] font-semibold text-red-400/70">
-                            Esgotado
-                          </span>
-                        ) : displayDelta > 0 ? (
-                          <span className="shrink-0 text-xs font-semibold text-orange-400">
-                            +{fmtPrice(displayDelta)}
-                          </span>
-                        ) : item.comboConfig ? (
-                          <span className="shrink-0 text-xs font-semibold text-white/30">
-                            incluído
-                          </span>
-                        ) : null}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-
-          {/* Tipo de queijo */}
-          {showCheeseSelector && (
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <p className="text-sm font-semibold text-white">Tipo de queijo</p>
-                <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-400"
-                  style={{ background: "rgba(249,115,22,0.15)" }}
-                >
-                  Obrigatório
-                </span>
-                <span className="text-[10px] text-white/30">Escolha 1</span>
-              </div>
-              <div className="space-y-1.5">
-                {CHEESE_OPTIONS.map((cheese) => {
-                  const isSelected = cheeseType === cheese.id
-                  return (
-                    <button
-                      key={cheese.id}
-                      onClick={() => setCheeseType(cheese.id)}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition"
-                      style={{
-                        background: isSelected ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${isSelected ? "rgba(249,115,22,0.35)" : "rgba(255,255,255,0.07)"}`,
-                      }}
-                    >
-                      <div
-                        className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
-                        style={{
-                          background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
-                          border: isSelected ? "none" : "1px solid rgba(255,255,255,0.15)",
-                        }}
-                      >
-                        {isSelected && <Check className="h-3 w-3 text-white" />}
-                      </div>
-                      <span className="flex-1 text-sm text-white">{cheese.name}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Adicionais globais */}
-          {globalExtras.length > 0 && (
-            <div>
-              <div className="mb-2 flex items-center gap-2">
-                <p className="text-sm font-semibold text-white">Adicionais</p>
-                <span className="text-[10px] text-white/30">Adicione o quanto quiser</span>
-              </div>
-              <div className="space-y-1.5">
-                {globalExtras.map((extra) => {
-                  const qty = extraQtys[extra.id] ?? 0
-                  return (
-                    <div
-                      key={extra.id}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5"
-                      style={{
-                        background: qty > 0 ? "rgba(249,115,22,0.10)" : "rgba(255,255,255,0.04)",
-                        border: `1px solid ${qty > 0 ? "rgba(249,115,22,0.30)" : "rgba(255,255,255,0.07)"}`,
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      <span className="flex-1 text-sm text-white">{extra.name}</span>
-                      <span className="text-xs font-semibold text-orange-400">
-                        +{fmtPrice(extra.price)}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => changeExtraQty(extra.id, -1)}
-                          disabled={qty === 0}
-                          className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 disabled:opacity-30"
-                        >
-                          <Minus className="h-3 w-3" />
+                          <div
+                            aria-hidden
+                            className="flex h-5 w-5 flex-none items-center justify-center rounded-full"
+                            style={{
+                              background: isSelected ? "#f97316" : "rgba(255,255,255,0.08)",
+                              border: isSelected ? "none" : "1px solid rgba(255,255,255,0.3)",
+                            }}
+                          >
+                            {isSelected && <Check className="h-3 w-3 text-white" />}
+                          </div>
+                          <span className="flex-1 text-sm text-white">{cheese.name}</span>
                         </button>
-                        <span className="w-4 text-center text-sm font-bold text-white">{qty}</span>
-                        <button
-                          onClick={() => changeExtraQty(extra.id, 1)}
-                          className="flex h-6 w-6 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Observações por item */}
-        <div className="mt-4">
-          <p className="mb-1.5 text-xs font-semibold text-white/30">
-            Observações deste item (opcional)
-          </p>
-          <textarea
-            value={observations}
-            onChange={(e) => setObservations(e.target.value)}
-            placeholder="Ex: sem cebola, sem maionese, alergia..."
-            rows={2}
-            maxLength={200}
-            className="w-full resize-none rounded-xl px-3 py-2.5 text-sm ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50"
-            style={{ background: "rgba(255,255,255,0.05)", color: "var(--mob-text-primary)" }}
-          />
-        </div>
-
-        {/* Progress indicator — combos e seletor de queijo */}
-        {(item.comboConfig || showCheeseSelector) &&
-          (() => {
-            const requiredGroups: { id: string; label: string; filled: boolean }[] = [
-              ...item.options
-                .filter((o) => o.required)
-                .map((o) => ({
-                  id: o.id,
-                  label: o.label,
-                  filled: (selected[o.id]?.length ?? 0) > 0,
-                })),
-              ...(showCheeseSelector
-                ? [{ id: "__cheese__", label: "Queijo", filled: cheeseType !== null }]
-                : []),
-            ]
-            const filledCount = requiredGroups.filter((g) => g.filled).length
-            const allDone = filledCount === requiredGroups.length
-
-            function chipLabel(label: string) {
-              if (/^escolha o lanche/i.test(label)) return { emoji: "🍔", text: "Lanche" }
-              if (/^lanche/i.test(label))
-                return { emoji: "🍔", text: label.replace(/^escolha a?o?\s*/i, "") }
-              if (/^escolha a bebida/i.test(label)) return { emoji: "🥤", text: "Bebida" }
-              if (/^bebida/i.test(label)) return { emoji: "🥤", text: label }
-              if (/^escolha a sobremesa/i.test(label)) return { emoji: "🍰", text: "Sobremesa" }
-              if (/^sobremesa/i.test(label)) return { emoji: "🍰", text: label }
-              if (/queijo/i.test(label)) return { emoji: "🧀", text: "Queijo" }
-              return { emoji: "•", text: label }
-            }
-
-            return (
-              <div className="mt-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[11px] text-white/30">
-                    {allDone
-                      ? "Tudo selecionado!"
-                      : `${filledCount} de ${requiredGroups.length} obrigatórios`}
-                  </p>
-                  {/* Mini progress bar */}
-                  <div className="h-1 w-24 overflow-hidden rounded-full bg-white/10">
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${(filledCount / requiredGroups.length) * 100}%`,
-                        background: allDone
-                          ? "linear-gradient(90deg, #4ade80, #22c55e)"
-                          : "linear-gradient(90deg, #f97316, #ea580c)",
-                      }}
-                    />
+                      )
+                    })}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {requiredGroups.map((g) => {
-                    const { emoji, text } = chipLabel(g.label)
-                    return (
-                      <div
-                        key={g.id}
-                        className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all"
-                        style={
-                          g.filled
-                            ? {
-                                background: "rgba(249,115,22,0.15)",
-                                color: "#f97316",
-                                border: "1px solid rgba(249,115,22,0.3)",
-                              }
-                            : {
-                                background: "rgba(255,255,255,0.04)",
-                                color: "rgba(255,255,255,0.25)",
-                                border: "1px solid rgba(255,255,255,0.07)",
-                              }
-                        }
-                      >
-                        {g.filled ? (
-                          <Check className="h-2.5 w-2.5 shrink-0" />
-                        ) : (
-                          <span className="h-2.5 w-2.5 shrink-0 text-center leading-none">·</span>
-                        )}
-                        {emoji} {text}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })()}
+              )}
 
-        <button
-          onClick={handleConfirm}
-          disabled={!canConfirm()}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition disabled:opacity-40"
-          style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
-        >
-          Adicionar à sacola · {fmtPrice(item.priceNum + optionsTotal + extrasTotal)}
-        </button>
+              {/* Adicionais globais */}
+              {globalExtras.length > 0 && (
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <p className="text-sm font-semibold text-white">Adicionais</p>
+                    <span className="text-xs text-white/50">Adicione o quanto quiser</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {globalExtras.map((extra) => {
+                      const qty = extraQtys[extra.id] ?? 0
+                      return (
+                        <div
+                          key={extra.id}
+                          className="flex items-center gap-3 rounded-xl py-1.5 pr-1.5 pl-3"
+                          style={{
+                            background:
+                              qty > 0 ? "rgba(249,115,22,0.10)" : "rgba(255,255,255,0.04)",
+                            border: `1px solid ${qty > 0 ? "rgba(249,115,22,0.30)" : "rgba(255,255,255,0.07)"}`,
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <span className="flex-1 text-sm text-white">{extra.name}</span>
+                          <span className="text-xs font-semibold text-orange-400">
+                            +{fmtPrice(extra.price)}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => changeExtraQty(extra.id, -1)}
+                              disabled={qty === 0}
+                              aria-label={`Remover um ${extra.name}`}
+                              className="flex h-9 w-9 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20 disabled:opacity-30"
+                            >
+                              <Minus aria-hidden className="h-4 w-4" />
+                            </button>
+                            <span
+                              aria-live="polite"
+                              className="w-5 text-center text-sm font-bold text-white"
+                            >
+                              {qty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => changeExtraQty(extra.id, 1)}
+                              aria-label={`Adicionar um ${extra.name}`}
+                              className="flex h-9 w-9 items-center justify-center rounded-lg text-orange-400 transition hover:bg-orange-500/20"
+                            >
+                              <Plus aria-hidden className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Observações por item */}
+            <div className="mt-4">
+              <label htmlFor={obsId} className="mb-1.5 block text-xs font-semibold text-white/60">
+                Observações deste item (opcional)
+              </label>
+              <textarea
+                id={obsId}
+                value={observations}
+                onChange={(e) => setObservations(e.target.value)}
+                placeholder="Ex: sem cebola, sem maionese, alergia..."
+                rows={2}
+                maxLength={200}
+                className="w-full resize-none rounded-xl px-3 py-2.5 text-base ring-1 ring-white/10 transition outline-none focus:ring-orange-500/50 sm:text-sm"
+                style={{ background: "rgba(255,255,255,0.05)", color: "var(--mob-text-primary)" }}
+              />
+            </div>
+
+            {/* Progress indicator — combos e seletor de queijo */}
+            {(item.comboConfig || showCheeseSelector) &&
+              (() => {
+                const requiredGroups: { id: string; label: string; filled: boolean }[] = [
+                  ...item.options
+                    .filter((o) => o.required)
+                    .map((o) => ({
+                      id: o.id,
+                      label: o.label,
+                      filled: (selected[o.id]?.length ?? 0) > 0,
+                    })),
+                  ...(showCheeseSelector
+                    ? [{ id: "__cheese__", label: "Queijo", filled: cheeseType !== null }]
+                    : []),
+                ]
+                const filledCount = requiredGroups.filter((g) => g.filled).length
+                const allDone = filledCount === requiredGroups.length
+
+                function chipLabel(label: string): { icon: LucideIcon | null; text: string } {
+                  if (/^escolha o lanche/i.test(label)) return { icon: Hamburger, text: "Lanche" }
+                  if (/^lanche/i.test(label))
+                    return { icon: Hamburger, text: label.replace(/^escolha a?o?\s*/i, "") }
+                  if (/^escolha a bebida/i.test(label)) return { icon: CupSoda, text: "Bebida" }
+                  if (/^bebida/i.test(label)) return { icon: CupSoda, text: label }
+                  if (/^escolha a sobremesa/i.test(label))
+                    return { icon: CakeSlice, text: "Sobremesa" }
+                  if (/^sobremesa/i.test(label)) return { icon: CakeSlice, text: label }
+                  if (/queijo/i.test(label)) return { icon: null, text: "Queijo" }
+                  return { icon: null, text: label }
+                }
+
+                return (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p aria-live="polite" className="text-xs text-white/60">
+                        {allDone
+                          ? "Tudo selecionado!"
+                          : `${filledCount} de ${requiredGroups.length} obrigatórios`}
+                      </p>
+                      {/* Mini progress bar */}
+                      <div
+                        aria-hidden
+                        className="h-1 w-24 overflow-hidden rounded-full bg-white/10"
+                      >
+                        <div
+                          className="h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${(filledCount / requiredGroups.length) * 100}%`,
+                            background: allDone
+                              ? "linear-gradient(90deg, #4ade80, #22c55e)"
+                              : "linear-gradient(90deg, #f97316, #ea580c)",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {requiredGroups.map((g) => {
+                        const { icon: ChipIcon, text } = chipLabel(g.label)
+                        return (
+                          <div
+                            key={g.id}
+                            className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all"
+                            style={
+                              g.filled
+                                ? {
+                                    background: "rgba(249,115,22,0.15)",
+                                    color: "#f97316",
+                                    border: "1px solid rgba(249,115,22,0.3)",
+                                  }
+                                : {
+                                    background: "rgba(255,255,255,0.04)",
+                                    color: "rgba(255,255,255,0.55)",
+                                    border: "1px solid rgba(255,255,255,0.07)",
+                                  }
+                            }
+                          >
+                            {g.filled ? (
+                              <Check aria-hidden className="h-3 w-3 shrink-0" />
+                            ) : (
+                              <span
+                                aria-hidden
+                                className="h-3 w-3 shrink-0 text-center leading-none"
+                              >
+                                ·
+                              </span>
+                            )}
+                            {ChipIcon && <ChipIcon aria-hidden className="h-3.5 w-3.5 shrink-0" />}
+                            {text}
+                            <span className="sr-only">
+                              {g.filled ? " (escolhido)" : " (pendente)"}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
+          </div>
+
+          {/* Rodapé fixo: o botão de adicionar fica sempre à vista enquanto as opções rolam */}
+          <div
+            className="flex-none border-t px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            style={{ borderColor: "rgba(255,255,255,0.08)", background: "#1a1612" }}
+          >
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={!canConfirm()}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition disabled:opacity-40"
+              style={{ background: "var(--mob-cta-gradient)" }}
+            >
+              Adicionar à sacola · {fmtPrice(item.priceNum + optionsTotal + extrasTotal)}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </Portal>
   )
 }
 
@@ -638,8 +725,11 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
 
   return (
     <>
-      <div
-        className="group/card relative flex flex-col overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-0.5"
+      {/* Celular: card horizontal (foto à esquerda) — o cardápio cabe em bem menos rolagem.
+          A partir de 640px volta ao card vertical em grid */}
+      <article
+        aria-labelledby={`produto-${item.id}`}
+        className="group/card relative flex flex-row overflow-hidden rounded-2xl transition-all duration-300 sm:flex-col sm:hover:-translate-y-0.5"
         style={{
           background: "var(--mob-s1)",
           border: "1px solid var(--mob-b1)",
@@ -648,12 +738,13 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
       >
         {/* Orange top accent */}
         <div
+          aria-hidden
           className="absolute top-0 right-0 left-0 z-10 h-0.5"
           style={{ background: "linear-gradient(to right, #f97316, #ea580c)" }}
         />
 
         {/* Imagem */}
-        <div className="relative h-48 w-full overflow-hidden bg-black/30">
+        <div className="relative min-h-36 w-32 flex-none overflow-hidden bg-black/30 sm:h-48 sm:min-h-0 sm:w-full">
           {item.img ? (
             <>
               {!imgLoaded && (
@@ -667,9 +758,9 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
               )}
               <Image
                 src={item.img}
-                alt={item.name}
+                alt=""
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                sizes="(max-width: 640px) 128px, (max-width: 1024px) 50vw, 33vw"
                 className={`object-cover transition-all duration-500 group-hover/card:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"} ${!item.inStock ? "brightness-50" : ""}`}
                 onLoad={() => setImgLoaded(true)}
               />
@@ -682,7 +773,7 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
                   "radial-gradient(ellipse at 50% 60%, rgba(249,115,22,0.12) 0%, transparent 70%)",
               }}
             >
-              <span className="text-6xl opacity-40">🍔</span>
+              <Hamburger aria-hidden className="h-12 w-12 text-orange-400/40" />
             </div>
           )}
           {!item.inStock && (
@@ -701,12 +792,14 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
 
           {/* Coração — favoritar */}
           <button
-            aria-label={fav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+            type="button"
+            aria-label={`${item.name}: ${fav ? "remover dos favoritos" : "adicionar aos favoritos"}`}
+            aria-pressed={fav}
             onClick={(e) => {
               e.stopPropagation()
               toggleFavorite(item.id)
             }}
-            className="absolute top-2.5 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-full transition-all active:scale-90"
+            className="absolute top-2 right-2 z-10 flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-90 sm:top-2.5 sm:right-2.5"
             style={{
               background: fav ? "rgba(220,0,0,0.85)" : "rgba(0,0,0,0.55)",
               backdropFilter: "blur(6px)",
@@ -717,6 +810,7 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
             }}
           >
             <Heart
+              aria-hidden
               className="h-4 w-4 transition-all"
               fill={fav ? "#fff" : "none"}
               stroke={fav ? "#fff" : "rgba(255,255,255,0.7)"}
@@ -725,8 +819,9 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
         </div>
 
         {/* Info */}
-        <div className="flex flex-1 flex-col gap-2 p-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
           <h3
+            id={`produto-${item.id}`}
             className="leading-none text-white"
             style={{
               fontFamily: "var(--font-bebas)",
@@ -747,29 +842,31 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
             <div className="flex flex-wrap gap-1">
               {item.comboConfig.numBurgers > 0 && (
                 <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-orange-300"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-orange-300"
                   style={{ background: "rgba(249,115,22,0.12)" }}
                 >
-                  🍔 {item.comboConfig.numBurgers}× lanche
+                  <Hamburger aria-hidden className="h-3 w-3" />
+                  {item.comboConfig.numBurgers}× lanche
                 </span>
               )}
               {item.comboConfig.numDrinks > 0 && (
                 <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-orange-300"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-orange-300"
                   style={{ background: "rgba(249,115,22,0.12)" }}
                 >
-                  🥤 {item.comboConfig.numDrinks}× bebida
+                  <CupSoda aria-hidden className="h-3 w-3" />
+                  {item.comboConfig.numDrinks}× bebida
                 </span>
               )}
             </div>
           )}
 
-          <div className="mt-auto flex items-center gap-3 pt-2">
+          <div className="mt-auto flex items-center gap-2 pt-1 sm:gap-3 sm:pt-2">
             <div className="shrink-0">
               {item.comboConfig ? (
                 <div>
                   <p
-                    className={`text-[10px] leading-none font-semibold ${item.inStock ? "text-white/40" : "text-white/20"}`}
+                    className={`text-xs leading-none font-semibold ${item.inStock ? "text-white/40" : "text-white/20"}`}
                   >
                     a partir de
                   </p>
@@ -789,25 +886,28 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
             </div>
 
             {!item.inStock ? (
-              <span className="flex-1 text-right text-xs font-semibold text-white/30">
+              <span className="flex-1 text-right text-xs font-semibold text-white/50">
                 Indisponível
               </span>
             ) : (
               <button
+                type="button"
                 onClick={handleAdd}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-[0.97]"
+                aria-haspopup="dialog"
+                aria-label={`Pedir ${item.name}`}
+                className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition active:scale-[0.97]"
                 style={{
-                  background: "linear-gradient(135deg, #f97316, #ea580c)",
+                  background: "var(--mob-cta-gradient)",
                   boxShadow: "0 4px 16px rgba(249,115,22,0.4)",
                 }}
               >
-                <ShoppingBag className="h-4 w-4" />
+                <ShoppingBag aria-hidden className="h-4 w-4" />
                 Pedir
               </button>
             )}
           </div>
         </div>
-      </div>
+      </article>
 
       {showModal && (
         <OptionsModal
@@ -828,25 +928,29 @@ function CartDrawer() {
 
   const totalVal = total()
   const hasItems = items.length > 0
-
-  // Fecha com ESC
-  useEffect(() => {
-    if (!isOpen) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeCart()
-    }
-    document.addEventListener("keydown", onKey)
-    return () => document.removeEventListener("keydown", onKey)
-  }, [isOpen, closeCart])
+  const panelRef = useRef<HTMLDivElement>(null)
+  // Esc, foco preso, trava de scroll e foco devolvido ao fechar
+  useDialog(isOpen, closeCart, panelRef)
 
   return (
-    <>
+    <Portal>
       {isOpen && (
-        <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={closeCart} />
+        <div
+          aria-hidden
+          className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm"
+          onClick={closeCart}
+        />
       )}
 
       <div
-        className="mob-on-dark fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-sm flex-col"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Sua sacola"
+        tabIndex={-1}
+        // Fechada: fora da árvore de acessibilidade e do Tab (antes era só translateX)
+        inert={!isOpen}
+        className="mob-on-dark fixed top-0 right-0 bottom-0 z-[60] flex w-full max-w-sm flex-col outline-none"
         style={{
           background: "rgba(14,12,10,0.97)",
           borderLeft: "1px solid var(--mob-b1)",
@@ -861,8 +965,8 @@ function CartDrawer() {
           style={{ borderBottom: "1px solid var(--mob-b1)" }}
         >
           <div className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5 text-orange-400" />
-            <span
+            <ShoppingBag aria-hidden className="h-5 w-5 text-orange-400" />
+            <h2
               className="text-white"
               style={{
                 fontFamily: "var(--font-bebas)",
@@ -871,22 +975,23 @@ function CartDrawer() {
               }}
             >
               Sua Sacola
-            </span>
+            </h2>
           </div>
           <button
+            type="button"
             aria-label="Fechar sacola"
             onClick={closeCart}
-            className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/5 hover:text-white"
+            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-lg text-white/60 transition hover:bg-white/5 hover:text-white"
           >
-            <X className="h-5 w-5" />
+            <X aria-hidden className="h-5 w-5" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {!hasItems ? (
             <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-              <ShoppingBag className="h-12 w-12 text-white/10" />
-              <p className="text-sm text-white/30">Sua sacola está vazia</p>
+              <ShoppingBag aria-hidden className="h-12 w-12 text-white/10" />
+              <p className="text-sm text-white/50">Sua sacola está vazia</p>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -898,7 +1003,7 @@ function CartDrawer() {
                 >
                   <div className="relative h-14 w-14 flex-none overflow-hidden rounded-lg bg-black/30">
                     {entry.img && (
-                      <Image src={entry.img} alt={entry.name} fill className="object-cover" />
+                      <Image src={entry.img} alt="" fill sizes="56px" className="object-cover" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -909,29 +1014,36 @@ function CartDrawer() {
                       {fmtPrice(entry.priceNum * entry.qty)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-0.5">
                     <button
+                      type="button"
                       aria-label={
-                        entry.qty === 1 ? "Remover item da sacola" : "Diminuir quantidade"
+                        entry.qty === 1
+                          ? `Remover ${entry.name} da sacola`
+                          : `Diminuir quantidade de ${entry.name}`
                       }
                       onClick={() => decrement(entry.id)}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/10 hover:text-white active:scale-90"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 transition hover:bg-white/10 hover:text-white active:scale-90"
                     >
                       {entry.qty === 1 ? (
-                        <Trash2 className="h-3 w-3 text-red-400" />
+                        <Trash2 aria-hidden className="h-4 w-4 text-red-400" />
                       ) : (
-                        <Minus className="h-3 w-3" />
+                        <Minus aria-hidden className="h-4 w-4" />
                       )}
                     </button>
-                    <span className="w-5 text-center text-sm font-bold text-white">
+                    <span
+                      aria-live="polite"
+                      className="w-5 text-center text-sm font-bold text-white"
+                    >
                       {entry.qty}
                     </span>
                     <button
-                      aria-label="Aumentar quantidade"
+                      type="button"
+                      aria-label={`Aumentar quantidade de ${entry.name}`}
                       onClick={() => increment(entry.id)}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/10 hover:text-white active:scale-90"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 transition hover:bg-white/10 hover:text-white active:scale-90"
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus aria-hidden className="h-4 w-4" />
                     </button>
                   </div>
                 </li>
@@ -941,7 +1053,10 @@ function CartDrawer() {
         </div>
 
         {hasItems && (
-          <div className="px-5 py-5" style={{ borderTop: "1px solid var(--mob-b1)" }}>
+          <div
+            className="px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+            style={{ borderTop: "1px solid var(--mob-b1)" }}
+          >
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm text-white/50">Total</span>
               <span className="text-lg font-bold text-white">{fmtPrice(totalVal)}</span>
@@ -950,52 +1065,59 @@ function CartDrawer() {
               href="/carrinho"
               className="block w-full rounded-xl py-3.5 text-center text-sm font-bold text-white transition active:scale-[0.98]"
               style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
+                background: "var(--mob-cta-gradient)",
                 boxShadow: "0 6px 20px rgba(249,115,22,0.35)",
               }}
             >
               Finalizar pedido
             </Link>
             <button
+              type="button"
               onClick={clear}
-              className="mt-2 w-full py-2 text-xs text-white/30 transition hover:text-white/50"
+              className="mt-2 min-h-11 w-full py-2 text-xs text-white/60 transition hover:text-white/80"
             >
               Limpar sacola
             </button>
           </div>
         )}
       </div>
-    </>
+    </Portal>
   )
 }
 
 // ─── CartBar ──────────────────────────────────────────────────────────────────
 
 function CartBar() {
+  const hydrated = useHydrated()
   const count = useCart((s) => s.count())
   const total = useCart((s) => s.total())
 
-  if (count === 0) return null
+  if (!hydrated || count === 0) return null
 
   return (
-    <div className="fixed right-0 bottom-0 left-0 z-30 px-4 pb-4">
+    <div className="fixed right-0 bottom-0 left-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
       <Link
         href="/carrinho"
+        aria-label={`Ver sacola: ${count} ${count === 1 ? "item" : "itens"}, ${fmtPrice(total)}`}
         className="mx-auto flex w-full max-w-lg items-center rounded-2xl px-4 py-3.5 transition active:scale-[0.98]"
         style={{
-          background: "linear-gradient(135deg, #f97316, #ea580c)",
+          background: "var(--mob-cta-gradient)",
           boxShadow: "0 8px 32px rgba(249,115,22,0.4)",
         }}
       >
         <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold text-orange-600"
-          style={{ background: "var(--mob-t25)" }}
+          aria-hidden
+          className="flex h-7 min-w-7 items-center justify-center rounded-lg bg-white px-1.5 text-xs font-bold text-orange-700"
         >
           {count}
         </div>
-        <span className="flex-1 text-center text-sm font-bold text-white">Ver sacola</span>
-        <span className="text-sm font-bold text-white/80">{fmtPrice(total)}</span>
-        <ChevronRight className="ml-1 h-4 w-4 text-white/80" />
+        <span aria-hidden className="flex-1 text-center text-sm font-bold text-white">
+          Ver sacola
+        </span>
+        <span aria-hidden className="text-sm font-bold text-white">
+          {fmtPrice(total)}
+        </span>
+        <ChevronRight aria-hidden className="ml-1 h-4 w-4 text-white" />
       </Link>
     </div>
   )
@@ -1070,7 +1192,7 @@ function CardapioContent() {
 
   return (
     <>
-      <main className="mx-auto max-w-7xl px-6 pt-10 pb-32">
+      <div className="mx-auto max-w-7xl px-4 pt-8 pb-32 sm:px-6 sm:pt-10">
         {/* Título */}
         <div className="mb-8">
           <p className="mb-1 text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">
@@ -1089,8 +1211,10 @@ function CardapioContent() {
         </div>
 
         {/* Filtros */}
-        <div
-          className="mob-on-dark sticky top-16 z-20 mb-8 space-y-4 rounded-2xl p-4"
+        {/* Fixo só a partir de 640px: no celular ocupava ~1/3 da tela enquanto rolava */}
+        <search
+          aria-label="Filtrar cardápio"
+          className="mob-on-dark z-20 mb-6 block space-y-3 rounded-2xl p-3 sm:sticky sm:top-[calc(var(--app-header-h,4rem)+0.5rem)] sm:mb-8 sm:space-y-4 sm:p-4"
           style={{
             background: "rgba(12,11,9,0.85)",
             backdropFilter: "blur(20px)",
@@ -1101,42 +1225,54 @@ function CardapioContent() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search
+                aria-hidden
                 className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
                 style={{ color: "var(--mob-text-tertiary)" }}
               />
               <input
-                type="text"
+                type="search"
+                aria-label="Buscar no cardápio"
+                enterKeyHint="search"
                 placeholder="Buscar por nome ou descrição..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className={`${inputCls} pr-4 pl-9`}
+                className={`${inputCls} pr-11 pl-9 [&::-webkit-search-cancel-button]:hidden`}
                 style={{ background: "var(--mob-input-bg)", color: "var(--mob-text-primary)" }}
               />
               {query && (
                 <button
+                  type="button"
                   onClick={() => setQuery("")}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-white/30 hover:text-white"
+                  aria-label="Limpar busca"
+                  className="absolute top-1/2 right-0.5 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-white/60 hover:text-white"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X aria-hidden className="h-4 w-4" />
                 </button>
               )}
             </div>
 
             <div className="flex shrink-0 items-center gap-3 sm:w-56">
-              <span
+              <label
+                htmlFor="filtro-preco"
                 className="text-xs whitespace-nowrap"
                 style={{ color: "var(--mob-text-tertiary)" }}
               >
                 Até
-              </span>
+              </label>
               <input
+                id="filtro-preco"
                 type="range"
                 min={0}
                 max={maxPriceLimit}
                 step={1}
                 value={maxPrice ?? maxPriceLimit}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
-                className="flex-1 accent-orange-500"
+                aria-valuetext={
+                  maxPrice === null || maxPrice >= maxPriceLimit
+                    ? "Sem limite de preço"
+                    : `Até ${fmtPrice(maxPrice)}`
+                }
+                className="h-10 flex-1 accent-orange-500"
               />
               <span className="w-14 text-right text-xs font-semibold whitespace-nowrap text-orange-400">
                 {maxPrice === null || maxPrice >= maxPriceLimit ? "Máx" : fmtPrice(maxPrice)}
@@ -1144,12 +1280,14 @@ function CardapioContent() {
             </div>
           </div>
 
-          {/* Pills de categoria */}
-          <div className="flex flex-wrap gap-2">
+          {/* Pills de categoria — uma linha com rolagem horizontal no celular */}
+          <div className="-mx-3 no-scrollbar flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {/* Pill Favoritos */}
             <button
+              type="button"
+              aria-pressed={onlyFavs}
               onClick={() => setOnlyFavs((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all"
+              className="flex min-h-10 flex-none items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-all"
               style={
                 onlyFavs
                   ? {
@@ -1164,7 +1302,7 @@ function CardapioContent() {
                     }
               }
             >
-              <Heart className="h-3 w-3" fill={onlyFavs ? "#fff" : "none"} />
+              <Heart aria-hidden className="h-3.5 w-3.5" fill={onlyFavs ? "#fff" : "none"} />
               Favoritos
             </button>
 
@@ -1173,11 +1311,13 @@ function CardapioContent() {
               return (
                 <button
                   key={cat.slug}
+                  type="button"
+                  aria-pressed={active}
                   onClick={() => setCategory(cat.slug)}
-                  className="rounded-full px-4 py-1.5 text-xs font-semibold transition-all"
+                  className="min-h-10 flex-none rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition-all"
                   style={
                     active
-                      ? { background: "linear-gradient(135deg, #f97316, #ea580c)", color: "#fff" }
+                      ? { background: "var(--mob-cta-gradient)", color: "#fff" }
                       : {
                           background: "var(--mob-pill-inactive-bg)",
                           color: "var(--mob-pill-inactive-text)",
@@ -1190,47 +1330,49 @@ function CardapioContent() {
               )
             })}
             <span
-              className="ml-auto self-center text-xs"
+              role="status"
+              className="ml-auto flex-none self-center pl-2 text-xs whitespace-nowrap"
               style={{ color: "var(--mob-text-tertiary)" }}
             >
               {filtered.length} {filtered.length === 1 ? "item" : "itens"}
             </span>
           </div>
-        </div>
+        </search>
 
         {/* Grid */}
         {menuLoading ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {[...Array(6)].map((_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-24 text-center">
-            <p className="text-4xl">🔍</p>
-            <p className="text-sm text-white/30">
+            <SearchX aria-hidden className="h-10 w-10 text-white/30" />
+            <p className="text-sm text-white/60">
               Nenhum item encontrado para os filtros aplicados.
             </p>
             <button
+              type="button"
               onClick={() => {
                 setQuery("")
                 setCategory("todos")
                 setMaxPrice(null)
                 setOnlyFavs(false)
               }}
-              className="mt-1 text-xs text-orange-400 hover:underline"
+              className="mt-1 min-h-11 px-4 text-sm font-semibold text-orange-400 hover:underline"
             >
               Limpar filtros
             </button>
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {filtered.map((item) => (
               <ProductCard key={item.id} item={item} globalExtras={globalExtras} />
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       <CartDrawer />
       <CartBar />

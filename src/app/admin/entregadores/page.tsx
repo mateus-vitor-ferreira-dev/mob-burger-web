@@ -156,7 +156,7 @@ export default function EntregadoresPage() {
             onClick={startCreate}
             className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition active:scale-95"
             style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
+              background: "var(--mob-cta-gradient)",
               boxShadow: "0 4px 12px rgba(249,115,22,0.3)",
             }}
           >
@@ -194,8 +194,14 @@ export default function EntregadoresPage() {
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs text-white/40">Nome completo</label>
+              <label
+                htmlFor="admin-entregadores-campo-1"
+                className="mb-1 block text-xs text-white/55"
+              >
+                Nome completo
+              </label>
               <input
+                id="admin-entregadores-campo-1"
                 className={inputCls}
                 style={inputStyle}
                 placeholder="Ex: Carlos Silva"
@@ -204,8 +210,14 @@ export default function EntregadoresPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs text-white/40">WhatsApp</label>
+              <label
+                htmlFor="admin-entregadores-campo-2"
+                className="mb-1 block text-xs text-white/55"
+              >
+                WhatsApp
+              </label>
               <input
+                id="admin-entregadores-campo-2"
                 className={inputCls}
                 style={inputStyle}
                 placeholder="(37) 99999-9999"
@@ -219,7 +231,7 @@ export default function EntregadoresPage() {
               onClick={handleSave}
               disabled={saving}
               className="flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold text-white transition disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}
+              style={{ background: "var(--mob-cta-gradient)" }}
             >
               {saving ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -239,7 +251,7 @@ export default function EntregadoresPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 py-12 text-white/30">
+        <div className="flex items-center gap-2 py-12 text-white/50">
           <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
         </div>
       ) : drivers.length === 0 ? (
@@ -248,7 +260,7 @@ export default function EntregadoresPage() {
           style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
           <Bike className="h-8 w-8 text-white/15" />
-          <p className="text-sm text-white/30">Nenhum entregador cadastrado</p>
+          <p className="text-sm text-white/50">Nenhum entregador cadastrado</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -275,7 +287,7 @@ export default function EntregadoresPage() {
 
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-white">{driver.name}</p>
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-white/40">
+                <div className="mt-0.5 flex items-center gap-1 text-xs text-white/55">
                   <Phone className="h-3 w-3" />
                   {maskPhone(driver.phone)}
                 </div>
@@ -285,7 +297,7 @@ export default function EntregadoresPage() {
                 <button
                   onClick={() => handleToggle(driver)}
                   title={driver.active ? "Desativar" : "Ativar"}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white"
                 >
                   {driver.active ? (
                     <Check className="h-4 w-4 text-green-400" />
@@ -295,14 +307,14 @@ export default function EntregadoresPage() {
                 </button>
                 <button
                   onClick={() => startEdit(driver)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={() => handleDelete(driver)}
                   disabled={deleting === driver.id}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
                 >
                   {deleting === driver.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

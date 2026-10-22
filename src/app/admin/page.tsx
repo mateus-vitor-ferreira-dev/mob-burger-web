@@ -83,7 +83,7 @@ function KpiCard({
       }}
     >
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">{label}</p>
+        <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">{label}</p>
         <div
           className="flex h-8 w-8 items-center justify-center rounded-xl"
           style={{ background: `${color}20` }}
@@ -97,7 +97,7 @@ function KpiCard({
       >
         {value}
       </p>
-      {sub && <p className="mt-0.5 text-xs text-white/30">{sub}</p>}
+      {sub && <p className="mt-0.5 text-xs text-white/50">{sub}</p>}
     </div>
   )
 }
@@ -180,18 +180,20 @@ export default function AdminDashboard() {
         </div>
         {/* Filtro de período */}
         <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="h-4 w-4 text-white/30" />
+          <Calendar aria-hidden className="h-4 w-4 text-white/30" />
           <input
             type="date"
+            aria-label="Data inicial do período"
             className={inputCls}
             style={{ background: "rgba(0,0,0,0.35)" }}
             value={from}
             max={todayStr()}
             onChange={(e) => setFrom(e.target.value)}
           />
-          <span className="text-xs text-white/30">até</span>
+          <span className="text-xs text-white/50">até</span>
           <input
             type="date"
+            aria-label="Data final do período"
             className={inputCls}
             style={{ background: "rgba(0,0,0,0.35)" }}
             value={to}
@@ -218,7 +220,7 @@ export default function AdminDashboard() {
                 setFrom("")
                 setTo("")
               }}
-              className="text-xs text-white/30 hover:text-white"
+              className="text-xs text-white/50 hover:text-white"
             >
               ✕
             </button>
@@ -311,7 +313,7 @@ export default function AdminDashboard() {
                 border: "1px solid var(--mob-s4)",
               }}
             >
-              <p className="mb-4 text-xs font-semibold tracking-widest text-white/30 uppercase">
+              <p className="mb-4 text-xs font-semibold tracking-widest text-white/50 uppercase">
                 Receita por método
               </p>
               <div className="space-y-3">
@@ -344,7 +346,7 @@ export default function AdminDashboard() {
                           {fmtPrice(data?.revenue ?? 0)}
                         </p>
                       </div>
-                      <p className="text-xs text-white/30">{data?.count ?? 0} transações</p>
+                      <p className="text-xs text-white/50">{data?.count ?? 0} transações</p>
                     </div>
                   </div>
                 ))}
@@ -361,7 +363,7 @@ export default function AdminDashboard() {
                 border: "1px solid var(--mob-s4)",
               }}
             >
-              <p className="mb-4 text-xs font-semibold tracking-widest text-white/30 uppercase">
+              <p className="mb-4 text-xs font-semibold tracking-widest text-white/50 uppercase">
                 Pedidos por status
               </p>
               <div className="space-y-2">
@@ -391,7 +393,7 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                 {(stats?.byStatus ?? []).every((s) => s.count === 0) && (
-                  <p className="text-xs text-white/25">Nenhum pedido ainda.</p>
+                  <p className="text-xs text-white/50">Nenhum pedido ainda.</p>
                 )}
               </div>
             </div>
@@ -409,7 +411,7 @@ export default function AdminDashboard() {
               }}
             >
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
                   Mais vendidos
                 </p>
                 <Trophy className="h-4 w-4 text-orange-400" />
@@ -420,7 +422,7 @@ export default function AdminDashboard() {
                   const pct = Math.round((tp.quantity / max) * 100)
                   return (
                     <div key={tp.product.id} className="flex items-center gap-3">
-                      <span className="w-4 flex-none text-right text-xs font-bold text-white/20">
+                      <span className="w-4 flex-none text-right text-xs font-bold text-white/50">
                         {i + 1}
                       </span>
                       <div className="relative h-8 w-8 flex-none overflow-hidden rounded-lg bg-black/30">
@@ -482,7 +484,7 @@ export default function AdminDashboard() {
               }}
             >
               <div className="mb-4 flex items-center justify-between">
-                <p className="text-xs font-semibold tracking-widest text-white/30 uppercase">
+                <p className="text-xs font-semibold tracking-widest text-white/50 uppercase">
                   Estoque
                 </p>
                 <Link
