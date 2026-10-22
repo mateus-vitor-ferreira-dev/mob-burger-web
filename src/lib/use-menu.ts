@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 
 export interface MenuOptionItem {
   id: string
@@ -66,12 +66,23 @@ async function buscarMenu() {
   }
 }
 
+// Cardápio que o servidor já buscou junto com a página: a primeira pintura sai
+// com os produtos, sem esperar a chamada do navegador.
+const MenuInicial = createContext<MenuCategory[] | null>(null)
+export const MenuInicialProvider = MenuInicial.Provider
+
 export function useMenu() {
-  const [categories, setCategories] = useState<MenuCategory[]>(_cache ?? [])
-  const [loading, setLoading] = useState(!_cache)
+  const inicial = useContext(MenuInicial)
+  const [categories, setCategories] = useState<MenuCategory[]>(_cache ?? inicial ?? [])
+  const [loading, setLoading] = useState(!_cache && !inicial)
 
   useEffect(() => {
     _listeners.add(setCategories)
+
+    if (!_cache && inicial) {
+      _cache = inicial
+      _cacheTime = Date.now()
+    }
 
     const now = Date.now()
     if (!_cache || now - _cacheTime > TTL) {
@@ -84,7 +95,7 @@ export function useMenu() {
     return () => {
       _listeners.delete(setCategories)
     }
-  }, [])
+  }, [inicial])
 
   function invalidate() {
     _cache = null
