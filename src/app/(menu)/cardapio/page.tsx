@@ -676,7 +676,19 @@ function comboMinPrice(item: MenuItem): number {
 
 // ─── ProductCard ─────────────────────────────────────────────────────────────
 
-function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: GlobalExtra[] }) {
+/** Quantos cards do topo carregam a foto na hora (os que cabem na primeira tela). */
+const PRIMEIRAS_FOTOS = 4
+
+function ProductCard({
+  item,
+  globalExtras,
+  destaque = false,
+}: {
+  item: MenuItem
+  globalExtras: GlobalExtra[]
+  /** Card do topo da lista: a foto carrega na hora, com prioridade (é o que aparece primeiro). */
+  destaque?: boolean
+}) {
   const add = useCart((s) => s.add)
   const { isFavorite, toggle: toggleFavorite } = useFavorites()
   const [showModal, setShowModal] = useState(false)
@@ -761,6 +773,8 @@ function ProductCard({ item, globalExtras }: { item: MenuItem; globalExtras: Glo
                 alt=""
                 fill
                 sizes="(max-width: 640px) 128px, (max-width: 1024px) 50vw, 33vw"
+                loading={destaque ? "eager" : "lazy"}
+                fetchPriority={destaque ? "high" : "auto"}
                 className={`object-cover transition-all duration-500 group-hover/card:scale-[1.06] ${imgLoaded ? "opacity-100" : "opacity-0"} ${!item.inStock ? "brightness-50" : ""}`}
                 onLoad={() => setImgLoaded(true)}
               />
@@ -1367,8 +1381,13 @@ function CardapioContent() {
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {filtered.map((item) => (
-              <ProductCard key={item.id} item={item} globalExtras={globalExtras} />
+            {filtered.map((item, i) => (
+              <ProductCard
+                key={item.id}
+                item={item}
+                globalExtras={globalExtras}
+                destaque={i < PRIMEIRAS_FOTOS}
+              />
             ))}
           </div>
         )}
